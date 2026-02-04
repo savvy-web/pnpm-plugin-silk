@@ -14,13 +14,15 @@ centralized catalog management across the Savvy Web ecosystem.
 
 - `catalog:silk` - Current/latest versions for direct dependencies
 - `catalog:silkPeers` - Permissive ranges for peerDependencies
+- `silkOverrides` - Security overrides for transitive dependency CVEs
 - Override warnings - Prominent console output when local versions diverge
-- Auto-generation - Catalogs generated from `pnpm-workspace.yaml`
+- Auto-generation - Catalogs and overrides generated from `pnpm-workspace.yaml`
 
 **Design Documentation:**
 
 - Architecture: `@./.claude/design/pnpm-plugin-silk/catalog-management.md`
-  Load when: adding catalog entries, modifying merge logic, debugging resolution
+  Load when: adding catalog entries, modifying merge logic, debugging resolution,
+  adding security overrides
 - Implementation Plan: `@./.claude/plans/pnpm-plugin-silk-mvp.md` (completed)
 
 ## Commands
@@ -31,7 +33,7 @@ centralized catalog management across the Savvy Web ecosystem.
 pnpm run lint              # Check code with Biome
 pnpm run lint:fix          # Auto-fix lint issues
 pnpm run typecheck         # Type-check via Turbo
-pnpm run test              # Run all tests (15 tests)
+pnpm run test              # Run all tests (19 tests)
 pnpm run test:watch        # Run tests in watch mode
 pnpm run test:coverage     # Run tests with coverage report
 ```

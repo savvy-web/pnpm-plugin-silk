@@ -21,6 +21,7 @@ interface WorkspaceConfig {
 		silk?: Record<string, string>;
 		silkPeers?: Record<string, string>;
 	};
+	overrides?: Record<string, string>;
 }
 
 /**
@@ -49,7 +50,11 @@ function formatCatalog(catalog: Record<string, string>, indent = "\t\t"): string
 /**
  * Generate the TypeScript catalog file content.
  */
-function generateCatalogFile(silk: Record<string, string>, silkPeers: Record<string, string>): string {
+function generateCatalogFile(
+	silk: Record<string, string>,
+	silkPeers: Record<string, string>,
+	silkOverrides: Record<string, string>,
+): string {
 	const timestamp = new Date().toISOString();
 
 	return `/**
@@ -70,6 +75,7 @@ import type { SilkCatalogs } from "./types.js";
  *
  * - \`silk\`: Current/latest versions for direct dependencies
  * - \`silkPeers\`: Permissive ranges for peerDependencies
+ * - \`silkOverrides\`: Security overrides for known CVEs
  */
 export const silkCatalogs: SilkCatalogs = {
 	silk: {
@@ -77,6 +83,9 @@ ${formatCatalog(silk)}
 	},
 	silkPeers: {
 ${formatCatalog(silkPeers)}
+	},
+	silkOverrides: {
+${formatCatalog(silkOverrides)}
 	},
 };
 `;
@@ -102,11 +111,13 @@ function main(): void {
 
 	const silk = config.catalogs.silk;
 	const silkPeers = config.catalogs.silkPeers;
+	const silkOverrides = config.overrides ?? {};
 
 	console.log(`Found ${Object.keys(silk).length} entries in silk catalog`);
 	console.log(`Found ${Object.keys(silkPeers).length} entries in silkPeers catalog`);
+	console.log(`Found ${Object.keys(silkOverrides).length} entries in silkOverrides`);
 
-	const content = generateCatalogFile(silk, silkPeers);
+	const content = generateCatalogFile(silk, silkPeers, silkOverrides);
 	const outputPath = join(ROOT_DIR, "src/catalogs/generated.ts");
 
 	writeFileSync(outputPath, content, "utf-8");

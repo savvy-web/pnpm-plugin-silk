@@ -5,7 +5,7 @@ category: architecture
 created: 2026-02-03
 updated: 2026-02-04
 last-synced: 2026-02-04
-completeness: 90
+completeness: 95
 related: []
 dependencies: []
 implementation-plans:
@@ -39,15 +39,15 @@ compatibility constraints, this plugin serves as a single source of truth that p
 consuming repositories via pnpm's config dependency mechanism.
 
 When a repository adds `@savvy-web/pnpm-plugin-silk` as a config dependency, it automatically
-receives two named catalogs:
+receives two named catalogs and security overrides:
 
 - **`catalog:silk`** - Current/latest versions for direct dependencies (kept up-to-date)
 - **`catalog:silkPeers`** - Permissive ranges for peerDependencies (avoids forcing updates)
+- **`overrides`** - Security fixes for transitive dependency CVEs (merged with local overrides)
 
 Plus future enhancements:
 
 - **Patches** - Centralized bug fixes applied uniformly
-- **Overrides** - Resolution rules for problematic transitive dependencies
 
 The dual-catalog approach lets Silk modules stay current while not requiring consumers to
 immediately upgrade. For example, a module can use `typescript: catalog:silk` (^5.9.4) for
@@ -96,20 +96,27 @@ The plugin consists of three main components that work together to provide catal
 
 **Generation Workflow:**
 
-Catalogs are generated from `pnpm-workspace.yaml` via `scripts/generate-catalogs.ts`:
+Catalogs and overrides are generated from `pnpm-workspace.yaml` via `scripts/generate-catalogs.ts`:
 
 ```bash
 pnpm run generate:catalogs  # Reads workspace yaml, generates TypeScript
 pnpm run build              # Runs generate:catalogs via prebuild hook
 ```
 
+The generator reads:
+
+- `catalogs.silk` - Direct dependency versions
+- `catalogs.silkPeers` - Peer dependency ranges
+- `overrides` - Security overrides for transitive dependency CVEs
+
 **Key interfaces/APIs:**
 
 ```typescript
 // src/catalogs/types.ts
 interface SilkCatalogs {
-  silk: Record<string, string>;      // Current versions for direct deps
-  silkPeers: Record<string, string>; // Permissive ranges for peers
+  silk: Record<string, string>;         // Current versions for direct deps
+  silkPeers: Record<string, string>;    // Permissive ranges for peers
+  silkOverrides: Record<string, string>; // Security overrides for CVEs
 }
 
 // src/catalogs/generated.ts (auto-generated)
@@ -117,12 +124,18 @@ export const silkCatalogs: SilkCatalogs = {
   silk: {
     typescript: "^5.9.3",
     vitest: "^4.0.18",
-    // ... more entries from pnpm-workspace.yaml
+    // ... more entries from pnpm-workspace.yaml catalogs.silk
   },
   silkPeers: {
     typescript: "^5.9.3",
     husky: "^9.1.7",
-    // ... more entries from pnpm-workspace.yaml
+    // ... more entries from pnpm-workspace.yaml catalogs.silkPeers
+  },
+  silkOverrides: {
+    "@isaacs/brace-expansion": ">=5.0.1", // CVE-2026-25547
+    lodash: ">=4.17.23",                  // CVE-2025-13465
+    tmp: ">=0.2.4",                       // GHSA-52f5-9888-hmc6
+    // ... more entries from pnpm-workspace.yaml overrides
   },
 };
 ```
@@ -145,14 +158,16 @@ export const silkCatalogs: SilkCatalogs = {
 // src/hooks/update-config.ts
 export interface PnpmConfig {
   catalogs?: Record<string, Record<string, string>>;
+  overrides?: Record<string, string>;
   [key: string]: unknown;
 }
 
 export function updateConfig(config: PnpmConfig): PnpmConfig {
   // 1. Read plugin catalogs (silkCatalogs.silk, silkCatalogs.silkPeers)
-  // 2. Read existing config catalogs
-  // 3. Merge (local wins, emit warnings for overrides)
-  // 4. Return updated config with silk and silkPeers catalogs
+  // 2. Read plugin overrides (silkCatalogs.silkOverrides)
+  // 3. Read existing config catalogs and overrides
+  // 4. Merge (local wins, emit warnings for conflicts)
+  // 5. Return updated config with silk/silkPeers catalogs and merged overrides
 }
 
 // src/hooks/warnings.ts
@@ -359,7 +374,7 @@ The plugin uses a simple two-layer architecture: data definition and hook implem
 
 ### Component Interactions
 
-#### Interaction 1: Catalog Injection During Install
+#### Interaction 1: Catalog and Override Injection During Install
 
 **Participants:** pnpm, pnpmfile.cjs, Catalog Definitions
 
@@ -368,10 +383,12 @@ The plugin uses a simple two-layer architecture: data definition and hook implem
 1. User runs `pnpm install` in consuming repo
 2. pnpm loads config dependency's `pnpmfile.cjs`
 3. pnpm calls `updateConfig(currentConfig)`
-4. Hook reads plugin catalog definitions
-5. Hook merges with existing config catalogs (local wins)
-6. Hook returns modified config
-7. pnpm uses merged catalogs for resolution
+4. Hook reads plugin catalog definitions and overrides
+5. Hook merges catalogs with existing config (local wins)
+6. Hook merges overrides with existing config (local wins)
+7. Hook emits warnings for any conflicts
+8. Hook returns modified config
+9. pnpm uses merged catalogs and overrides for resolution
 
 **Sequence diagram:**
 
@@ -379,10 +396,12 @@ The plugin uses a simple two-layer architecture: data definition and hook implem
 pnpm           pnpmfile.cjs    Catalogs
 │                   │              │
 ├──────────────────>│              │  1. updateConfig(config)
-│                   ├─────────────>│  2. getCatalogs()
-│                   │<─────────────┤  3. catalogData
+│                   ├─────────────>│  2. getCatalogs() + getOverrides()
+│                   │<─────────────┤  3. catalogData + overrideData
 │                   │              │
 │                   │ merge catalogs
+│                   │ merge overrides
+│                   │ emit warnings
 │                   │              │
 │<──────────────────┤              │  4. return mergedConfig
 │                   │              │
@@ -400,7 +419,8 @@ Hooks must be resilient since failures can break `pnpm install` entirely.
 
 ### Override Warning Strategy
 
-When a local catalog entry overrides a Silk-managed version, emit prominent console warnings:
+When a local catalog entry or pnpm override conflicts with a Silk-managed version, emit prominent
+console warnings:
 
 ```text
 ┌─────────────────────────────────────────────────────────────────────┐
@@ -416,6 +436,10 @@ When a local catalog entry overrides a Silk-managed version, emit prominent cons
 │    Silk version:  ^2.0.0 || ^3.0.0                                  │
 │    Local override: ^3.0.0                                           │
 │                                                                     │
+│  overrides.@isaacs/brace-expansion                                  │
+│    Silk version:  >=5.0.1                                           │
+│    Local override: >=5.0.0                                          │
+│                                                                     │
 │  Local versions will be used. To use Silk defaults, remove these    │
 │  entries from your pnpm-workspace.yaml catalogs section.            │
 └─────────────────────────────────────────────────────────────────────┘
@@ -427,6 +451,7 @@ This ensures:
 - **Visibility:** Overrides are impossible to miss during install
 - **Traceability:** Clear diff between Silk and local versions
 - **Guidance:** Instructions on how to revert to Silk defaults
+- **Security awareness:** Alerts when local overrides may downgrade security fixes
 
 ---
 
@@ -452,6 +477,8 @@ interface SilkCatalogs {
   silk: Record<string, string>;
   // Named catalog for peer dependency ranges (more permissive)
   silkPeers: Record<string, string>;
+  // Security overrides for transitive dependency CVEs
+  silkOverrides: Record<string, string>;
 }
 
 // Example catalog definitions
@@ -466,15 +493,21 @@ const silkCatalogs: SilkCatalogs = {
     vitest: "^2.0.0 || ^3.0.0",
     effect: "^3.0.0",
   },
+  silkOverrides: {
+    "@isaacs/brace-expansion": ">=5.0.1", // CVE-2026-25547
+    "lodash": ">=4.17.23",                // CVE-2025-13465
+    "tmp": ">=0.2.4",                     // GHSA-52f5-9888-hmc6
+  },
 };
 
-// Merge result - adds silk catalogs to named catalogs
+// Merge result - adds silk catalogs and overrides
 interface MergedConfig extends PnpmConfig {
   catalogs: {
     silk: Record<string, string>;       // current versions
     silkPeers: Record<string, string>;  // peer ranges
     [other: string]: Record<string, string>;
   };
+  overrides: Record<string, string>;    // security overrides
 }
 ```
 
@@ -712,6 +745,7 @@ The plugin requires testing at multiple levels given its integration with pnpm's
 - Empty catalog handling (plugin-only, local-only, both, neither)
 - Conflict resolution (local wins)
 - Named catalog merging
+- Override merging and conflict detection
 - Invalid input handling (malformed catalogs)
 
 **Example test cases:**
@@ -738,6 +772,23 @@ describe("mergeCatalogs", () => {
     expect(config.catalogs.silk.typescript).toBe("^5.9.4");
     expect(config.catalogs.silkPeers.typescript).toBe("^5.0.0");
   });
+
+  it("adds silk overrides to config", () => {
+    const config = updateConfig({});
+
+    expect(config.overrides).toBeDefined();
+    expect(config.overrides["@isaacs/brace-expansion"]).toBe(">=5.0.1");
+    expect(config.overrides.lodash).toBe(">=4.17.23");
+  });
+
+  it("merges local overrides with silk overrides", () => {
+    const config = updateConfig({
+      overrides: { "custom-pkg": "^1.0.0" },
+    });
+
+    expect(config.overrides["custom-pkg"]).toBe("^1.0.0");
+    expect(config.overrides["@isaacs/brace-expansion"]).toBe(">=5.0.1");
+  });
 });
 ```
 
@@ -756,27 +807,34 @@ describe("mergeCatalogs", () => {
 
 ## Future Enhancements
 
-### Phase 1: MVP (v1.0.0)
+### Phase 1: MVP (v1.0.0) - COMPLETE
 
 - **Catalog management** - Core catalog merging via updateConfig hook
 - **CJS bundling** - Add CJS output support to rslib-builder
 - **Initial catalogs** - Define versions for Silk ecosystem modules
 
-### Phase 2: Security Overrides (v1.1.0)
+### Phase 2: Security Overrides (v1.1.0) - COMPLETE
 
 - **Override management** - Centralize `overrides` field for transitive dependency resolution
 - **Security response** - When a CVE is discovered in a transitive dependency, push a fix to all
   consuming repos by updating the plugin
 - **Override warnings** - Similar to catalog warnings, alert when local overrides conflict
 
-Example use case:
+**Implementation Details:**
+
+The `silkOverrides` catalog is read from `pnpm-workspace.yaml`'s `overrides` section and merged
+into consuming repositories via the `updateConfig` hook. Current security overrides:
 
 ```yaml
-# Plugin injects into pnpm config
+# pnpm-workspace.yaml (plugin source)
 overrides:
-  "lodash@<4.17.21": "4.17.21"  # CVE-2021-23337
-  "minimist@<1.2.6": "1.2.6"    # CVE-2021-44906
+  "@isaacs/brace-expansion": ">=5.0.1"  # CVE-2026-25547
+  lodash: ">=4.17.23"                   # CVE-2025-13465
+  tmp: ">=0.2.4"                        # GHSA-52f5-9888-hmc6
 ```
+
+The `mergeOverrides()` function handles merging with local overrides, where local entries take
+precedence but emit warnings for conflicts.
 
 ### Phase 3: Patch Distribution (v1.2.0)
 
@@ -815,7 +873,6 @@ Areas that may need refactoring in the future:
 **Internal Design Docs:**
 
 - (Future) [Patch Management](./patch-management.md) - Centralized patch distribution
-- (Future) [Override Strategy](./override-strategy.md) - Transitive dependency overrides
 
 **Package Documentation:**
 
@@ -831,7 +888,7 @@ Areas that may need refactoring in the future:
 
 ---
 
-**Document Status:** Current (90% complete) - MVP implementation complete
+**Document Status:** Current (95% complete) - MVP + Security Overrides complete
 
 **Synced:** 2026-02-04
 
@@ -841,7 +898,9 @@ Areas that may need refactoring in the future:
 - Rslib virtualEntries feature (v0.10.0) used for CJS bundling
 - Catalog generation from `pnpm-workspace.yaml` implemented
 - `updateConfig` hook with override warnings implemented
-- 15 unit tests passing
+- Security overrides syncing from `pnpm-workspace.yaml` `overrides` section
+- `mergeOverrides()` function with local precedence and conflict warnings
+- 19 unit tests passing (15 catalog tests + 4 override tests)
 
 **Build Output:**
 
@@ -849,9 +908,16 @@ Areas that may need refactoring in the future:
 - `dist/npm/index.js` - ESM public API
 - `dist/npm/index.d.ts` - Type declarations
 
+**Current Security Overrides:**
+
+| Package | Minimum Version | CVE/Advisory |
+| :------ | :-------------- | :----------- |
+| `@isaacs/brace-expansion` | `>=5.0.1` | CVE-2026-25547 |
+| `lodash` | `>=4.17.23` | CVE-2025-13465 |
+| `tmp` | `>=0.2.4` | GHSA-52f5-9888-hmc6 |
+
 **Next Steps:**
 
 1. Publish initial version to npm
 2. Test as config dependency in another repo
-3. Phase 2: Add security overrides support
-4. Phase 3: Add patch distribution
+3. Phase 3: Add patch distribution
