@@ -22,6 +22,8 @@ interface WorkspaceConfig {
 		silkPeers?: Record<string, string>;
 	};
 	overrides?: Record<string, string>;
+	onlyBuiltDependencies?: string[];
+	publicHoistPattern?: string[];
 }
 
 /**
@@ -48,12 +50,22 @@ function formatCatalog(catalog: Record<string, string>, indent = "\t\t"): string
 }
 
 /**
+ * Format a string array as TypeScript code.
+ */
+function formatStringArray(items: string[], indent = "\t\t"): string {
+	const sortedItems = [...items].sort((a, b) => a.localeCompare(b));
+	return sortedItems.map((item) => `${indent}"${item}",`).join("\n");
+}
+
+/**
  * Generate the TypeScript catalog file content.
  */
 function generateCatalogFile(
 	silk: Record<string, string>,
 	silkPeers: Record<string, string>,
 	silkOverrides: Record<string, string>,
+	silkOnlyBuiltDependencies: string[],
+	silkPublicHoistPattern: string[],
 ): string {
 	const timestamp = new Date().toISOString();
 
@@ -76,6 +88,8 @@ import type { SilkCatalogs } from "./types.js";
  * - \`silk\`: Current/latest versions for direct dependencies
  * - \`silkPeers\`: Permissive ranges for peerDependencies
  * - \`silkOverrides\`: Security overrides for known CVEs
+ * - \`silkOnlyBuiltDependencies\`: Packages allowed to run build scripts
+ * - \`silkPublicHoistPattern\`: Packages to hoist to virtual store root
  */
 export const silkCatalogs: SilkCatalogs = {
 	silk: {
@@ -87,6 +101,12 @@ ${formatCatalog(silkPeers)}
 	silkOverrides: {
 ${formatCatalog(silkOverrides)}
 	},
+	silkOnlyBuiltDependencies: [
+${formatStringArray(silkOnlyBuiltDependencies)}
+	],
+	silkPublicHoistPattern: [
+${formatStringArray(silkPublicHoistPattern)}
+	],
 };
 `;
 }
@@ -112,12 +132,22 @@ function main(): void {
 	const silk = config.catalogs.silk;
 	const silkPeers = config.catalogs.silkPeers;
 	const silkOverrides = config.overrides ?? {};
+	const silkOnlyBuiltDependencies = config.onlyBuiltDependencies ?? [];
+	const silkPublicHoistPattern = config.publicHoistPattern ?? [];
 
 	console.log(`Found ${Object.keys(silk).length} entries in silk catalog`);
 	console.log(`Found ${Object.keys(silkPeers).length} entries in silkPeers catalog`);
 	console.log(`Found ${Object.keys(silkOverrides).length} entries in silkOverrides`);
+	console.log(`Found ${silkOnlyBuiltDependencies.length} entries in onlyBuiltDependencies`);
+	console.log(`Found ${silkPublicHoistPattern.length} entries in publicHoistPattern`);
 
-	const content = generateCatalogFile(silk, silkPeers, silkOverrides);
+	const content = generateCatalogFile(
+		silk,
+		silkPeers,
+		silkOverrides,
+		silkOnlyBuiltDependencies,
+		silkPublicHoistPattern,
+	);
 	const outputPath = join(ROOT_DIR, "src/catalogs/generated.ts");
 
 	writeFileSync(outputPath, content, "utf-8");

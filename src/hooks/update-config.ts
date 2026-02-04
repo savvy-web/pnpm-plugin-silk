@@ -30,6 +30,10 @@ export interface PnpmConfig {
 	catalogs?: Record<string, Record<string, string>>;
 	/** Package version overrides for security fixes. */
 	overrides?: Record<string, string>;
+	/** Packages allowed to run build scripts during install. */
+	onlyBuiltDependencies?: string[];
+	/** Packages to hoist to the virtual store root. */
+	publicHoistPattern?: string[];
 	/** Additional pnpm configuration fields (preserved but not modified). */
 	[key: string]: unknown;
 }
@@ -111,12 +115,34 @@ function mergeOverrides(
 }
 
 /**
+ * Merge string arrays, removing duplicates.
+ *
+ * @param silkArray - The Silk-provided array
+ * @param localArray - The local array (may be undefined)
+ * @returns The merged array with duplicates removed
+ */
+function mergeStringArrays(silkArray: readonly string[], localArray: string[] | undefined): string[] {
+	const merged = new Set(silkArray);
+
+	if (localArray) {
+		for (const item of localArray) {
+			merged.add(item);
+		}
+	}
+
+	return [...merged].sort((a, b) => a.localeCompare(b));
+}
+
+/**
  * The updateConfig hook for pnpm.
  *
  * @remarks
  * Merges Silk's `silk` and `silkPeers` catalogs into the pnpm configuration.
  * Local catalog entries take precedence, but overrides emit prominent warnings
  * to alert users of version mismatches.
+ *
+ * Also merges `onlyBuiltDependencies` and `publicHoistPattern` arrays,
+ * combining Silk defaults with local entries.
  *
  * On error, logs a warning and returns the original config unchanged to avoid
  * breaking the installation process.
@@ -139,6 +165,11 @@ export function updateConfig(config: PnpmConfig): PnpmConfig {
 			warnings,
 		);
 		const mergedOverrides = mergeOverrides(silkCatalogs.silkOverrides, config.overrides, warnings);
+		const mergedOnlyBuiltDependencies = mergeStringArrays(
+			silkCatalogs.silkOnlyBuiltDependencies,
+			config.onlyBuiltDependencies,
+		);
+		const mergedPublicHoistPattern = mergeStringArrays(silkCatalogs.silkPublicHoistPattern, config.publicHoistPattern);
 
 		warnOverrides(warnings);
 
@@ -150,6 +181,8 @@ export function updateConfig(config: PnpmConfig): PnpmConfig {
 				silkPeers: mergedSilkPeers,
 			},
 			overrides: mergedOverrides,
+			onlyBuiltDependencies: mergedOnlyBuiltDependencies,
+			publicHoistPattern: mergedPublicHoistPattern,
 		};
 	} catch (error) {
 		console.warn(

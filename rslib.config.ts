@@ -9,10 +9,12 @@ export default NodeLibraryBuilder.create({
 		},
 	},
 	transform({ pkg }) {
+		delete pkg.dependencies;
 		delete pkg.devDependencies;
 		delete pkg.scripts;
 		delete pkg.publishConfig;
 		delete pkg.devEngines;
+		delete pkg.optionalDependencies;
 		return pkg;
 	},
 });

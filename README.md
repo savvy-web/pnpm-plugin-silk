@@ -6,19 +6,20 @@
 [![pnpm](https://img.shields.io/badge/pnpm-%3E%3D10-orange)](https://pnpm.io/)
 
 Centralized dependency version management for the Silk ecosystem via pnpm
-config dependencies. Share curated dependency catalogs, patches, and overrides
-across multiple repositories from a single source of truth.
+config dependencies. Share curated dependency catalogs, security overrides,
+and build configurations across multiple repositories from a single source
+of truth.
 
 ## Features
 
 - **Dual catalog strategy** - Current versions for direct dependencies
   (`catalog:silk`), permissive ranges for peer dependencies (`catalog:silkPeers`)
-- **Non-destructive merging** - Plugin catalogs merge with local definitions;
-  local entries always take precedence
-- **Override warnings** - Clear console output when local versions override
-  Silk-managed defaults
-- **Zero runtime dependencies** - Self-contained CommonJS bundle that pnpm loads
-  directly
+- **Security overrides** - Centralized CVE fixes via `silkOverrides` that
+  propagate to all consuming repositories
+- **Build configuration sync** - Shared `onlyBuiltDependencies` and
+  `publicHoistPattern` settings
+- **Non-destructive merging** - Local definitions always take precedence with
+  clear warnings for divergences
 
 ## Installation
 
@@ -33,11 +34,8 @@ hash:
 
 ```yaml
 configDependencies:
-  "@savvy-web/pnpm-plugin-silk": "0.1.0+sha512-abc123..."
+  "@savvy-web/pnpm-plugin-silk": "0.2.0+sha512-..."
 ```
-
-> **Note:** Config dependencies require exact versions with SHA-512 integrity
-> checksums. The `pnpm add --config` command generates this automatically.
 
 ## Quick Start
 
@@ -55,9 +53,10 @@ Reference Silk catalogs in your `package.json`:
 }
 ```
 
-The `silk` catalog provides current/latest versions for your direct
-dependencies, while `silkPeers` provides permissive ranges that allow consumers
-to use older compatible versions.
+The `silk` catalog provides current/latest versions for direct dependencies,
+while `silkPeers` provides permissive ranges for peer dependencies. Security
+overrides, build script allowlists, and hoist patterns are automatically
+merged during `pnpm install`.
 
 ## More Information
 

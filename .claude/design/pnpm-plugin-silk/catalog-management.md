@@ -5,7 +5,7 @@ category: architecture
 created: 2026-02-03
 updated: 2026-02-04
 last-synced: 2026-02-04
-completeness: 95
+completeness: 98
 related: []
 dependencies: []
 implementation-plans:
@@ -44,6 +44,8 @@ receives two named catalogs and security overrides:
 - **`catalog:silk`** - Current/latest versions for direct dependencies (kept up-to-date)
 - **`catalog:silkPeers`** - Permissive ranges for peerDependencies (avoids forcing updates)
 - **`overrides`** - Security fixes for transitive dependency CVEs (merged with local overrides)
+- **`onlyBuiltDependencies`** - Packages allowed to run build scripts during install
+- **`publicHoistPattern`** - Packages to hoist to the virtual store root
 
 Plus future enhancements:
 
@@ -108,6 +110,8 @@ The generator reads:
 - `catalogs.silk` - Direct dependency versions
 - `catalogs.silkPeers` - Peer dependency ranges
 - `overrides` - Security overrides for transitive dependency CVEs
+- `onlyBuiltDependencies` - Packages allowed to run build scripts
+- `publicHoistPattern` - Packages to hoist to virtual store root
 
 **Key interfaces/APIs:**
 
@@ -117,6 +121,8 @@ interface SilkCatalogs {
   silk: Record<string, string>;         // Current versions for direct deps
   silkPeers: Record<string, string>;    // Permissive ranges for peers
   silkOverrides: Record<string, string>; // Security overrides for CVEs
+  silkOnlyBuiltDependencies: string[];  // Packages allowed to run build scripts
+  silkPublicHoistPattern: string[];     // Packages to hoist to virtual store root
 }
 
 // src/catalogs/generated.ts (auto-generated)
@@ -137,6 +143,16 @@ export const silkCatalogs: SilkCatalogs = {
     tmp: ">=0.2.4",                       // GHSA-52f5-9888-hmc6
     // ... more entries from pnpm-workspace.yaml overrides
   },
+  silkOnlyBuiltDependencies: [
+    "@parcel/watcher",
+    "esbuild",
+    // ... more entries from pnpm-workspace.yaml onlyBuiltDependencies
+  ],
+  silkPublicHoistPattern: [
+    "typescript",
+    "turbo",
+    // ... more entries from pnpm-workspace.yaml publicHoistPattern
+  ],
 };
 ```
 
@@ -159,15 +175,19 @@ export const silkCatalogs: SilkCatalogs = {
 export interface PnpmConfig {
   catalogs?: Record<string, Record<string, string>>;
   overrides?: Record<string, string>;
+  onlyBuiltDependencies?: string[];
+  publicHoistPattern?: string[];
   [key: string]: unknown;
 }
 
 export function updateConfig(config: PnpmConfig): PnpmConfig {
   // 1. Read plugin catalogs (silkCatalogs.silk, silkCatalogs.silkPeers)
   // 2. Read plugin overrides (silkCatalogs.silkOverrides)
-  // 3. Read existing config catalogs and overrides
-  // 4. Merge (local wins, emit warnings for conflicts)
-  // 5. Return updated config with silk/silkPeers catalogs and merged overrides
+  // 3. Read plugin arrays (silkOnlyBuiltDependencies, silkPublicHoistPattern)
+  // 4. Read existing config catalogs, overrides, and arrays
+  // 5. Merge catalogs/overrides (local wins, emit warnings for conflicts)
+  // 6. Merge arrays (combine + dedupe, no warnings)
+  // 7. Return updated config with all merged fields
 }
 
 // src/hooks/warnings.ts
@@ -479,6 +499,10 @@ interface SilkCatalogs {
   silkPeers: Record<string, string>;
   // Security overrides for transitive dependency CVEs
   silkOverrides: Record<string, string>;
+  // Packages allowed to run build scripts during install
+  silkOnlyBuiltDependencies: string[];
+  // Packages to hoist to virtual store root
+  silkPublicHoistPattern: string[];
 }
 
 // Example catalog definitions
@@ -498,9 +522,17 @@ const silkCatalogs: SilkCatalogs = {
     "lodash": ">=4.17.23",                // CVE-2025-13465
     "tmp": ">=0.2.4",                     // GHSA-52f5-9888-hmc6
   },
+  silkOnlyBuiltDependencies: [
+    "@parcel/watcher",         // Native file watcher
+    "esbuild",                 // Native bundler
+  ],
+  silkPublicHoistPattern: [
+    "typescript",              // IDE needs access
+    "turbo",                   // Build orchestration
+  ],
 };
 
-// Merge result - adds silk catalogs and overrides
+// Merge result - adds silk catalogs, overrides, and arrays
 interface MergedConfig extends PnpmConfig {
   catalogs: {
     silk: Record<string, string>;       // current versions
@@ -508,6 +540,8 @@ interface MergedConfig extends PnpmConfig {
     [other: string]: Record<string, string>;
   };
   overrides: Record<string, string>;    // security overrides
+  onlyBuiltDependencies: string[];      // build script allowlist (merged)
+  publicHoistPattern: string[];         // hoist patterns (merged)
 }
 ```
 
@@ -888,7 +922,7 @@ Areas that may need refactoring in the future:
 
 ---
 
-**Document Status:** Current (95% complete) - MVP + Security Overrides complete
+**Document Status:** Current (98% complete) - MVP + Security Overrides + Build Config Sync complete
 
 **Synced:** 2026-02-04
 
@@ -900,7 +934,10 @@ Areas that may need refactoring in the future:
 - `updateConfig` hook with override warnings implemented
 - Security overrides syncing from `pnpm-workspace.yaml` `overrides` section
 - `mergeOverrides()` function with local precedence and conflict warnings
-- 19 unit tests passing (15 catalog tests + 4 override tests)
+- `onlyBuiltDependencies` array syncing with deduplication
+- `publicHoistPattern` array syncing with deduplication
+- `mergeStringArrays()` function for combining and deduplicating arrays
+- 28 unit tests passing (17 catalog tests + 4 override warning tests + 7 array merge tests)
 
 **Build Output:**
 
@@ -915,6 +952,34 @@ Areas that may need refactoring in the future:
 | `@isaacs/brace-expansion` | `>=5.0.1` | CVE-2026-25547 |
 | `lodash` | `>=4.17.23` | CVE-2025-13465 |
 | `tmp` | `>=0.2.4` | GHSA-52f5-9888-hmc6 |
+
+**Current onlyBuiltDependencies:**
+
+| Package | Reason |
+| :------ | :----- |
+| `@parcel/watcher` | Native file watcher with platform-specific binaries |
+| `@savvy-web/commitlint` | Build-time dependency |
+| `@savvy-web/lint-staged` | Build-time dependency |
+| `core-js` | Polyfill compilation |
+| `esbuild` | Native bundler with platform-specific binaries |
+| `msgpackr-extract` | Native binary extraction |
+
+**Current publicHoistPattern:**
+
+| Package | Reason |
+| :------ | :----- |
+| `@commitlint/cli` | CLI needs direct access |
+| `@commitlint/config-conventional` | Commitlint plugin loading |
+| `@commitlint/cz-commitlint` | Commitizen adapter |
+| `@microsoft/api-extractor` | Build tool needs direct access |
+| `@rslib/core` | Build tool needs direct access |
+| `@typescript/native-preview` | TypeScript native preview access |
+| `husky` | Git hooks need direct access |
+| `lint-staged` | CLI needs direct access |
+| `markdownlint-cli2` | CLI needs direct access |
+| `markdownlint-cli2-formatter-codequality` | Formatter plugin loading |
+| `turbo` | Build orchestration needs direct access |
+| `typescript` | IDE and build tools need direct access |
 
 **Next Steps:**
 
