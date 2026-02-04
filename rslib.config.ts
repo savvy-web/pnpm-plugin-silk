@@ -1,6 +1,13 @@
 import { NodeLibraryBuilder } from "@savvy-web/rslib-builder";
 
 export default NodeLibraryBuilder.create({
+	format: "cjs",
+	virtualEntries: {
+		"pnpmfile.cjs": {
+			source: "./src/pnpmfile.ts",
+			format: "cjs",
+		},
+	},
 	transform({ pkg }) {
 		delete pkg.devDependencies;
 		delete pkg.scripts;

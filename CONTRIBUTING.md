@@ -5,20 +5,20 @@ and instructions for development.
 
 ## Prerequisites
 
-- Node.js 20+
-- pnpm 10+
+- Node.js 24.11.0+
+- pnpm 10.28.2+
 
 ## Development Setup
 
 ```bash
 # Clone the repository
-git clone https://github.com/savvy-web/pnpm-module-template.git
-cd pnpm-module-template
+git clone https://github.com/savvy-web/pnpm-plugin-silk.git
+cd pnpm-plugin-silk
 
 # Install dependencies
 pnpm install
 
-# Build all packages
+# Build all outputs
 pnpm run build
 
 # Run tests
@@ -28,23 +28,40 @@ pnpm run test
 ## Project Structure
 
 ```text
-pnpm-module-template/
-├── pkgs/                           # Workspace packages
-│   └── ecma-module/                # Example ESM package
-├── lib/
-│   └── configs/                    # Shared configuration files
-└── ...
+pnpm-plugin-silk/
+├── src/
+│   ├── catalogs/           # Catalog definitions and types
+│   │   ├── generated.ts    # Auto-generated from pnpm-workspace.yaml
+│   │   ├── index.ts        # Public exports
+│   │   └── types.ts        # Type definitions
+│   ├── hooks/              # pnpm hook implementations
+│   │   ├── update-config.ts
+│   │   └── warnings.ts
+│   ├── index.ts            # Package entry point
+│   └── pnpmfile.ts         # pnpm hook entry point
+├── scripts/
+│   └── generate-catalogs.ts
+├── dist/
+│   ├── dev/                # Development build
+│   └── npm/                # Production build for publishing
+└── lib/
+    └── configs/            # Shared configuration files
 ```
 
 ## Available Scripts
 
-| Script              | Description                          |
-| ------------------- | ------------------------------------ |
-| `pnpm run build`    | Build all packages (dev + prod)      |
-| `pnpm run test`     | Run all tests                        |
-| `pnpm run lint`     | Check code with Biome                |
-| `pnpm run lint:fix` | Auto-fix lint issues                 |
-| `pnpm run typecheck`| Type-check all workspaces            |
+| Script                       | Description                             |
+| ---------------------------- | --------------------------------------- |
+| `pnpm run build`             | Build all packages (dev + prod)         |
+| `pnpm run build:dev`         | Build development output only           |
+| `pnpm run build:prod`        | Build production/npm output only        |
+| `pnpm run test`              | Run all tests                           |
+| `pnpm run test:watch`        | Run tests in watch mode                 |
+| `pnpm run test:coverage`     | Run tests with coverage report          |
+| `pnpm run lint`              | Check code with Biome                   |
+| `pnpm run lint:fix`          | Auto-fix lint issues                    |
+| `pnpm run typecheck`         | Type-check all workspaces               |
+| `pnpm run generate:catalogs` | Regenerate catalogs from workspace yaml |
 
 ## Code Quality
 
@@ -60,7 +77,7 @@ All commits must follow the [Conventional Commits](https://conventionalcommits.o
 specification and include a DCO signoff:
 
 ```text
-feat: add new feature
+feat: add new catalog entries
 
 Signed-off-by: Your Name <your.email@example.com>
 ```
@@ -86,14 +103,10 @@ pnpm run test:watch
 
 # Run tests with coverage
 pnpm run test:coverage
-
-# Run tests for a specific package
-pnpm run test -- --filter=@savvy-web/ecma-module
 ```
 
 ## TypeScript
 
-- Composite builds with project references
 - Strict mode enabled
 - ES2022/ES2023 targets
 - Import extensions required (`.js` for ESM)
@@ -102,13 +115,13 @@ pnpm run test -- --filter=@savvy-web/ecma-module
 
 ```typescript
 // Use .js extensions for relative imports (ESM requirement)
-import { myFunction } from "./utils/helpers.js";
+import { silkCatalogs } from "./catalogs/index.js";
 
 // Use node: protocol for Node.js built-ins
-import { EventEmitter } from "node:events";
+import { readFileSync } from "node:fs";
 
 // Separate type imports
-import type { MyType } from "./types.js";
+import type { SilkCatalogs } from "./catalogs/types.js";
 ```
 
 ## Submitting Changes

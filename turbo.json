@@ -4,7 +4,7 @@
 	"tasks": {
 		"build:dev": {
 			"cache": true,
-			"dependsOn": ["types:check"],
+			"dependsOn": ["types:check", "generate:catalogs"],
 			"inputs": [
 				"$TURBO_DEFAULT$",
 				"$TURBO_ROOT$/package.json",
@@ -22,7 +22,7 @@
 		},
 		"build:prod": {
 			"cache": true,
-			"dependsOn": ["types:check"],
+			"dependsOn": ["types:check", "generate:catalogs"],
 			"inputs": [
 				"$TURBO_DEFAULT$",
 				"$TURBO_ROOT$/package.json",
@@ -37,6 +37,20 @@
 			],
 			"outputLogs": "full",
 			"outputs": ["dist/npm/**", ".rslib/declarations/npm/**"]
+		},
+		"generate:catalogs": {
+			"cache": false,
+			"dependsOn": [],
+			"inputs": [
+				"$TURBO_DEFAULT$",
+				"$TURBO_ROOT$/package.json",
+				"$TURBO_ROOT$/pnpm-lock.yml",
+				"$TURBO_ROOT$/pnpm-workspace.yml",
+				"scripts/generate-catalogs.ts",
+				"lib/catalogs/**"
+			],
+			"outputLogs": "full",
+			"outputs": ["lib/catalogs/genertated.ts"]
 		},
 		"types:check": {
 			"cache": true,
