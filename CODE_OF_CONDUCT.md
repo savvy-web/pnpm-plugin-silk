@@ -50,9 +50,9 @@ Community Moderators take reports of violations seriously and will make every ef
 
 ## Addressing and Repairing Harm
 
-**[NOTE: The remedies and repairs outlined below are suggestions based on best practices in code of conduct enforcement. If your community has its own established enforcement process, be sure to edit this section to describe your own policies.]**
+Our goal is to restore trust and safety within the community while giving individuals the opportunity to learn and grow.
 
-If an investigation by the Community Moderators finds that this Code of Conduct has been violated, the following enforcement ladder may be used to determine how best to repair harm, based on the incident's impact on the individuals involved and the community as a whole. Depending on the severity of a violation, lower rungs on the ladder may be skipped.
+If an investigation by the Community Moderators finds that this Code of Conduct has been violated, the following enforcement ladder will be used to determine how best to repair harm, based on the incident's impact on the individuals involved and the community as a whole. Depending on the severity of a violation, lower rungs on the ladder may be skipped.
 
 1) Warning
    1) Event: A violation involving a single incident or series of incidents.

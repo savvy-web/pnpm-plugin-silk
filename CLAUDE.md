@@ -5,10 +5,22 @@ code in this repository.
 
 ## Project Status
 
-This is a **base template repository** in initial state. The design
-documentation system (`.claude/` skills and agents) is included but no design
-docs exist yet. To begin planning and documenting architecture decisions, run
-`/design-init` to create your first design document.
+This is **@savvy-web/pnpm-plugin-silk** - a pnpm config dependency plugin for
+centralized catalog management across the Savvy Web ecosystem.
+
+**Current Phase:** MVP Complete (v0.1.0)
+
+**Key Features:**
+
+- `catalog:silk` - Current/latest versions for direct dependencies
+- `catalog:silkPeers` - Permissive ranges for peerDependencies
+- Override warnings - Prominent console output when local versions diverge
+- Auto-generation - Catalogs generated from `pnpm-workspace.yaml`
+
+**Design Documentation:**
+
+- Architecture: @.claude/design/pnpm-plugin-silk/catalog-management.md
+- Implementation Plan: @.claude/plans/pnpm-plugin-silk-mvp.md (completed)
 
 ## Commands
 
@@ -17,8 +29,8 @@ docs exist yet. To begin planning and documenting architecture decisions, run
 ```bash
 pnpm run lint              # Check code with Biome
 pnpm run lint:fix          # Auto-fix lint issues
-pnpm run typecheck         # Type-check all workspaces via Turbo
-pnpm run test              # Run all tests
+pnpm run typecheck         # Type-check via Turbo
+pnpm run test              # Run all tests (15 tests)
 pnpm run test:watch        # Run tests in watch mode
 pnpm run test:coverage     # Run tests with coverage report
 ```
@@ -26,38 +38,57 @@ pnpm run test:coverage     # Run tests with coverage report
 ### Building
 
 ```bash
-pnpm run build             # Build all packages (dev + prod)
+pnpm run generate:catalogs # Regenerate catalogs from pnpm-workspace.yaml
+pnpm run build             # Build (runs generate:catalogs via prebuild)
 pnpm run build:dev         # Build development output only
 pnpm run build:prod        # Build production/npm output only
 ```
 
-### Running a Single Test
+### Updating Versions
 
 ```bash
-# Run tests for a specific package
-pnpm run test -- --filter=@savvy-web/ecma-module
+# 1. Update versions in pnpm-workspace.yaml (or use pnpm up)
+pnpm up -i -r --latest
 
-# Run a specific test file
-pnpm vitest run pkgs/ecma-module/src/index.test.ts
+# 2. Rebuild (auto-regenerates catalogs)
+pnpm run build
+
+# 3. Test and commit
+pnpm run test
 ```
 
 ## Architecture
 
-### Monorepo Structure
+### Package Structure
 
-- **Package Manager**: pnpm with workspaces
-- **Build Orchestration**: Turbo for caching and task dependencies
-- **Packages**: Located in `pkgs/` directory
-- **Shared Configs**: Located in `lib/configs/`
+Single-package repository (not a monorepo):
 
-### Package Build Pipeline
+```
+src/
+├── index.ts              # Public API exports
+├── index.test.ts         # Unit tests (15 tests)
+├── pnpmfile.ts           # pnpm hook entry point
+├── catalogs/
+│   ├── types.ts          # Type definitions
+│   ├── generated.ts      # Auto-generated from pnpm-workspace.yaml
+│   └── index.ts          # Re-exports
+└── hooks/
+    ├── update-config.ts  # updateConfig hook implementation
+    └── warnings.ts       # Override warning formatter
 
-Each package uses Rslib with dual output:
+scripts/
+└── generate-catalogs.ts  # Reads yaml, writes TypeScript
+```
 
-1. `dist/dev/` - Development build with source maps
-2. `dist/npm/` - Production build for npm publishing
+### Build Pipeline
 
-Turbo tasks define dependencies: `typecheck` depends on `build` completing first.
+Uses rslib-builder with `virtualEntries` for CJS output:
+
+1. `prebuild` - Runs `generate:catalogs` + `lint:fix`
+2. `build:dev` - Development build with source maps
+3. `build:prod` - Production build for npm
+
+**Key Output:** `dist/npm/pnpmfile.cjs` (4KB self-contained CJS bundle)
 
 ### Code Quality
 

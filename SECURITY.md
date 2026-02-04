@@ -2,13 +2,17 @@
 
 ## Supported Versions
 
-| Version | Supported |
-| ------- | --------- |
-| Latest  | Yes       |
+| Version | Supported          |
+| ------- | ------------------ |
+| 0.1.x   | :white_check_mark: |
+
+Since this package is in pre-1.0 development, only the latest version receives
+security updates.
 
 ## Reporting a Vulnerability
 
-To report a security vulnerability, please email [security@savvyweb.systems](mailto:security@savvyweb.systems).
+To report a security vulnerability, please email
+[spencer@savvyweb.systems](mailto:spencer@savvyweb.systems).
 
 Please include:
 
@@ -17,4 +21,22 @@ Please include:
 - Potential impact
 - Any suggested fixes (optional)
 
-We will acknowledge receipt within 72 hours and provide updates as we investigate. We appreciate responsible disclosure and will credit reporters in release notes unless anonymity is requested.
+**Response Timeline:**
+
+- We will acknowledge receipt within 72 hours
+- We will provide a status update within 7 days
+- Critical vulnerabilities will be prioritized for immediate patching
+
+We appreciate responsible disclosure and will credit reporters in release notes
+unless anonymity is requested.
+
+## Security Considerations
+
+This package is a pnpm config dependency that:
+
+- Has zero runtime dependencies
+- Is loaded during `pnpm install` to merge catalog definitions
+- Does not execute arbitrary code or access network resources
+
+The primary security consideration is ensuring that catalog version definitions
+are accurate and do not inadvertently introduce vulnerable dependency versions.
