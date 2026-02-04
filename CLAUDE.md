@@ -63,7 +63,7 @@ pnpm run test
 
 Single-package repository (not a monorepo):
 
-```
+```text
 src/
 ├── index.ts              # Public API exports
 ├── index.test.ts         # Unit tests (15 tests)

@@ -3,15 +3,22 @@
 	"version": "0.1.0",
 	"private": false,
 	"description": "pnpm config dependency for centralized catalog management across the Silk ecosystem.",
+	"keywords": [
+		"pnpm",
+		"pnpm-plugin",
+		"config-dependency",
+		"catalog",
+		"monorepo",
+		"silk"
+	],
 	"homepage": "https://github.com/savvy-web/pnpm-plugin-silk#readme",
+	"bugs": {
+		"url": "https://github.com/savvy-web/pnpm-plugin-silk/issues"
+	},
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/savvy-web/pnpm-plugin-silk.git"
 	},
-	"bugs": {
-		"url": "https://github.com/savvy-web/pnpm-plugin-silk/issues"
-	},
-	"keywords": ["pnpm", "pnpm-plugin", "config-dependency", "catalog", "monorepo", "silk"],
 	"license": "MIT",
 	"author": {
 		"name": "C. Spencer Beggs",
@@ -23,7 +30,6 @@
 		".": "./src/index.ts"
 	},
 	"scripts": {
-		"generate:catalogs": "node --import tsx scripts/generate-catalogs.ts",
 		"prebuild": "pnpm run generate:catalogs && pnpm run lint:fix",
 		"build": "turbo run build:dev build:prod --log-order=grouped",
 		"build:dev": "rslib build --config-loader native --env-mode dev",
@@ -34,6 +40,7 @@
 		"ci:version": "changeset version && biome format --write .",
 		"commit:check": "savvy-commit check",
 		"commit:init": "savvy-commit init",
+		"generate:catalogs": "node --import tsx scripts/generate-catalogs.ts",
 		"lint": "biome check --max-diagnostics=none",
 		"lint:fix": "biome check --write --max-diagnostics=none",
 		"lint:fix:unsafe": "biome check --write --unsafe --max-diagnostics=none",

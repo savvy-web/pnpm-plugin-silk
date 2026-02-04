@@ -50,17 +50,17 @@ pnpm-plugin-silk/
 
 ## Available Scripts
 
-| Script                     | Description                           |
-| -------------------------- | ------------------------------------- |
-| `pnpm run build`           | Build all packages (dev + prod)       |
-| `pnpm run build:dev`       | Build development output only         |
-| `pnpm run build:prod`      | Build production/npm output only      |
-| `pnpm run test`            | Run all tests                         |
-| `pnpm run test:watch`      | Run tests in watch mode               |
-| `pnpm run test:coverage`   | Run tests with coverage report        |
-| `pnpm run lint`            | Check code with Biome                 |
-| `pnpm run lint:fix`        | Auto-fix lint issues                  |
-| `pnpm run typecheck`       | Type-check all workspaces             |
+| Script                       | Description                             |
+| ---------------------------- | --------------------------------------- |
+| `pnpm run build`             | Build all packages (dev + prod)         |
+| `pnpm run build:dev`         | Build development output only           |
+| `pnpm run build:prod`        | Build production/npm output only        |
+| `pnpm run test`              | Run all tests                           |
+| `pnpm run test:watch`        | Run tests in watch mode                 |
+| `pnpm run test:coverage`     | Run tests with coverage report          |
+| `pnpm run lint`              | Check code with Biome                   |
+| `pnpm run lint:fix`          | Auto-fix lint issues                    |
+| `pnpm run typecheck`         | Type-check all workspaces               |
 | `pnpm run generate:catalogs` | Regenerate catalogs from workspace yaml |
 
 ## Code Quality

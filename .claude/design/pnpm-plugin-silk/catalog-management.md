@@ -422,6 +422,7 @@ When a local catalog entry overrides a Silk-managed version, emit prominent cons
 ```
 
 This ensures:
+
 - **Flexibility:** Users can override when necessary
 - **Visibility:** Overrides are impossible to miss during install
 - **Traceability:** Clear diff between Silk and local versions
@@ -769,6 +770,7 @@ describe("mergeCatalogs", () => {
 - **Override warnings** - Similar to catalog warnings, alert when local overrides conflict
 
 Example use case:
+
 ```yaml
 # Plugin injects into pnpm config
 overrides:
@@ -783,6 +785,7 @@ overrides:
 - **Patch for unpublished fixes** - Apply fixes before upstream releases
 
 Example use case:
+
 ```yaml
 # Plugin injects into pnpm config
 patchedDependencies:
