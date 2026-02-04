@@ -33,6 +33,20 @@ describe("silkCatalogs", () => {
 		expect(silkCatalogs.silkOverrides.lodash).toBe(">=4.17.23");
 		expect(silkCatalogs.silkOverrides.tmp).toBe(">=0.2.4");
 	});
+
+	it("exports silkOnlyBuiltDependencies array", () => {
+		expect(silkCatalogs.silkOnlyBuiltDependencies).toBeDefined();
+		expect(Array.isArray(silkCatalogs.silkOnlyBuiltDependencies)).toBe(true);
+		expect(silkCatalogs.silkOnlyBuiltDependencies).toContain("esbuild");
+		expect(silkCatalogs.silkOnlyBuiltDependencies).toContain("@parcel/watcher");
+	});
+
+	it("exports silkPublicHoistPattern array", () => {
+		expect(silkCatalogs.silkPublicHoistPattern).toBeDefined();
+		expect(Array.isArray(silkCatalogs.silkPublicHoistPattern)).toBe(true);
+		expect(silkCatalogs.silkPublicHoistPattern).toContain("typescript");
+		expect(silkCatalogs.silkPublicHoistPattern).toContain("turbo");
+	});
 });
 
 describe("updateConfig", () => {
@@ -166,6 +180,81 @@ describe("updateConfig", () => {
 		expect(result.overrides?.["@isaacs/brace-expansion"]).toBe(localVersion);
 		// Warning should be emitted
 		expect(warnSpy).toHaveBeenCalled();
+	});
+
+	it("adds silk onlyBuiltDependencies to empty config", () => {
+		const config: PnpmConfig = {};
+		const result = updateConfig(config);
+
+		expect(result.onlyBuiltDependencies).toBeDefined();
+		expect(result.onlyBuiltDependencies).toContain("esbuild");
+		expect(result.onlyBuiltDependencies).toContain("@parcel/watcher");
+	});
+
+	it("merges local onlyBuiltDependencies with silk defaults", () => {
+		const config: PnpmConfig = {
+			onlyBuiltDependencies: ["local-build-dep"],
+		};
+		const result = updateConfig(config);
+
+		// Should have both silk defaults and local entry
+		expect(result.onlyBuiltDependencies).toContain("esbuild");
+		expect(result.onlyBuiltDependencies).toContain("local-build-dep");
+	});
+
+	it("deduplicates onlyBuiltDependencies entries", () => {
+		const config: PnpmConfig = {
+			onlyBuiltDependencies: ["esbuild", "custom-dep"],
+		};
+		const result = updateConfig(config);
+
+		// Should only have one esbuild entry
+		const esbuildCount = result.onlyBuiltDependencies?.filter((d) => d === "esbuild").length;
+		expect(esbuildCount).toBe(1);
+		expect(result.onlyBuiltDependencies).toContain("custom-dep");
+	});
+
+	it("adds silk publicHoistPattern to empty config", () => {
+		const config: PnpmConfig = {};
+		const result = updateConfig(config);
+
+		expect(result.publicHoistPattern).toBeDefined();
+		expect(result.publicHoistPattern).toContain("typescript");
+		expect(result.publicHoistPattern).toContain("turbo");
+	});
+
+	it("merges local publicHoistPattern with silk defaults", () => {
+		const config: PnpmConfig = {
+			publicHoistPattern: ["local-hoist-pattern"],
+		};
+		const result = updateConfig(config);
+
+		// Should have both silk defaults and local entry
+		expect(result.publicHoistPattern).toContain("typescript");
+		expect(result.publicHoistPattern).toContain("local-hoist-pattern");
+	});
+
+	it("deduplicates publicHoistPattern entries", () => {
+		const config: PnpmConfig = {
+			publicHoistPattern: ["typescript", "custom-pattern"],
+		};
+		const result = updateConfig(config);
+
+		// Should only have one typescript entry
+		const typescriptCount = result.publicHoistPattern?.filter((p) => p === "typescript").length;
+		expect(typescriptCount).toBe(1);
+		expect(result.publicHoistPattern).toContain("custom-pattern");
+	});
+
+	it("sorts merged arrays alphabetically", () => {
+		const config: PnpmConfig = {
+			onlyBuiltDependencies: ["zzz-last", "aaa-first"],
+		};
+		const result = updateConfig(config);
+
+		// Arrays should be sorted
+		const sorted = [...(result.onlyBuiltDependencies ?? [])].sort((a, b) => a.localeCompare(b));
+		expect(result.onlyBuiltDependencies).toEqual(sorted);
 	});
 });
 

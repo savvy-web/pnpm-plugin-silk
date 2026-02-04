@@ -59,4 +59,16 @@ export interface SilkCatalogs {
 	 * Synced to pnpm `overrides` configuration.
 	 */
 	readonly silkOverrides: Catalog;
+
+	/**
+	 * Packages allowed to run build scripts during install.
+	 * Synced to pnpm `onlyBuiltDependencies` configuration.
+	 */
+	readonly silkOnlyBuiltDependencies: readonly string[];
+
+	/**
+	 * Packages to hoist to the virtual store root.
+	 * Synced to pnpm `publicHoistPattern` configuration.
+	 */
+	readonly silkPublicHoistPattern: readonly string[];
 }
