@@ -19,8 +19,9 @@ centralized catalog management across the Savvy Web ecosystem.
 
 **Design Documentation:**
 
-- Architecture: @.claude/design/pnpm-plugin-silk/catalog-management.md
-- Implementation Plan: @.claude/plans/pnpm-plugin-silk-mvp.md (completed)
+- Architecture: `@./.claude/design/pnpm-plugin-silk/catalog-management.md`
+  Load when: adding catalog entries, modifying merge logic, debugging resolution
+- Implementation Plan: `@./.claude/plans/pnpm-plugin-silk-mvp.md` (completed)
 
 ## Commands
 
@@ -66,7 +67,7 @@ Single-package repository (not a monorepo):
 ```text
 src/
 ├── index.ts              # Public API exports
-├── index.test.ts         # Unit tests (15 tests)
+├── index.test.ts         # Unit tests
 ├── pnpmfile.ts           # pnpm hook entry point
 ├── catalogs/
 │   ├── types.ts          # Type definitions

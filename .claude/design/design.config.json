@@ -3,7 +3,7 @@
 	"version": "1.0.0",
 	"project": {
 		"name": "savvy-web/pnpm-plugin-silk",
-		"type": "monorepo",
+		"type": "single-package",
 		"repository": "https://github.com/spencerbeggs/pnpm-plugin-silk",
 		"maintainer": "C. Spencer Beggs"
 	},
