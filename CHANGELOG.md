@@ -1,5 +1,11 @@
 # @savvy-web/pnpm-plugin-silk
 
+## 0.3.0
+
+### Minor Changes
+
+- 88c97f4: Adds onlyBuiltDependencies and publicHoistPatterns support
+
 ## 0.2.0
 
 ### Minor Changes
