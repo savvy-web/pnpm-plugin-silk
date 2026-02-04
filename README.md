@@ -2,7 +2,7 @@
 
 [![npm version](https://img.shields.io/npm/v/@savvy-web/pnpm-plugin-silk)](https://www.npmjs.com/package/@savvy-web/pnpm-plugin-silk)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Node.js](https://img.shields.io/badge/node-%3E%3D22-brightgreen)](https://nodejs.org/)
+[![Node.js](https://img.shields.io/badge/node-%3E%3D24-brightgreen)](https://nodejs.org/)
 [![pnpm](https://img.shields.io/badge/pnpm-%3E%3D10-orange)](https://pnpm.io/)
 
 Centralized dependency version management for the Silk ecosystem via pnpm
@@ -59,13 +59,11 @@ The `silk` catalog provides current/latest versions for your direct
 dependencies, while `silkPeers` provides permissive ranges that allow consumers
 to use older compatible versions.
 
-## Documentation
-
-For catalog contents, local overrides, TypeScript API, and advanced
-configuration, see [docs/](./docs/).
+## More Information
 
 - [Contributing](./CONTRIBUTING.md) - Development setup and guidelines
 - [Security Policy](./SECURITY.md) - Vulnerability reporting
+- [Design Documentation](./.claude/design/pnpm-plugin-silk/catalog-management.md) - Architecture and implementation details
 
 ## License
 

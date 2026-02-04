@@ -28,6 +28,8 @@ import { warnOverrides } from "./warnings.js";
 export interface PnpmConfig {
 	/** Named catalogs mapping package names to version ranges. */
 	catalogs?: Record<string, Record<string, string>>;
+	/** Package version overrides for security fixes. */
+	overrides?: Record<string, string>;
 	/** Additional pnpm configuration fields (preserved but not modified). */
 	[key: string]: unknown;
 }
@@ -72,6 +74,43 @@ function mergeSingleCatalog(
 }
 
 /**
+ * Merge overrides, tracking divergences.
+ *
+ * @param silkOverrides - The Silk-provided overrides
+ * @param localOverrides - The local overrides (may be undefined)
+ * @param overrideWarnings - Array to collect override information
+ * @returns The merged overrides with local entries taking precedence
+ */
+function mergeOverrides(
+	silkOverrides: Catalog,
+	localOverrides: Catalog | undefined,
+	overrideWarnings: Override[],
+): Catalog {
+	const merged: Catalog = { ...silkOverrides };
+
+	if (!localOverrides) {
+		return merged;
+	}
+
+	for (const [pkg, localVersion] of Object.entries(localOverrides)) {
+		const silkVersion = silkOverrides[pkg];
+
+		if (silkVersion !== undefined && silkVersion !== localVersion) {
+			overrideWarnings.push({
+				catalog: "overrides",
+				package: pkg,
+				silkVersion,
+				localVersion,
+			});
+		}
+
+		merged[pkg] = localVersion;
+	}
+
+	return merged;
+}
+
+/**
  * The updateConfig hook for pnpm.
  *
  * @remarks
@@ -89,18 +128,19 @@ function mergeSingleCatalog(
  */
 export function updateConfig(config: PnpmConfig): PnpmConfig {
 	try {
-		const overrides: Override[] = [];
+		const warnings: Override[] = [];
 		const existingCatalogs = config.catalogs ?? {};
 
-		const mergedSilk = mergeSingleCatalog("silk", silkCatalogs.silk, existingCatalogs.silk, overrides);
+		const mergedSilk = mergeSingleCatalog("silk", silkCatalogs.silk, existingCatalogs.silk, warnings);
 		const mergedSilkPeers = mergeSingleCatalog(
 			"silkPeers",
 			silkCatalogs.silkPeers,
 			existingCatalogs.silkPeers,
-			overrides,
+			warnings,
 		);
+		const mergedOverrides = mergeOverrides(silkCatalogs.silkOverrides, config.overrides, warnings);
 
-		warnOverrides(overrides);
+		warnOverrides(warnings);
 
 		return {
 			...config,
@@ -109,6 +149,7 @@ export function updateConfig(config: PnpmConfig): PnpmConfig {
 				silk: mergedSilk,
 				silkPeers: mergedSilkPeers,
 			},
+			overrides: mergedOverrides,
 		};
 	} catch (error) {
 		console.warn(

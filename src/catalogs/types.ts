@@ -53,4 +53,10 @@ export interface SilkCatalogs {
 	 * Use with `catalog:silkPeers` in package.json.
 	 */
 	readonly silkPeers: Catalog;
+
+	/**
+	 * Security overrides for known CVEs.
+	 * Synced to pnpm `overrides` configuration.
+	 */
+	readonly silkOverrides: Catalog;
 }

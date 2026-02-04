@@ -12,9 +12,16 @@ catalogs:
     "@changesets/cli": ^2.29.8
     "@microsoft/api-extractor": ^7.56.0
     "@rslib/core": ^0.19.4
+    tsx: ^4.21.0
+    lint-staged: ^16.2.7
+    markdownlint-cli2: ^0.20.0
+    markdownlint-cli2-formatter-codequality: ^0.0.7
+    husky: ^9.1.7
+    "@commitlint/cli": ^20.4.1
+    "@commitlint/config-conventional": ^20.4.1
+    commitizen: ^4.3.1
   silkPeers:
     "@microsoft/api-extractor": ^7.55.2
-    "@rslib/core": ^0.19.3
     "@types/node": ^25.0.10
     "@typescript/native-preview": ^7.0.0-dev.20260124.1
     typescript: ^5.9.3
@@ -23,15 +30,16 @@ catalogs:
     commitizen: ^4.3.1
     husky: ^9.1.7
     "@biomejs/biome": ^2.3.12
-    lint-staged: ^16.2.7
-    markdownlint-cli2: ^0.20.0
-    markdownlint-cli2-formatter-codequality: ^0.0.7
 loglevel: info
 onlyBuiltDependencies:
   - "@parcel/watcher"
   - core-js
   - esbuild
   - msgpackr-extract
+overrides:
+  "@isaacs/brace-expansion": ">=5.0.1"
+  lodash: ">=4.17.23"
+  tmp: ">=0.2.4"
 preferFrozenLockfile: true
 publicHoistPattern:
   - "@commitlint/cli"

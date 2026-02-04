@@ -26,6 +26,13 @@ describe("silkCatalogs", () => {
 	it("includes testing tools in silk catalog", () => {
 		expect(silkCatalogs.silk.vitest).toBeDefined();
 	});
+
+	it("exports silkOverrides for security fixes", () => {
+		expect(silkCatalogs.silkOverrides).toBeDefined();
+		expect(silkCatalogs.silkOverrides["@isaacs/brace-expansion"]).toBe(">=5.0.1");
+		expect(silkCatalogs.silkOverrides.lodash).toBe(">=4.17.23");
+		expect(silkCatalogs.silkOverrides.tmp).toBe(">=0.2.4");
+	});
 });
 
 describe("updateConfig", () => {
@@ -122,6 +129,43 @@ describe("updateConfig", () => {
 
 		expect(result.someOtherSetting).toBe(true);
 		expect(result.anotherField).toBe("value");
+	});
+
+	it("adds silk overrides to empty config", () => {
+		const config: PnpmConfig = {};
+		const result = updateConfig(config);
+
+		expect(result.overrides).toBeDefined();
+		expect(result.overrides?.["@isaacs/brace-expansion"]).toBe(">=5.0.1");
+		expect(result.overrides?.lodash).toBe(">=4.17.23");
+	});
+
+	it("merges local overrides with silk overrides", () => {
+		const config: PnpmConfig = {
+			overrides: {
+				"custom-pkg": "^1.0.0",
+			},
+		};
+		const result = updateConfig(config);
+
+		// Should have both custom override and silk defaults
+		expect(result.overrides?.["custom-pkg"]).toBe("^1.0.0");
+		expect(result.overrides?.["@isaacs/brace-expansion"]).toBe(">=5.0.1");
+	});
+
+	it("allows local override of silk overrides with warning", () => {
+		const localVersion = ">=5.0.0";
+		const config: PnpmConfig = {
+			overrides: {
+				"@isaacs/brace-expansion": localVersion,
+			},
+		};
+		const result = updateConfig(config);
+
+		// Local should win
+		expect(result.overrides?.["@isaacs/brace-expansion"]).toBe(localVersion);
+		// Warning should be emitted
+		expect(warnSpy).toHaveBeenCalled();
 	});
 });
 
