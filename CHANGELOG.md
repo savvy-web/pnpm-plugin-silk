@@ -1,5 +1,21 @@
 # @savvy-web/pnpm-plugin-silk
 
+## 0.4.0
+
+### Minor Changes
+
+- 2db03cc: Add automatic Biome schema version synchronization
+
+  When `@savvy-web/lint-staged` is a workspace dependency, the plugin now
+  automatically updates `$schema` URLs in `biome.json`/`biome.jsonc` files to
+  match the catalog version of `@biomejs/biome`. Uses comment-preserving JSONC
+  edits via `jsonc-parser` and respects `.gitignore` patterns when searching for
+  config files via Node's built-in `fs.promises.glob`.
+
+### Patch Changes
+
+- 2db03cc: Updates dependencies
+
 ## 0.3.0
 
 ### Minor Changes
