@@ -3,13 +3,14 @@ status: current
 module: pnpm-plugin-silk
 category: architecture
 created: 2026-02-03
-updated: 2026-02-04
-last-synced: 2026-02-04
+updated: 2026-02-06
+last-synced: 2026-02-06
 completeness: 98
 related: []
 dependencies: []
 implementation-plans:
   - ../plans/pnpm-plugin-silk-mvp.md
+  - ../plans/serene-tinkering-lantern.md
 ---
 
 # Catalog Management - Architecture
@@ -47,6 +48,11 @@ receives two named catalogs and security overrides:
 - **`onlyBuiltDependencies`** - Packages allowed to run build scripts during install
 - **`publicHoistPattern`** - Packages to hoist to the virtual store root
 
+Plus side-effect hooks:
+
+- **Biome Schema Sync** - Automatically updates `$schema` URLs in `biome.json`/`biome.jsonc` files
+  when the plugin manages `@biomejs/biome`
+
 Plus future enhancements:
 
 - **Patches** - Centralized bug fixes applied uniformly
@@ -68,6 +74,8 @@ its own devDependencies while declaring `peerDependencies: { typescript: catalog
   definitions take precedence
 - **Version pinning** - Config dependencies require exact versions with integrity checksums for
   reproducibility
+- **Side-effect hooks** - Async operations (e.g., file system writes) run as side effects from the
+  async `updateConfig` hook, after config merging completes
 
 **When to reference this document:**
 
@@ -75,6 +83,7 @@ its own devDependencies while declaring `peerDependencies: { typescript: catalog
 - When modifying the catalog merging strategy
 - When updating rslib-builder to support CJS output
 - When debugging catalog resolution issues in consuming repos
+- When modifying the Biome schema sync behavior or adding new side-effect hooks
 
 ---
 
@@ -160,13 +169,15 @@ export const silkCatalogs: SilkCatalogs = {
 
 **Location:** `src/hooks/`
 
-**Purpose:** Implement pnpm hooks that inject catalog entries into consuming repositories
+**Purpose:** Implement pnpm hooks that inject catalog entries into consuming repositories and
+perform side-effect operations like Biome schema synchronization
 
 **Actual Files:**
 
 - `src/hooks/update-config.ts` - Main hook implementation with merge logic
 - `src/hooks/warnings.ts` - Override warning formatter (box-styled console output)
-- `src/pnpmfile.ts` - Entry point exporting `module.exports = { hooks: { updateConfig } }`
+- `src/hooks/sync-biome-schema.ts` - Biome config `$schema` URL synchronization
+- `src/pnpmfile.ts` - Async entry point exporting `module.exports = { hooks: { async updateConfig } }`
 
 **Key interfaces/APIs:**
 
@@ -200,7 +211,18 @@ export interface Override {
 
 export function formatOverrideWarning(overrides: Override[]): string;
 export function warnOverrides(overrides: Override[]): void;
+
+// src/hooks/sync-biome-schema.ts
+export function extractSemver(versionRange: string): string;
+export async function shouldSyncBiomeSchema(workspaceRoot: string): Promise<boolean>;
+export async function parseGitignorePatterns(workspaceRoot: string): Promise<string[]>;
+export async function findBiomeConfigs(workspaceRoot: string): Promise<string[]>;
+export async function syncBiomeSchema(workspaceRoot: string, biomeVersion: string): Promise<void>;
 ```
+
+**Type Declarations:**
+
+- `types/parse-gitignore.d.ts` - Type declarations for `parse-gitignore` v2 API
 
 #### Component 3: Bundle Output
 
@@ -210,35 +232,40 @@ export function warnOverrides(overrides: Override[]): void;
 
 **Responsibilities:**
 
-- Bundle all source code into single CJS file
+- Bundle all source code into single CJS file (~73KB)
 - Include catalog definitions inline (no external imports)
+- Bundle third-party libraries (`jsonc-parser`, `parse-gitignore`) inline
 - Maintain compatibility with pnpm's hook loading mechanism
 
 ### Architecture Diagram
 
 ```text
-┌─────────────────────────────────────────────────────────────────┐
-│                    @savvy-web/pnpm-plugin-silk                   │
-│                                                                  │
-│  ┌──────────────────┐  ┌──────────────────┐  ┌───────────────┐ │
-│  │  Catalog Defs    │  │  Hook Handlers   │  │  Patch Files  │ │
-│  │  src/catalogs/   │  │  src/hooks/      │  │  patches/     │ │
-│  └────────┬─────────┘  └────────┬─────────┘  └───────┬───────┘ │
-│           │                     │                     │         │
-│           └──────────┬──────────┴─────────────────────┘         │
-│                      │                                           │
-│                      ▼                                           │
-│           ┌──────────────────────┐                              │
-│           │   rslib-builder      │                              │
-│           │   (CJS bundling)     │                              │
-│           └──────────┬───────────┘                              │
-│                      │                                           │
-│                      ▼                                           │
-│           ┌──────────────────────┐                              │
-│           │  dist/npm/           │                              │
-│           │  └── pnpmfile.cjs    │                              │
-│           └──────────────────────┘                              │
-└─────────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────────┐
+│                     @savvy-web/pnpm-plugin-silk                       │
+│                                                                       │
+│  ┌──────────────────┐  ┌──────────────────────┐  ┌───────────────┐  │
+│  │  Catalog Defs    │  │  Hook Handlers       │  │  Patch Files  │  │
+│  │  src/catalogs/   │  │  src/hooks/          │  │  patches/     │  │
+│  │                  │  │  ├─ update-config.ts  │  │               │  │
+│  │                  │  │  ├─ warnings.ts       │  │               │  │
+│  │                  │  │  └─ sync-biome-       │  │               │  │
+│  │                  │  │     schema.ts         │  │               │  │
+│  └────────┬─────────┘  └──────────┬───────────┘  └───────┬───────┘  │
+│           │                       │                       │          │
+│           └───────────┬───────────┴───────────────────────┘          │
+│                       │                                               │
+│                       ▼                                               │
+│            ┌──────────────────────┐                                  │
+│            │   rslib-builder      │                                  │
+│            │   (CJS bundling)     │                                  │
+│            └──────────┬───────────┘                                  │
+│                       │                                               │
+│                       ▼                                               │
+│            ┌──────────────────────┐                                  │
+│            │  dist/npm/           │                                  │
+│            │  └── pnpmfile.cjs    │  (~73KB self-contained)          │
+│            └──────────────────────┘                                  │
+└──────────────────────────────────────────────────────────────────────┘
                               │
                               │ pnpm add --config
                               ▼
@@ -316,6 +343,47 @@ multiple repositories in the Silk ecosystem.
    - Cons: Too late in lifecycle, doesn't affect initial resolution, complex
    - Why rejected: Catalogs need to influence resolution, not post-process it
 
+#### Decision 3: Async updateConfig Hook for Side Effects
+
+**Context:** Need to perform file system operations (Biome schema sync) as part of the pnpm
+install hook, but the core config merging logic is synchronous.
+
+**Options considered:**
+
+1. **Option A (Chosen): Async wrapper around synchronous merge + async side effects**
+   - Pros: Config merging remains pure/testable; side effects are cleanly separated; pnpm supports
+     async hooks
+   - Cons: Adds async complexity to the entry point
+   - Why chosen: Clean separation of concerns; side effects do not affect the returned config
+
+2. **Option B: Separate hook (e.g., afterAllResolved) for file operations**
+   - Pros: Complete separation of config mutation from file operations
+   - Cons: Different hook timing; `afterAllResolved` runs too late for schema sync to be useful
+   - Why rejected: Schema sync should happen at install time, not after resolution
+
+3. **Option C: Synchronous file operations (fs.readFileSync/writeFileSync)**
+   - Pros: Simpler hook signature; no async needed
+   - Cons: Blocks pnpm's install process; poor performance with many config files
+   - Why rejected: Async is more appropriate for I/O operations
+
+#### Decision 4: Conditional Activation via @savvy-web/lint-staged Detection
+
+**Context:** Biome schema sync should only run in repos that use the Silk linting stack, not in
+every repo that uses the Silk catalog plugin.
+
+**Options considered:**
+
+1. **Option A (Chosen): Check for `@savvy-web/lint-staged` in workspace root package.json**
+   - Pros: Simple, reliable signal; lint-staged implies Biome usage in the Silk ecosystem
+   - Cons: Indirect signal (lint-staged presence implies Biome, does not guarantee it)
+   - Why chosen: All Silk ecosystem repos using Biome also use @savvy-web/lint-staged; it is
+     the most reliable available heuristic
+
+2. **Option B: Check for `@biomejs/biome` in local dependencies**
+   - Pros: Direct signal
+   - Cons: Biome is in the silk catalog, so it appears in all consuming repos even if not used
+   - Why rejected: Would trigger in repos that do not actually use Biome
+
 ### Design Patterns Used
 
 #### Pattern 1: Merge with Local Precedence
@@ -330,6 +398,22 @@ multiple repositories in the Silk ecosystem.
 - **Why used:** Config dependencies cannot have their own dependencies
 - **Implementation:** rslib-builder bundles all source + data into single CJS file
 
+#### Pattern 3: Comment-Preserving JSONC Edits
+
+- **Where used:** Biome schema sync in `sync-biome-schema.ts`
+- **Why used:** Biome config files often contain JSONC (JSON with comments); standard
+  `JSON.parse`/`JSON.stringify` would strip comments and reformat the file
+- **Implementation:** `jsonc-parser.modify()` generates minimal text edits; `applyEdits()` applies
+  them to the raw string, preserving all comments, whitespace, and formatting
+
+#### Pattern 4: Gitignore-Aware File Discovery
+
+- **Where used:** `findBiomeConfigs()` in `sync-biome-schema.ts`
+- **Why used:** Biome config files may exist in `node_modules`, `dist`, or other ignored directories
+  that should not be modified
+- **Implementation:** `parse-gitignore` reads `.gitignore` patterns; `path.matchesGlob` filters
+  them in the `fs.promises.glob` exclude callback
+
 ### Constraints and Trade-offs
 
 #### Constraint 1: No Dependencies Allowed
@@ -343,6 +427,14 @@ multiple repositories in the Silk ecosystem.
 - **Description:** pnpm loads `pnpmfile.cjs` specifically; ESM not supported
 - **Impact:** Must transpile ESM source to CJS; need to update rslib-builder
 - **Mitigation:** Add CJS output format support to rslib-builder configuration
+
+#### Constraint 3: Bundle Size vs. Feature Richness
+
+- **Description:** Adding `jsonc-parser` and `parse-gitignore` increased bundle from ~4KB to ~73KB
+- **Impact:** Larger download for config dependency; longer initial install time
+- **Mitigation:** ~73KB is still very small for a bundled package; the feature value (automatic
+  schema sync) justifies the size increase; both libraries are necessary for correct behavior
+  (comment preservation, gitignore respect)
 
 #### Trade-off 1: Centralization vs. Flexibility
 
@@ -383,50 +475,66 @@ The plugin uses a simple two-layer architecture: data definition and hook implem
 - Implement pnpm hook contracts
 - Merge plugin data with local configuration
 - Emit warnings for overrides
+- Perform side-effect operations (Biome schema sync)
 
 **Components:**
 
-- `src/hooks/update-config.ts` - `updateConfig` hook with merge logic
+- `src/hooks/update-config.ts` - `updateConfig` hook with merge logic (synchronous)
 - `src/hooks/warnings.ts` - Override detection and warning formatter
-- `src/pnpmfile.ts` - Entry point (`module.exports = { hooks: { updateConfig } }`)
+- `src/hooks/sync-biome-schema.ts` - Biome config `$schema` URL synchronization (async)
+- `src/pnpmfile.ts` - Async entry point (`module.exports = { hooks: { async updateConfig } }`)
+- `types/parse-gitignore.d.ts` - Type declarations for `parse-gitignore` v2 API
 
-**Communication:** Called by pnpm during install lifecycle
+**Communication:** Called by pnpm during install lifecycle. The `updateConfig` hook is async,
+first performing synchronous config merging, then awaiting the async Biome schema sync before
+returning the merged config.
+
+**Bundled Dependencies:**
+
+- `jsonc-parser` - Comment-preserving JSONC editing (for Biome schema sync)
+- `parse-gitignore` - `.gitignore` pattern parsing (for file discovery)
 
 ### Component Interactions
 
 #### Interaction 1: Catalog and Override Injection During Install
 
-**Participants:** pnpm, pnpmfile.cjs, Catalog Definitions
+**Participants:** pnpm, pnpmfile.cjs, Catalog Definitions, Biome Schema Sync
 
 **Flow:**
 
 1. User runs `pnpm install` in consuming repo
 2. pnpm loads config dependency's `pnpmfile.cjs`
-3. pnpm calls `updateConfig(currentConfig)`
+3. pnpm calls `async updateConfig(currentConfig)`
 4. Hook reads plugin catalog definitions and overrides
 5. Hook merges catalogs with existing config (local wins)
 6. Hook merges overrides with existing config (local wins)
 7. Hook emits warnings for any conflicts
-8. Hook returns modified config
-9. pnpm uses merged catalogs and overrides for resolution
+8. Hook resolves Biome version from catalogs (`silk["@biomejs/biome"]` with `silkPeers` fallback)
+9. Hook awaits `syncBiomeSchema()` to update `$schema` URLs in `biome.json`/`biome.jsonc` files
+10. Hook returns modified config
+11. pnpm uses merged catalogs and overrides for resolution
 
 **Sequence diagram:**
 
 ```text
-pnpm           pnpmfile.cjs    Catalogs
-│                   │              │
-├──────────────────>│              │  1. updateConfig(config)
-│                   ├─────────────>│  2. getCatalogs() + getOverrides()
-│                   │<─────────────┤  3. catalogData + overrideData
-│                   │              │
-│                   │ merge catalogs
-│                   │ merge overrides
-│                   │ emit warnings
-│                   │              │
-│<──────────────────┤              │  4. return mergedConfig
-│                   │              │
-│ use for resolution│              │
-│                   │              │
+pnpm           pnpmfile.cjs    Catalogs     Biome Configs
+│                   │              │              │
+├──────────────────>│              │              │  1. updateConfig(config)
+│                   ├─────────────>│              │  2. getCatalogs() + getOverrides()
+│                   │<─────────────┤              │  3. catalogData + overrideData
+│                   │              │              │
+│                   │ merge catalogs              │
+│                   │ merge overrides             │
+│                   │ emit warnings               │
+│                   │              │              │
+│                   ├─────────────────────────────>│  4. syncBiomeSchema()
+│                   │              │              │     (async, file system writes)
+│                   │<─────────────────────────────┤  5. schema URLs updated
+│                   │              │              │
+│<──────────────────┤              │              │  6. return mergedConfig
+│                   │              │              │
+│ use for resolution│              │              │
+│                   │              │              │
 ```
 
 ### Error Handling Strategy
@@ -436,6 +544,12 @@ Hooks must be resilient since failures can break `pnpm install` entirely.
 - **Missing local config:** Return plugin defaults without merging
 - **Invalid catalog entry:** Log warning, skip invalid entry, continue with valid entries
 - **Hook exception:** Catch at top level, log error, return unmodified config (fail-safe)
+- **Biome sync failure:** `syncBiomeSchema` has its own top-level try-catch; errors are logged
+  as `console.warn` with `[pnpm-plugin-silk]` prefix and never propagate to the hook caller
+- **Missing package.json:** `shouldSyncBiomeSchema` catches ENOENT and returns `false` (no sync)
+- **Missing .gitignore:** `parseGitignorePatterns` catches ENOENT and returns empty array
+- **Non-standard schema URL:** Files with `$schema` URLs not starting with
+  `https://biomejs.dev/schemas/` are silently skipped
 
 ### Override Warning Strategy
 
@@ -619,14 +733,64 @@ catalogs:
     vitest: "^3.0.0"      ← from plugin
 ```
 
+#### Flow 4: Biome Schema Synchronization
+
+```text
+[updateConfig completes]
+      │
+      ▼
+[Resolve biome version from silkCatalogs.silk["@biomejs/biome"]]
+      │  (fallback to silkCatalogs.silkPeers["@biomejs/biome"])
+      │
+      ▼
+[syncBiomeSchema(workspaceRoot, biomeVersion)]
+      │
+      ├── shouldSyncBiomeSchema()
+      │   └── Check package.json for @savvy-web/lint-staged → bail if absent
+      │
+      ├── extractSemver(biomeVersion)
+      │   └── Strip range prefix (^2.3.14 → 2.3.14)
+      │
+      ├── parseGitignorePatterns()
+      │   └── Read .gitignore → parse-gitignore → exclusion patterns
+      │
+      ├── findBiomeConfigs()
+      │   └── fs.promises.glob("**/biome.{json,jsonc}") with gitignore exclude callback
+      │       (uses path.matchesGlob for pattern matching)
+      │
+      └── For each config file:
+          ├── jsonc-parser.parse() → extract $schema URL
+          ├── Compare version in URL against catalog version
+          ├── If mismatch: jsonc-parser.modify() + applyEdits()
+          │   └── Comment-preserving edit of $schema value only
+          ├── writeFile() with updated content
+          └── console.warn() log of updated file
+```
+
+**Activation conditions:**
+
+- `@savvy-web/lint-staged` must be in workspace root `package.json` (dependencies or devDependencies)
+- `@biomejs/biome` must be in `silkCatalogs.silk` or `silkCatalogs.silkPeers`
+
+**Safety:**
+
+- Entire function wrapped in try-catch; errors log a warning but never break `pnpm install`
+- Only updates `$schema` URLs that already start with `https://biomejs.dev/schemas/`
+- Skips files without a `$schema` field (no-op)
+- Skips files already at the correct version
+- Comment-preserving edits via `jsonc-parser` (no formatting changes)
+
 ### State Management
 
-The plugin is stateless—all data is determined at hook invocation time.
+The plugin is largely stateless--all catalog data is determined at hook invocation time.
 
 - **Where state lives:** No persistent state; catalogs are static data bundled in plugin
 - **How state is updated:** Plugin updates require new version release; local overrides are
   immediate
 - **State consistency:** Guaranteed by pnpm's atomic install process
+- **Side effects:** The Biome schema sync writes to `biome.json`/`biome.jsonc` files in the
+  consuming repo's working tree. These are idempotent--running install again with the same
+  catalog version produces no changes
 
 ---
 
@@ -661,7 +825,8 @@ export default NodeLibraryBuilder.create({
 });
 ```
 
-**Data exchange:** TypeScript source → bundled CommonJS (4KB self-contained)
+**Data exchange:** TypeScript source → bundled CommonJS (~73KB self-contained, includes `jsonc-parser`
+and `parse-gitignore`)
 
 **Feature:** `virtualEntries` added to rslib-builder v0.10.0 specifically for this use case
 
@@ -688,7 +853,7 @@ const silkModules = {
 
 **Purpose:** Primary integration point; pnpm calls exported hooks during install
 
-**Protocol:** CommonJS module.exports with hooks object
+**Protocol:** CommonJS module.exports with hooks object (async supported)
 
 **Interface:**
 
@@ -696,15 +861,24 @@ const silkModules = {
 // pnpmfile.cjs
 module.exports = {
   hooks: {
-    updateConfig(config) {
-      // Merge plugin catalogs into config
-      return mergedConfig;
+    async updateConfig(config) {
+      // 1. Merge plugin catalogs into config (synchronous)
+      const updatedConfig = updateConfig(config);
+      // 2. Sync biome schema URLs (async side-effect)
+      const biomeVersion = silkCatalogs.silk["@biomejs/biome"]
+        ?? silkCatalogs.silkPeers["@biomejs/biome"];
+      if (biomeVersion) {
+        await syncBiomeSchema(process.cwd(), biomeVersion);
+      }
+      return updatedConfig;
     },
   },
 };
 ```
 
-**Error handling:** Exceptions in hooks can break install; use try-catch with fail-safe defaults
+**Error handling:** Exceptions in hooks can break install; use try-catch with fail-safe defaults.
+The `syncBiomeSchema` function has its own top-level try-catch that logs warnings on failure
+without propagating errors to the hook caller.
 
 #### Integration 2: pnpm-workspace.yaml
 
@@ -773,14 +947,24 @@ The plugin requires testing at multiple levels given its integration with pnpm's
 
 **Coverage target:** 90%+
 
-**What to test:**
+**Current test count:** 51 tests across 6 describe blocks
 
-- Catalog merge function with various input combinations
-- Empty catalog handling (plugin-only, local-only, both, neither)
-- Conflict resolution (local wins)
-- Named catalog merging
-- Override merging and conflict detection
-- Invalid input handling (malformed catalogs)
+**Test areas:**
+
+- **silkCatalogs** (7 tests) - Catalog structure, build tools, testing tools, overrides, arrays
+- **updateConfig** (17 tests) - Catalog merging, override warnings, array merging, deduplication
+- **formatOverrideWarning** (4 tests) - Warning formatting, single/multiple overrides, guidance text
+- **extractSemver** (8 tests) - Range prefix stripping (^, ~, >=, >, <=, =, bare, prerelease)
+- **shouldSyncBiomeSchema** (4 tests) - lint-staged detection in dependencies/devDependencies
+- **parseGitignorePatterns** (2 tests) - .gitignore parsing, missing file handling
+- **findBiomeConfigs** (2 tests) - Glob result collection, gitignore pattern passing
+- **syncBiomeSchema** (7 tests) - Full sync flow, version mismatch updates, JSONC comment
+  preservation, missing $schema handling, correct version skip, non-biomejs URL skip, range prefix
+  stripping
+
+**Mocking strategy:** Uses `vi.mock("node:fs/promises")` with partial mocking to mock `readFile`,
+`writeFile`, and `glob` while preserving other `node:fs/promises` exports. This keeps Biome schema
+sync tests fast and isolated from the filesystem.
 
 **Example test cases:**
 
@@ -870,7 +1054,44 @@ overrides:
 The `mergeOverrides()` function handles merging with local overrides, where local entries take
 precedence but emit warnings for conflicts.
 
-### Phase 3: Patch Distribution (v1.2.0)
+### Phase 3: Biome Schema Sync (v0.4.0) - COMPLETE
+
+- **Schema synchronization** - Automatically update `$schema` URLs in `biome.json`/`biome.jsonc`
+  files when the silk catalog manages `@biomejs/biome`
+- **Conditional activation** - Only runs when `@savvy-web/lint-staged` is declared as a dependency
+  in the workspace root `package.json`, indicating the repo uses the Silk linting stack
+- **Gitignore-aware discovery** - Uses `parse-gitignore` to respect `.gitignore` patterns when
+  searching for config files via `fs.promises.glob`
+- **Comment-preserving edits** - Uses `jsonc-parser`'s `modify()` + `applyEdits()` API to surgically
+  update only the `$schema` value, leaving comments, formatting, and other fields untouched
+- **Async hook** - The `updateConfig` hook in `pnpmfile.ts` is now async to support file system
+  operations
+
+**Implementation Details:**
+
+The `syncBiomeSchema` module (`src/hooks/sync-biome-schema.ts`) provides five exported functions:
+
+- `extractSemver()` - Strips range prefixes (`^`, `~`, `>=`) to get bare semver for schema URLs
+- `shouldSyncBiomeSchema()` - Reads workspace root `package.json` to check for `@savvy-web/lint-staged`
+- `parseGitignorePatterns()` - Reads `.gitignore` and returns parsed patterns via `parse-gitignore`
+- `findBiomeConfigs()` - Uses `fs.promises.glob("**/biome.{json,jsonc}")` with `path.matchesGlob`
+  exclude callback to find config files while respecting `.gitignore`
+- `syncBiomeSchema()` - Orchestrator that checks activation, finds configs, compares versions,
+  and applies comment-preserving edits
+
+New devDependencies (bundled into output):
+
+- `jsonc-parser` (^3.3.1) - JSONC parsing and comment-preserving edits
+- `parse-gitignore` (^2.0.0) - `.gitignore` file parsing
+
+New type declarations:
+
+- `types/parse-gitignore.d.ts` - Type declarations for `parse-gitignore` v2 API
+
+Bundle size impact: `pnpmfile.cjs` grew from ~4KB to ~73KB due to bundled `jsonc-parser` and
+`parse-gitignore` libraries.
+
+### Phase 4: Patch Distribution (v1.2.0)
 
 - **Centralized patches** - Store patch files in plugin package
 - **Patch references** - Plugin sets `patchedDependencies` pointing to bundled patches
@@ -886,7 +1107,7 @@ patchedDependencies:
 
 The patch files are bundled inside the plugin package and referenced via the config dependency path.
 
-### Phase 4: Advanced Features (v2.0.0)
+### Phase 5: Advanced Features (v2.0.0)
 
 - **Conditional catalogs** - Different catalogs based on repo type or Node version
 - **Catalog validation** - Verify catalog entries resolve to valid packages
@@ -899,6 +1120,10 @@ Areas that may need refactoring in the future:
 
 - **Catalog organization** - As catalog grows, may need to split into separate modules/files
 - **Hook composition** - If multiple hooks needed, may need shared context/utilities
+- **Side-effect orchestration** - As more async side-effects are added (beyond Biome sync), may
+  need a side-effect registry pattern rather than inline calls in `pnpmfile.ts`
+- **Bundle size management** - At ~73KB, the bundle is still reasonable, but additional bundled
+  libraries should be evaluated for size impact
 
 ---
 
@@ -922,26 +1147,33 @@ Areas that may need refactoring in the future:
 
 ---
 
-**Document Status:** Current (98% complete) - MVP + Security Overrides + Build Config Sync complete
+**Document Status:** Current (98% complete) - MVP + Security Overrides + Build Config Sync + Biome
+Schema Sync complete
 
-**Synced:** 2026-02-04
+**Synced:** 2026-02-06
 
 **Implementation Summary:**
 
 - Package structure created at repo root (single package, not monorepo)
 - Rslib virtualEntries feature (v0.10.0) used for CJS bundling
 - Catalog generation from `pnpm-workspace.yaml` implemented
-- `updateConfig` hook with override warnings implemented
+- `updateConfig` hook with override warnings implemented (now async)
 - Security overrides syncing from `pnpm-workspace.yaml` `overrides` section
 - `mergeOverrides()` function with local precedence and conflict warnings
 - `onlyBuiltDependencies` array syncing with deduplication
 - `publicHoistPattern` array syncing with deduplication
 - `mergeStringArrays()` function for combining and deduplicating arrays
-- 28 unit tests passing (17 catalog tests + 4 override warning tests + 7 array merge tests)
+- Biome schema sync (`src/hooks/sync-biome-schema.ts`) with gitignore-aware file discovery
+- Comment-preserving JSONC edits via `jsonc-parser` for `$schema` URL updates
+- `.gitignore` pattern parsing via `parse-gitignore` for file discovery exclusions
+- Type declarations for `parse-gitignore` at `types/parse-gitignore.d.ts`
+- 51 unit tests passing (7 catalog + 17 config merge + 4 warning format + 8 extractSemver +
+  4 shouldSync + 2 parseGitignore + 2 findBiomeConfigs + 7 syncBiomeSchema)
 
 **Build Output:**
 
-- `dist/npm/pnpmfile.cjs` (4KB) - Self-contained CJS bundle
+- `dist/npm/pnpmfile.cjs` (~73KB) - Self-contained CJS bundle (includes `jsonc-parser` and
+  `parse-gitignore`)
 - `dist/npm/index.js` - ESM public API
 - `dist/npm/index.d.ts` - Type declarations
 
@@ -985,4 +1217,4 @@ Areas that may need refactoring in the future:
 
 1. Publish initial version to npm
 2. Test as config dependency in another repo
-3. Phase 3: Add patch distribution
+3. Phase 4: Add patch distribution
