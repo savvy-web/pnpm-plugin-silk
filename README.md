@@ -17,7 +17,9 @@ of truth.
 - **Security overrides** - Centralized CVE fixes via `silkOverrides` that
   propagate to all consuming repositories
 - **Build configuration sync** - Shared `onlyBuiltDependencies` and
-  `publicHoistPattern` settings
+  `publicHoistPattern` settings across repositories
+- **Biome schema sync** - Automatically updates `$schema` URLs in
+  `biome.json`/`biome.jsonc` files to match the catalog version
 - **Non-destructive merging** - Local definitions always take precedence with
   clear warnings for divergences
 
@@ -34,7 +36,7 @@ hash:
 
 ```yaml
 configDependencies:
-  "@savvy-web/pnpm-plugin-silk": "0.2.0+sha512-..."
+  "@savvy-web/pnpm-plugin-silk": "0.3.0+sha512-..."
 ```
 
 ## Quick Start
@@ -58,11 +60,17 @@ while `silkPeers` provides permissive ranges for peer dependencies. Security
 overrides, build script allowlists, and hoist patterns are automatically
 merged during `pnpm install`.
 
+## Documentation
+
+For configuration details, architecture overview, and advanced usage, see
+[docs/](./docs/).
+
 ## More Information
 
+- [Changelog](./CHANGELOG.md) - Release history
 - [Contributing](./CONTRIBUTING.md) - Development setup and guidelines
 - [Security Policy](./SECURITY.md) - Vulnerability reporting
-- [Design Documentation](./.claude/design/pnpm-plugin-silk/catalog-management.md) - Architecture and implementation details
+- [Code of Conduct](./CODE_OF_CONDUCT.md) - Community guidelines
 
 ## License
 

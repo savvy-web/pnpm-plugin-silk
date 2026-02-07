@@ -8,13 +8,16 @@ code in this repository.
 This is **@savvy-web/pnpm-plugin-silk** - a pnpm config dependency plugin for
 centralized catalog management across the Savvy Web ecosystem.
 
-**Current Phase:** MVP Complete (v0.1.0)
+**Current Phase:** Active Development (v0.3.0)
 
 **Key Features:**
 
 - `catalog:silk` - Current/latest versions for direct dependencies
 - `catalog:silkPeers` - Permissive ranges for peerDependencies
 - `silkOverrides` - Security overrides for transitive dependency CVEs
+- `onlyBuiltDependencies` - Allowlist for packages with build scripts
+- `publicHoistPattern` - Packages hoisted to virtual store root
+- Biome schema sync - Auto-updates `$schema` URLs in `biome.json`/`biome.jsonc`
 - Override warnings - Prominent console output when local versions diverge
 - Auto-generation - Catalogs and overrides generated from `pnpm-workspace.yaml`
 
@@ -22,7 +25,7 @@ centralized catalog management across the Savvy Web ecosystem.
 
 - Architecture: `@./.claude/design/pnpm-plugin-silk/catalog-management.md`
   Load when: adding catalog entries, modifying merge logic, debugging resolution,
-  adding security overrides
+  adding security overrides, modifying Biome schema sync
 - Implementation Plan: `@./.claude/plans/pnpm-plugin-silk-mvp.md` (completed)
 
 ## Commands
@@ -32,8 +35,8 @@ centralized catalog management across the Savvy Web ecosystem.
 ```bash
 pnpm run lint              # Check code with Biome
 pnpm run lint:fix          # Auto-fix lint issues
-pnpm run typecheck         # Type-check via Turbo
-pnpm run test              # Run all tests (19 tests)
+pnpm run typecheck         # Type-check via Turbo -> tsgo
+pnpm run test              # Run all tests (51 tests)
 pnpm run test:watch        # Run tests in watch mode
 pnpm run test:coverage     # Run tests with coverage report
 ```
@@ -69,18 +72,22 @@ Single-package repository (not a monorepo):
 ```text
 src/
 ├── index.ts              # Public API exports
-├── index.test.ts         # Unit tests
-├── pnpmfile.ts           # pnpm hook entry point
+├── index.test.ts         # Unit tests (51 tests)
+├── pnpmfile.ts           # Async pnpm hook entry point
 ├── catalogs/
 │   ├── types.ts          # Type definitions
 │   ├── generated.ts      # Auto-generated from pnpm-workspace.yaml
 │   └── index.ts          # Re-exports
 └── hooks/
     ├── update-config.ts  # updateConfig hook implementation
-    └── warnings.ts       # Override warning formatter
+    ├── warnings.ts       # Override warning formatter
+    └── sync-biome-schema.ts  # Biome $schema URL synchronization
 
 scripts/
 └── generate-catalogs.ts  # Reads yaml, writes TypeScript
+
+types/
+└── parse-gitignore.d.ts  # Type declarations for parse-gitignore v2
 ```
 
 ### Build Pipeline
@@ -91,7 +98,8 @@ Uses rslib-builder with `virtualEntries` for CJS output:
 2. `build:dev` - Development build with source maps
 3. `build:prod` - Production build for npm
 
-**Key Output:** `dist/npm/pnpmfile.cjs` (4KB self-contained CJS bundle)
+**Key Output:** `dist/npm/pnpmfile.cjs` (~73KB self-contained CJS bundle,
+includes bundled `jsonc-parser` and `parse-gitignore`)
 
 ### Code Quality
 
@@ -134,3 +142,4 @@ All commits require:
 ### Publishing
 
 Packages publish to both GitHub Packages and npm with provenance.
+Uses changesets (`@changesets/cli`) for versioning and changelog generation.

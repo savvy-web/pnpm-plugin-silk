@@ -1,5 +1,13 @@
+import { glob, readFile, writeFile } from "node:fs/promises";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { silkCatalogs } from "./catalogs/index.js";
+import {
+	extractSemver,
+	findBiomeConfigs,
+	parseGitignorePatterns,
+	shouldSyncBiomeSchema,
+	syncBiomeSchema,
+} from "./hooks/sync-biome-schema.js";
 import type { PnpmConfig } from "./hooks/update-config.js";
 import { updateConfig } from "./hooks/update-config.js";
 import type { Override } from "./hooks/warnings.js";
@@ -315,5 +323,266 @@ describe("formatOverrideWarning", () => {
 
 		expect(result).toContain("pnpm-workspace.yaml");
 		expect(result).toContain("Silk defaults");
+	});
+});
+
+vi.mock("node:fs/promises", async (importOriginal) => {
+	const actual = await importOriginal<typeof import("node:fs/promises")>();
+	return {
+		...actual,
+		readFile: vi.fn(actual.readFile),
+		writeFile: vi.fn(actual.writeFile),
+		glob: vi.fn(actual.glob),
+	};
+});
+
+const mockedReadFile = vi.mocked(readFile);
+const mockedWriteFile = vi.mocked(writeFile);
+const mockedGlob = vi.mocked(glob);
+
+describe("extractSemver", () => {
+	it("strips caret prefix", () => {
+		expect(extractSemver("^2.3.14")).toBe("2.3.14");
+	});
+
+	it("strips tilde prefix", () => {
+		expect(extractSemver("~2.3.14")).toBe("2.3.14");
+	});
+
+	it("strips gte prefix", () => {
+		expect(extractSemver(">=2.3.14")).toBe("2.3.14");
+	});
+
+	it("strips gt prefix", () => {
+		expect(extractSemver(">2.3.14")).toBe("2.3.14");
+	});
+
+	it("strips lte prefix", () => {
+		expect(extractSemver("<=2.3.14")).toBe("2.3.14");
+	});
+
+	it("strips eq prefix", () => {
+		expect(extractSemver("=2.3.14")).toBe("2.3.14");
+	});
+
+	it("returns bare semver unchanged", () => {
+		expect(extractSemver("2.3.14")).toBe("2.3.14");
+	});
+
+	it("handles prerelease versions", () => {
+		expect(extractSemver("^2.4.0-beta.1")).toBe("2.4.0-beta.1");
+	});
+});
+
+describe("shouldSyncBiomeSchema", () => {
+	afterEach(() => {
+		mockedReadFile.mockReset();
+	});
+
+	it("returns true when @savvy-web/lint-staged is in devDependencies", async () => {
+		mockedReadFile.mockResolvedValueOnce(JSON.stringify({ devDependencies: { "@savvy-web/lint-staged": "^0.3.0" } }));
+		expect(await shouldSyncBiomeSchema("/fake/root")).toBe(true);
+	});
+
+	it("returns true when @savvy-web/lint-staged is in dependencies", async () => {
+		mockedReadFile.mockResolvedValueOnce(JSON.stringify({ dependencies: { "@savvy-web/lint-staged": "^0.3.0" } }));
+		expect(await shouldSyncBiomeSchema("/fake/root")).toBe(true);
+	});
+
+	it("returns false when @savvy-web/lint-staged is absent", async () => {
+		mockedReadFile.mockResolvedValueOnce(JSON.stringify({ devDependencies: { vitest: "^4.0.0" } }));
+		expect(await shouldSyncBiomeSchema("/fake/root")).toBe(false);
+	});
+
+	it("returns false when package.json cannot be read", async () => {
+		mockedReadFile.mockRejectedValueOnce(new Error("ENOENT"));
+		expect(await shouldSyncBiomeSchema("/fake/root")).toBe(false);
+	});
+});
+
+describe("parseGitignorePatterns", () => {
+	afterEach(() => {
+		mockedReadFile.mockReset();
+	});
+
+	it("parses .gitignore patterns", async () => {
+		mockedReadFile.mockResolvedValueOnce("node_modules\ndist\n# comment\n*.log\n");
+		const patterns = await parseGitignorePatterns("/fake/root");
+		expect(patterns).toContain("node_modules");
+		expect(patterns).toContain("dist");
+		expect(patterns).toContain("*.log");
+		expect(patterns).not.toContain("# comment");
+	});
+
+	it("returns empty array when .gitignore missing", async () => {
+		mockedReadFile.mockRejectedValueOnce(new Error("ENOENT"));
+		const patterns = await parseGitignorePatterns("/fake/root");
+		expect(patterns).toEqual([]);
+	});
+});
+
+describe("findBiomeConfigs", () => {
+	afterEach(() => {
+		mockedReadFile.mockReset();
+		mockedGlob.mockReset();
+	});
+
+	it("returns glob results as array", async () => {
+		mockedReadFile.mockRejectedValueOnce(new Error("ENOENT"));
+
+		async function* fakeGlob() {
+			yield "biome.jsonc";
+			yield "packages/app/biome.json";
+		}
+		mockedGlob.mockReturnValueOnce(fakeGlob() as ReturnType<typeof glob>);
+
+		const results = await findBiomeConfigs("/root");
+		expect(results).toEqual(["biome.jsonc", "packages/app/biome.json"]);
+	});
+
+	it("passes gitignore patterns to glob exclude", async () => {
+		mockedReadFile.mockResolvedValueOnce("node_modules\ndist\n");
+
+		async function* fakeGlob() {
+			yield "biome.jsonc";
+		}
+		mockedGlob.mockReturnValueOnce(fakeGlob() as ReturnType<typeof glob>);
+
+		await findBiomeConfigs("/root");
+
+		expect(mockedGlob).toHaveBeenCalledWith("**/biome.{json,jsonc}", {
+			cwd: "/root",
+			exclude: expect.any(Function),
+		});
+	});
+});
+
+describe("syncBiomeSchema", () => {
+	let warnSpy: ReturnType<typeof vi.spyOn>;
+
+	beforeEach(() => {
+		warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+	});
+
+	afterEach(() => {
+		warnSpy.mockRestore();
+		mockedReadFile.mockReset();
+		mockedWriteFile.mockReset();
+		mockedGlob.mockReset();
+	});
+
+	function mockGlob(...files: string[]) {
+		async function* fakeGlob() {
+			for (const f of files) yield f;
+		}
+		mockedGlob.mockReturnValueOnce(fakeGlob() as ReturnType<typeof glob>);
+	}
+
+	function mockFs(fileMap: Record<string, string>) {
+		mockedReadFile.mockImplementation(async (path: Parameters<typeof readFile>[0]) => {
+			const p = String(path);
+			for (const [key, value] of Object.entries(fileMap)) {
+				if (p.endsWith(key)) return value;
+			}
+			throw new Error(`ENOENT: ${p}`);
+		});
+		mockedWriteFile.mockResolvedValue();
+	}
+
+	it("skips sync when @savvy-web/lint-staged not in package.json", async () => {
+		mockedReadFile.mockResolvedValueOnce(JSON.stringify({ devDependencies: {} }));
+
+		await syncBiomeSchema("/fake/root", "^2.3.14");
+
+		expect(mockedGlob).not.toHaveBeenCalled();
+		expect(mockedWriteFile).not.toHaveBeenCalled();
+	});
+
+	it("updates $schema URL when version mismatches", async () => {
+		const oldContent = '{\n\t"$schema": "https://biomejs.dev/schemas/2.3.10/schema.json",\n\t"root": true\n}\n';
+		mockFs({
+			"package.json": JSON.stringify({ devDependencies: { "@savvy-web/lint-staged": "^0.3.0" } }),
+			".gitignore": "node_modules\n",
+			"biome.json": oldContent,
+		});
+		mockGlob("biome.json");
+
+		await syncBiomeSchema("/root", "^2.3.14");
+
+		expect(mockedWriteFile).toHaveBeenCalledOnce();
+		const writtenContent = mockedWriteFile.mock.calls[0]?.[1] as string;
+		expect(writtenContent).toContain("https://biomejs.dev/schemas/2.3.14/schema.json");
+		expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining("Updated biome schema"));
+	});
+
+	it("preserves comments and formatting in JSONC files", async () => {
+		const jsoncContent =
+			'{\n\t// Biome configuration\n\t"$schema": "https://biomejs.dev/schemas/2.3.10/schema.json",\n\t"root": true\n}\n';
+		mockFs({
+			"package.json": JSON.stringify({ devDependencies: { "@savvy-web/lint-staged": "^0.3.0" } }),
+			".gitignore": "",
+			"biome.jsonc": jsoncContent,
+		});
+		mockGlob("biome.jsonc");
+
+		await syncBiomeSchema("/root", "^2.3.14");
+
+		expect(mockedWriteFile).toHaveBeenCalledOnce();
+		const writtenContent = mockedWriteFile.mock.calls[0]?.[1] as string;
+		expect(writtenContent).toContain("// Biome configuration");
+		expect(writtenContent).toContain("https://biomejs.dev/schemas/2.3.14/schema.json");
+	});
+
+	it("handles missing $schema field gracefully (no-op)", async () => {
+		mockFs({
+			"package.json": JSON.stringify({ devDependencies: { "@savvy-web/lint-staged": "^0.3.0" } }),
+			".gitignore": "",
+			"biome.json": '{\n\t"root": true\n}\n',
+		});
+		mockGlob("biome.json");
+
+		await syncBiomeSchema("/root", "^2.3.14");
+
+		expect(mockedWriteFile).not.toHaveBeenCalled();
+	});
+
+	it("skips files already at correct version", async () => {
+		mockFs({
+			"package.json": JSON.stringify({ devDependencies: { "@savvy-web/lint-staged": "^0.3.0" } }),
+			".gitignore": "",
+			"biome.json": '{\n\t"$schema": "https://biomejs.dev/schemas/2.3.14/schema.json",\n\t"root": true\n}\n',
+		});
+		mockGlob("biome.json");
+
+		await syncBiomeSchema("/root", "^2.3.14");
+
+		expect(mockedWriteFile).not.toHaveBeenCalled();
+	});
+
+	it("skips files with non-biomejs.dev schema URLs", async () => {
+		mockFs({
+			"package.json": JSON.stringify({ devDependencies: { "@savvy-web/lint-staged": "^0.3.0" } }),
+			".gitignore": "",
+			"biome.json": '{\n\t"$schema": "https://example.com/schemas/biome.json",\n\t"root": true\n}\n',
+		});
+		mockGlob("biome.json");
+
+		await syncBiomeSchema("/root", "^2.3.14");
+
+		expect(mockedWriteFile).not.toHaveBeenCalled();
+	});
+
+	it("strips range prefixes from catalog version", async () => {
+		mockFs({
+			"package.json": JSON.stringify({ devDependencies: { "@savvy-web/lint-staged": "^0.3.0" } }),
+			".gitignore": "",
+			"biome.json": '{\n\t"$schema": "https://biomejs.dev/schemas/2.3.10/schema.json",\n\t"root": true\n}\n',
+		});
+		mockGlob("biome.json");
+
+		await syncBiomeSchema("/root", "~2.3.14");
+
+		const writtenContent = mockedWriteFile.mock.calls[0]?.[1] as string;
+		expect(writtenContent).toContain("https://biomejs.dev/schemas/2.3.14/schema.json");
 	});
 });

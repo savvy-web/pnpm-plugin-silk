@@ -30,37 +30,42 @@ pnpm run test
 ```text
 pnpm-plugin-silk/
 ├── src/
-│   ├── catalogs/           # Catalog definitions and types
-│   │   ├── generated.ts    # Auto-generated from pnpm-workspace.yaml
-│   │   ├── index.ts        # Public exports
-│   │   └── types.ts        # Type definitions
-│   ├── hooks/              # pnpm hook implementations
-│   │   ├── update-config.ts
-│   │   └── warnings.ts
-│   ├── index.ts            # Package entry point
-│   └── pnpmfile.ts         # pnpm hook entry point
+│   ├── catalogs/              # Catalog definitions and types
+│   │   ├── generated.ts       # Auto-generated from pnpm-workspace.yaml
+│   │   ├── index.ts           # Public exports
+│   │   └── types.ts           # Type definitions
+│   ├── hooks/                 # pnpm hook implementations
+│   │   ├── sync-biome-schema.ts  # Biome $schema URL synchronization
+│   │   ├── update-config.ts      # updateConfig hook with merge logic
+│   │   └── warnings.ts           # Override warning formatter
+│   ├── index.ts               # Package entry point
+│   ├── index.test.ts          # Unit tests
+│   └── pnpmfile.ts            # pnpm hook entry point (async)
 ├── scripts/
-│   └── generate-catalogs.ts
+│   └── generate-catalogs.ts   # Reads workspace yaml, writes TypeScript
+├── types/
+│   └── parse-gitignore.d.ts   # Type declarations for parse-gitignore
 ├── dist/
-│   ├── dev/                # Development build
-│   └── npm/                # Production build for publishing
+│   ├── dev/                   # Development build
+│   └── npm/                   # Production build for publishing
 └── lib/
-    └── configs/            # Shared configuration files
+    └── configs/               # Shared configuration files
 ```
 
 ## Available Scripts
 
-| Script                       | Description                             |
-| ---------------------------- | --------------------------------------- |
-| `pnpm run build`             | Build all packages (dev + prod)         |
-| `pnpm run build:dev`         | Build development output only           |
-| `pnpm run build:prod`        | Build production/npm output only        |
-| `pnpm run test`              | Run all tests                           |
-| `pnpm run test:watch`        | Run tests in watch mode                 |
-| `pnpm run test:coverage`     | Run tests with coverage report          |
-| `pnpm run lint`              | Check code with Biome                   |
-| `pnpm run lint:fix`          | Auto-fix lint issues                    |
-| `pnpm run typecheck`         | Type-check all workspaces               |
+| Script | Description |
+| --- | --- |
+| `pnpm run build` | Build all outputs (dev + prod) |
+| `pnpm run build:dev` | Build development output only |
+| `pnpm run build:prod` | Build production/npm output only |
+| `pnpm run test` | Run all tests |
+| `pnpm run test:watch` | Run tests in watch mode |
+| `pnpm run test:coverage` | Run tests with coverage report |
+| `pnpm run lint` | Check code with Biome |
+| `pnpm run lint:fix` | Auto-fix lint issues |
+| `pnpm run lint:md` | Lint markdown files |
+| `pnpm run typecheck` | Type-check with tsgo (TypeScript native) |
 | `pnpm run generate:catalogs` | Regenerate catalogs from workspace yaml |
 
 ## Code Quality
@@ -82,13 +87,13 @@ feat: add new catalog entries
 Signed-off-by: Your Name <your.email@example.com>
 ```
 
-### Pre-commit Hooks
+### Git Hooks
 
-The following checks run automatically:
+The following checks run automatically via Husky:
 
-- **pre-commit**: Runs lint-staged
-- **commit-msg**: Validates commit message format
-- **pre-push**: Runs tests for affected packages
+- **commit-msg**: Validates conventional commit format via commitlint
+- **post-checkout**: Ensures shell script permissions are correct
+- **post-merge**: Ensures shell script permissions are correct
 
 ## Testing
 

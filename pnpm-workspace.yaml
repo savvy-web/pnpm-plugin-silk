@@ -3,13 +3,14 @@ packages:
 autoInstallPeers: true
 catalogs:
   silk:
+    "@biomejs/biome": 2.3.14
     "@changesets/cli": ^2.29.8
     "@commitlint/cli": ^20.4.1
     "@commitlint/config-conventional": ^20.4.1
     "@microsoft/api-extractor": ^7.56.2
-    "@rslib/core": ^0.19.4
-    "@types/node": ^25.2.0
-    "@typescript/native-preview": ^7.0.0-dev.20260203.1
+    "@rslib/core": ^0.19.5
+    "@types/node": ^25.2.1
+    "@typescript/native-preview": ^7.0.0-dev.20260206.1
     "@vitest/coverage-v8": ^4.0.18
     commitizen: ^4.3.1
     husky: ^9.1.7
@@ -21,7 +22,7 @@ catalogs:
     typescript: ^5.9.3
     vitest: ^4.0.18
   silkPeers:
-    "@biomejs/biome": ^2.3.12
+    "@biomejs/biome": 2.3.14
     "@commitlint/cli": ^20.4.1
     "@commitlint/config-conventional": ^20.4.1
     "@microsoft/api-extractor": ^7.56.2
