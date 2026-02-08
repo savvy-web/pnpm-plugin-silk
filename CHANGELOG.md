@@ -1,5 +1,11 @@
 # @savvy-web/pnpm-plugin-silk
 
+## 0.4.1
+
+### Patch Changes
+
+- 2fa447f: Updates dependencies
+
 ## 0.4.0
 
 ### Minor Changes
