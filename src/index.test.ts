@@ -39,7 +39,7 @@ describe("silkCatalogs", () => {
 		expect(silkCatalogs.silkOverrides).toBeDefined();
 		expect(silkCatalogs.silkOverrides["@isaacs/brace-expansion"]).toBe(">=5.0.1");
 		expect(silkCatalogs.silkOverrides.lodash).toBe(">=4.17.23");
-		expect(silkCatalogs.silkOverrides.tmp).toBe(">=0.2.4");
+		expect(silkCatalogs.silkOverrides.tmp).toBe("^0.2.4");
 	});
 
 	it("exports silkOnlyBuiltDependencies array", () => {
