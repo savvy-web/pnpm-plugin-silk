@@ -52,8 +52,8 @@
 		"@microsoft/api-extractor": "catalog:silk",
 		"@rslib/core": "catalog:silk",
 		"@savvy-web/commitlint": "^0.3.1",
-		"@savvy-web/lint-staged": "^0.3.1",
-		"@savvy-web/rslib-builder": "^0.12.0",
+		"@savvy-web/lint-staged": "^0.4.0",
+		"@savvy-web/rslib-builder": "^0.12.1",
 		"@types/node": "catalog:silk",
 		"@typescript/native-preview": "catalog:silk",
 		"@vitest/coverage-v8": "catalog:silk",
@@ -64,22 +64,6 @@
 		"typescript": "catalog:silk",
 		"vitest": "catalog:silk",
 		"yaml": "^2.8.2"
-	},
-	"peerDependencies": {
-		"@types/node": "catalog:silk",
-		"@typescript/native-preview": "catalog:silk",
-		"typescript": "catalog:silk"
-	},
-	"peerDependenciesMeta": {
-		"@types/node": {
-			"optional": false
-		},
-		"@typescript/native-preview": {
-			"optional": false
-		},
-		"typescript": {
-			"optional": false
-		}
 	},
 	"optionalDependencies": {
 		"@commitlint/cli": "catalog:silk",
