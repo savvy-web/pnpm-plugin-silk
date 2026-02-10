@@ -66,6 +66,8 @@ overrides:
   lodash: '>=4.17.23'
   tmp: ^0.2.4
 
+pnpmfileChecksum: sha256-XDuMVNoUNvaUI6hNBFqR2VH8EmmpdbLL1zWBl58OdHE=
+
 importers:
 
   .:
@@ -83,14 +85,14 @@ importers:
         specifier: catalog:silk
         version: 0.19.5(@microsoft/api-extractor@7.56.3(@types/node@25.2.3))(@typescript/native-preview@7.0.0-dev.20260210.1)(typescript@5.9.3)
       '@savvy-web/commitlint':
-        specifier: ^0.3.1
-        version: 0.3.1(3c12acc20078184a86edccfcad5fc894)
+        specifier: ^0.3.2
+        version: 0.3.2(3c12acc20078184a86edccfcad5fc894)
       '@savvy-web/lint-staged':
         specifier: ^0.4.0
         version: 0.4.0(3930e0d924518cbb933fb0354b8743b6)
       '@savvy-web/rslib-builder':
-        specifier: ^0.12.1
-        version: 0.12.1(@microsoft/api-extractor@7.56.3(@types/node@25.2.3))(@pnpm/logger@1001.0.1)(@rslib/core@0.19.5(@microsoft/api-extractor@7.56.3(@types/node@25.2.3))(@typescript/native-preview@7.0.0-dev.20260210.1)(typescript@5.9.3))(@types/node@25.2.3)(@typescript/native-preview@7.0.0-dev.20260210.1)(jiti@2.6.1)(typescript@5.9.3)
+        specifier: ^0.12.2
+        version: 0.12.2(@microsoft/api-extractor@7.56.3(@types/node@25.2.3))(@pnpm/logger@1001.0.1)(@rslib/core@0.19.5(@microsoft/api-extractor@7.56.3(@types/node@25.2.3))(@typescript/native-preview@7.0.0-dev.20260210.1)(typescript@5.9.3))(@types/node@25.2.3)(@typescript/native-preview@7.0.0-dev.20260210.1)(jiti@2.6.1)(typescript@5.9.3)
       '@types/node':
         specifier: catalog:silk
         version: 25.2.3
@@ -1315,8 +1317,8 @@ packages:
   '@rushstack/ts-command-line@5.2.0':
     resolution: {integrity: sha512-lYxCX0nDdkDtCkVpvF0m25ymf66SaMWuppbD6b7MdkIzvGXKBXNIVZlwBH/C0YfkanrupnICWf2n4z3AKSfaHw==}
 
-  '@savvy-web/commitlint@0.3.1':
-    resolution: {integrity: sha512-p9loHMUdAUFoOJ+5FQ/cutiBWVQ4iFQOeeGdof4whbc6XrpPomDLnw+WdjWDEVd+PxHoyfVFwxTR5/oZEGtY5Q==}
+  '@savvy-web/commitlint@0.3.2':
+    resolution: {integrity: sha512-CIKthxUcm/3zLC0G3hNYRtwGjPZIiYjFpUa8jzQ6wZXqQFhNnyIAY/0IJ1KVEc9vGjQ0RByvVItBHJoNZ1N1eA==}
     hasBin: true
     peerDependencies:
       '@commitlint/cli': ^20.4.1
@@ -1344,14 +1346,14 @@ packages:
       '@biomejs/biome':
         optional: true
 
-  '@savvy-web/rslib-builder@0.12.1':
-    resolution: {integrity: sha512-2ic7Cn4MrchOr9IZrmZ4wZ9gPezGULJ/m9IAfr/Piav5OuISsmB2h128ncstUvcB3ja/ZxMKTd+b0I++BNO9/A==}
+  '@savvy-web/rslib-builder@0.12.2':
+    resolution: {integrity: sha512-WG8/FklnDHd1C4aieMFgJJoIsEO9zJXpu6QD2YRO8bPVnG9QDcNXymVmlO/xTaJ51JCieC+CVS0q22Uj56eBRA==}
     engines: {node: '>=24.0.0'}
     peerDependencies:
       '@microsoft/api-extractor': ^7.56.3
       '@rslib/core': ^0.19.5
-      '@types/node': ^25.2.1
-      '@typescript/native-preview': 7.0.0-dev.20260207.1
+      '@types/node': ^25.2.2
+      '@typescript/native-preview': ^7.0.0-dev.20260209.1
       typescript: ^5.9.3
 
   '@sindresorhus/merge-streams@4.0.0':
@@ -2249,8 +2251,8 @@ packages:
     resolution: {integrity: sha512-XxwI8EOhVQgWp6iDL+3b0r86f4d6AX6zSU55HfB4ydCEuXLXc5FcYeOu+nnGftS4TEju/11rt4KJPTMgbfmv4A==}
     engines: {node: '>=10.13.0'}
 
-  glob@13.0.1:
-    resolution: {integrity: sha512-B7U/vJpE3DkJ5WXTgTpTRN63uV42DseiXXKMwG14LQBXmsdeIoHAPbU/MEo6II0k5ED74uc2ZGTC6MwHFQhF6w==}
+  glob@13.0.2:
+    resolution: {integrity: sha512-035InabNu/c1lW0tzPhAgapKctblppqsKKG9ZaNzbr+gXwWMjXoiyGSyB9sArzrjG7jY+zntRq5ZSUYemrnWVQ==}
     engines: {node: 20 || >=22}
 
   glob@7.2.3:
@@ -2683,8 +2685,8 @@ packages:
     resolution: {integrity: sha512-Ajzxb8CM6WAnFjgiloPsI3bF+WCxcvhdIG3KNA2KN962+tdBsHcuQ4k4qX/EcS/2CRkcc0iAkR956Nib6aXU/Q==}
     engines: {node: '>=0.10.0'}
 
-  lru-cache@11.2.5:
-    resolution: {integrity: sha512-vFrFJkWtJvJnD5hg+hJvVE8Lh/TcMzKnTgCWmtBipwI5yLX/iX+5UB2tfuyODF5E7k9xEzMdYgGqaSb1c0c5Yw==}
+  lru-cache@11.2.6:
+    resolution: {integrity: sha512-ESL2CrkS/2wTPfuend7Zhkzo2u0daGJ/A2VucJOgQ/C48S/zB8MMeMHSGKYpXhIjbPxfuezITkaBH1wqv00DDQ==}
     engines: {node: 20 || >=22}
 
   lru-cache@6.0.0:
@@ -4864,7 +4866,7 @@ snapshots:
     transitivePeerDependencies:
       - '@types/node'
 
-  '@savvy-web/commitlint@0.3.1(3c12acc20078184a86edccfcad5fc894)':
+  '@savvy-web/commitlint@0.3.2(3c12acc20078184a86edccfcad5fc894)':
     dependencies:
       '@commitlint/cli': 20.4.1(@types/node@25.2.3)(typescript@5.9.3)
       '@commitlint/config-conventional': 20.4.1
@@ -4922,7 +4924,7 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  '@savvy-web/rslib-builder@0.12.1(@microsoft/api-extractor@7.56.3(@types/node@25.2.3))(@pnpm/logger@1001.0.1)(@rslib/core@0.19.5(@microsoft/api-extractor@7.56.3(@types/node@25.2.3))(@typescript/native-preview@7.0.0-dev.20260210.1)(typescript@5.9.3))(@types/node@25.2.3)(@typescript/native-preview@7.0.0-dev.20260210.1)(jiti@2.6.1)(typescript@5.9.3)':
+  '@savvy-web/rslib-builder@0.12.2(@microsoft/api-extractor@7.56.3(@types/node@25.2.3))(@pnpm/logger@1001.0.1)(@rslib/core@0.19.5(@microsoft/api-extractor@7.56.3(@types/node@25.2.3))(@typescript/native-preview@7.0.0-dev.20260210.1)(typescript@5.9.3))(@types/node@25.2.3)(@typescript/native-preview@7.0.0-dev.20260210.1)(jiti@2.6.1)(typescript@5.9.3)':
     dependencies:
       '@microsoft/api-extractor': 7.56.3(@types/node@25.2.3)
       '@microsoft/tsdoc': 0.16.0
@@ -4939,7 +4941,7 @@ snapshots:
       deep-equal: 2.2.3
       eslint: 9.39.2(jiti@2.6.1)
       eslint-plugin-tsdoc: 0.5.0(eslint@9.39.2(jiti@2.6.1))(typescript@5.9.3)
-      glob: 13.0.1
+      glob: 13.0.2
       picocolors: 1.1.1
       sort-package-json: 3.6.1
       tmp: 0.2.5
@@ -5982,7 +5984,7 @@ snapshots:
     dependencies:
       is-glob: 4.0.3
 
-  glob@13.0.1:
+  glob@13.0.2:
     dependencies:
       minimatch: 10.1.2
       minipass: 7.1.2
@@ -6413,7 +6415,7 @@ snapshots:
   longest@2.0.1:
     optional: true
 
-  lru-cache@11.2.5: {}
+  lru-cache@11.2.6: {}
 
   lru-cache@6.0.0:
     dependencies:
@@ -6879,7 +6881,7 @@ snapshots:
 
   path-scurry@2.0.1:
     dependencies:
-      lru-cache: 11.2.5
+      lru-cache: 11.2.6
       minipass: 7.1.2
 
   path-type@4.0.0: {}
