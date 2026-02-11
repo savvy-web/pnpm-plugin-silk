@@ -51,9 +51,9 @@
 		"@changesets/cli": "catalog:silk",
 		"@microsoft/api-extractor": "catalog:silk",
 		"@rslib/core": "catalog:silk",
-		"@savvy-web/commitlint": "^0.3.1",
+		"@savvy-web/commitlint": "^0.3.2",
 		"@savvy-web/lint-staged": "^0.4.0",
-		"@savvy-web/rslib-builder": "^0.12.1",
+		"@savvy-web/rslib-builder": "^0.12.2",
 		"@types/node": "catalog:silk",
 		"@typescript/native-preview": "catalog:silk",
 		"@vitest/coverage-v8": "catalog:silk",
@@ -74,11 +74,11 @@
 		"markdownlint-cli2": "catalog:silk",
 		"markdownlint-cli2-formatter-codequality": "catalog:silk"
 	},
-	"packageManager": "pnpm@10.28.2",
+	"packageManager": "pnpm@10.29.2+sha512.bef43fa759d91fd2da4b319a5a0d13ef7a45bb985a3d7342058470f9d2051a3ba8674e629672654686ef9443ad13a82da2beb9eeb3e0221c87b8154fff9d74b8",
 	"devEngines": {
 		"packageManager": {
 			"name": "pnpm",
-			"version": "10.28.2",
+			"version": "10.29.2",
 			"onFail": "ignore"
 		},
 		"runtime": [
