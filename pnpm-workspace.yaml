@@ -3,14 +3,14 @@ packages:
 autoInstallPeers: true
 catalogs:
   silk:
-    "@biomejs/biome": 2.3.14
+    "@biomejs/biome": 2.3.15
     "@changesets/cli": ^2.29.8
     "@commitlint/cli": ^20.4.1
     "@commitlint/config-conventional": ^20.4.1
     "@microsoft/api-extractor": ^7.56.3
-    "@rslib/core": ^0.19.5
+    "@rslib/core": ^0.19.6
     "@types/node": ^25.2.3
-    "@typescript/native-preview": 7.0.0-dev.20260210.1
+    "@typescript/native-preview": 7.0.0-dev.20260214.1
     "@vitest/coverage-v8": ^4.0.18
     commitizen: ^4.3.1
     husky: ^9.1.7
@@ -18,11 +18,11 @@ catalogs:
     markdownlint-cli2: ^0.20.0
     markdownlint-cli2-formatter-codequality: ^0.0.7
     tsx: ^4.21.0
-    turbo: ^2.8.4
+    turbo: ^2.8.9
     typescript: ^5.9.3
     vitest: ^4.0.18
   silkPeers:
-    "@biomejs/biome": 2.3.14
+    "@biomejs/biome": 2.3.15
     "@commitlint/cli": ^20.4.1
     "@commitlint/config-conventional": ^20.4.1
     "@microsoft/api-extractor": ^7.56.2
@@ -31,11 +31,10 @@ catalogs:
     commitizen: ^4.3.1
     husky: ^9.1.7
     typescript: ^5.9.3
-configDependencies:
-  "@savvy-web/pnpm-plugin-silk": 0.4.4+sha512-ASwjt8EwZVXa6QRsOWMNk479qZ8E9Rz26euitA1jVq4Jx9vuRXEALRVAHn0FrzIAka67PlfhqwBPcgRABiH8aw==
 loglevel: info
 onlyBuiltDependencies:
   - "@parcel/watcher"
+  - "@savvy-web/changesets"
   - "@savvy-web/commitlint"
   - "@savvy-web/lint-staged"
   - core-js
@@ -45,8 +44,8 @@ overrides:
   "@isaacs/brace-expansion": ">=5.0.1"
   lodash: ">=4.17.23"
   tmp: ^0.2.4
-preferFrozenLockfile: true
 publicHoistPattern:
+  - "@changesets/cli"
   - "@commitlint/cli"
   - "@commitlint/config-conventional"
   - "@commitlint/cz-commitlint"
@@ -59,3 +58,4 @@ publicHoistPattern:
   - markdownlint-cli2-formatter-codequality
   - turbo
   - typescript
+  - vitest
