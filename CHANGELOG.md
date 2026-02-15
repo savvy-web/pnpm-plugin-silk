@@ -1,5 +1,13 @@
 # @savvy-web/pnpm-plugin-silk
 
+## 0.5.0
+
+### Minor Changes
+
+### Features
+
+- [`6b28769`](https://github.com/savvy-web/pnpm-plugin-silk/commit/6b28769a17b28559d3647cab3618a704af24dd54) Support for @savvy-web/changesets system
+
 ## 0.4.4
 
 ### Patch Changes
