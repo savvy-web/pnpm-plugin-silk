@@ -69,28 +69,6 @@ overrides:
 importers:
 
   .:
-    dependencies:
-      '@savvy-web/changesets':
-        specifier: ^0.1.1
-        version: 0.1.1(272bb0e3e11c8dec73dbf1944a1bee31)
-      '@savvy-web/commitlint':
-        specifier: ^0.3.2
-        version: 0.3.2(004e85f5607013e8e93abe8c44be02e5)
-      '@savvy-web/lint-staged':
-        specifier: ^0.4.0
-        version: 0.4.0(8feb67e03de7cac810e653fa7007c140)
-      '@savvy-web/rslib-builder':
-        specifier: ^0.14.1
-        version: 0.14.1(@microsoft/api-extractor@7.56.3(@types/node@25.2.3))(@pnpm/logger@1001.0.1)(@rslib/core@0.19.6(@microsoft/api-extractor@7.56.3(@types/node@25.2.3))(@typescript/native-preview@7.0.0-dev.20260214.1)(typescript@5.9.3))(@types/node@25.2.3)(@typescript/native-preview@7.0.0-dev.20260214.1)(jiti@2.6.1)(typescript@5.9.3)
-      jsonc-parser:
-        specifier: ^3.3.1
-        version: 3.3.1
-      parse-gitignore:
-        specifier: ^2.0.0
-        version: 2.0.0
-      yaml:
-        specifier: ^2.8.2
-        version: 2.8.2
     devDependencies:
       '@biomejs/biome':
         specifier: catalog:silk
@@ -110,6 +88,18 @@ importers:
       '@rslib/core':
         specifier: catalog:silk
         version: 0.19.6(@microsoft/api-extractor@7.56.3(@types/node@25.2.3))(@typescript/native-preview@7.0.0-dev.20260214.1)(typescript@5.9.3)
+      '@savvy-web/changesets':
+        specifier: ^0.1.1
+        version: 0.1.1(272bb0e3e11c8dec73dbf1944a1bee31)
+      '@savvy-web/commitlint':
+        specifier: ^0.3.2
+        version: 0.3.2(004e85f5607013e8e93abe8c44be02e5)
+      '@savvy-web/lint-staged':
+        specifier: ^0.4.0
+        version: 0.4.0(8feb67e03de7cac810e653fa7007c140)
+      '@savvy-web/rslib-builder':
+        specifier: ^0.14.1
+        version: 0.14.1(@microsoft/api-extractor@7.56.3(@types/node@25.2.3))(@pnpm/logger@1001.0.1)(@rslib/core@0.19.6(@microsoft/api-extractor@7.56.3(@types/node@25.2.3))(@typescript/native-preview@7.0.0-dev.20260214.1)(typescript@5.9.3))(@types/node@25.2.3)(@typescript/native-preview@7.0.0-dev.20260214.1)(jiti@2.6.1)(typescript@5.9.3)
       '@types/node':
         specifier: catalog:silk
         version: 25.2.3
@@ -125,6 +115,9 @@ importers:
       husky:
         specifier: catalog:silk
         version: 9.1.7
+      jsonc-parser:
+        specifier: ^3.3.1
+        version: 3.3.1
       lint-staged:
         specifier: catalog:silk
         version: 16.2.7
@@ -134,6 +127,9 @@ importers:
       markdownlint-cli2-formatter-codequality:
         specifier: catalog:silk
         version: 0.0.7(markdownlint-cli2@0.20.0)
+      parse-gitignore:
+        specifier: ^2.0.0
+        version: 2.0.0
       tsx:
         specifier: catalog:silk
         version: 4.21.0
@@ -146,6 +142,9 @@ importers:
       vitest:
         specifier: catalog:silk
         version: 4.0.18(@types/node@25.2.3)(jiti@2.6.1)(tsx@4.21.0)(yaml@2.8.2)
+      yaml:
+        specifier: ^2.8.2
+        version: 2.8.2
     publishDirectory: dist/dev
 
 packages:
