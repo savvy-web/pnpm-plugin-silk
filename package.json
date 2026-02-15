@@ -46,33 +46,34 @@
 		"typecheck": "turbo run types:check --log-prefix=none --log-order=grouped",
 		"types:check": "tsgo --noEmit"
 	},
+	"dependencies": {
+		"@savvy-web/changesets": "^0.1.1",
+		"@savvy-web/commitlint": "^0.3.2",
+		"@savvy-web/lint-staged": "^0.4.0",
+		"@savvy-web/rslib-builder": "^0.14.1",
+		"jsonc-parser": "^3.3.1",
+		"parse-gitignore": "^2.0.0",
+		"yaml": "^2.8.2"
+	},
 	"devDependencies": {
 		"@biomejs/biome": "catalog:silk",
 		"@changesets/cli": "catalog:silk",
+		"@commitlint/cli": "catalog:silk",
+		"@commitlint/config-conventional": "catalog:silk",
 		"@microsoft/api-extractor": "catalog:silk",
 		"@rslib/core": "catalog:silk",
-		"@savvy-web/commitlint": "^0.3.2",
-		"@savvy-web/lint-staged": "^0.4.0",
-		"@savvy-web/rslib-builder": "^0.12.2",
 		"@types/node": "catalog:silk",
 		"@typescript/native-preview": "catalog:silk",
 		"@vitest/coverage-v8": "catalog:silk",
-		"jsonc-parser": "^3.3.1",
-		"parse-gitignore": "^2.0.0",
-		"tsx": "catalog:silk",
-		"turbo": "catalog:silk",
-		"typescript": "catalog:silk",
-		"vitest": "catalog:silk",
-		"yaml": "^2.8.2"
-	},
-	"optionalDependencies": {
-		"@commitlint/cli": "catalog:silk",
-		"@commitlint/config-conventional": "catalog:silk",
 		"commitizen": "catalog:silk",
 		"husky": "catalog:silk",
 		"lint-staged": "catalog:silk",
 		"markdownlint-cli2": "catalog:silk",
-		"markdownlint-cli2-formatter-codequality": "catalog:silk"
+		"markdownlint-cli2-formatter-codequality": "catalog:silk",
+		"tsx": "catalog:silk",
+		"turbo": "catalog:silk",
+		"typescript": "catalog:silk",
+		"vitest": "catalog:silk"
 	},
 	"packageManager": "pnpm@10.29.3+sha512.498e1fb4cca5aa06c1dcf2611e6fafc50972ffe7189998c409e90de74566444298ffe43e6cd2acdc775ba1aa7cc5e092a8b7054c811ba8c5770f84693d33d2dc",
 	"devEngines": {
