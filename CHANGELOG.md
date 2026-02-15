@@ -1,5 +1,13 @@
 # @savvy-web/pnpm-plugin-silk
 
+## 0.5.1
+
+### Patch Changes
+
+### Bug Fixes
+
+- [`2773064`](https://github.com/savvy-web/pnpm-plugin-silk/commit/27730644f346e81fdf5588240ac83f0c346c11da) Bundle jsonc-parser
+
 ## 0.5.0
 
 ### Minor Changes
