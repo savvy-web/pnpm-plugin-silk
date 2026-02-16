@@ -53,6 +53,7 @@ publicHoistPattern:
   - "@microsoft/api-extractor"
   - "@rslib/core"
   - "@typescript/native-preview"
+  - "@vitest/coverage-v8"
   - husky
   - lint-staged
   - markdownlint-cli2
