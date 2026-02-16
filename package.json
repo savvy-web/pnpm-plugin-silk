@@ -3,7 +3,14 @@
 	"version": "0.5.2",
 	"private": true,
 	"description": "pnpm config dependency for centralized catalog management across the Silk ecosystem.",
-	"keywords": ["pnpm", "pnpm-plugin", "config-dependency", "catalog", "monorepo", "silk"],
+	"keywords": [
+		"pnpm",
+		"pnpm-plugin",
+		"config-dependency",
+		"catalog",
+		"monorepo",
+		"silk"
+	],
 	"homepage": "https://github.com/savvy-web/pnpm-plugin-silk#readme",
 	"bugs": {
 		"url": "https://github.com/savvy-web/pnpm-plugin-silk/issues"
@@ -55,7 +62,7 @@
 		"@rslib/core": "catalog:silk",
 		"@savvy-web/changesets": "^0.1.1",
 		"@savvy-web/commitlint": "^0.3.3",
-		"@savvy-web/lint-staged": "^0.4.1",
+		"@savvy-web/lint-staged": "^0.4.2",
 		"@savvy-web/rslib-builder": "^0.14.2",
 		"@types/node": "catalog:silk",
 		"@typescript/native-preview": "catalog:silk",
