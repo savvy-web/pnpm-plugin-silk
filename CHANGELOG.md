@@ -1,5 +1,11 @@
 # @savvy-web/pnpm-plugin-silk
 
+## 0.5.3
+
+### Dependencies
+
+* [`4c4a2b7`](https://github.com/savvy-web/pnpm-plugin-silk/commit/4c4a2b7eb5f7b335e729b553304a4c96eee31343) Updates Biome to 2.4.1
+
 ## 0.5.2
 
 ### Dependencies
