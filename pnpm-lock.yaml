@@ -43,8 +43,8 @@ catalogs:
       specifier: ^16.2.7
       version: 16.2.7
     markdownlint-cli2:
-      specifier: ^0.20.0
-      version: 0.20.0
+      specifier: ^0.21.0
+      version: 0.21.0
     markdownlint-cli2-formatter-codequality:
       specifier: ^0.0.7
       version: 0.0.7
@@ -54,9 +54,6 @@ catalogs:
     turbo:
       specifier: ^2.8.9
       version: 2.8.9
-    typescript:
-      specifier: ^5.9.3
-      version: 5.9.3
     vitest:
       specifier: ^4.0.18
       version: 4.0.18
@@ -97,7 +94,7 @@ importers:
         version: 0.3.3(004e85f5607013e8e93abe8c44be02e5)
       '@savvy-web/lint-staged':
         specifier: ^0.4.2
-        version: 0.4.2(eb23e354874266ea52236573fad4cf50)
+        version: 0.4.2(42a8b8831a9e92774b026a297f1abcc3)
       '@savvy-web/rslib-builder':
         specifier: ^0.14.2
         version: 0.14.2(@microsoft/api-extractor@7.56.3(@types/node@25.2.3))(@pnpm/logger@1001.0.1)(@rslib/core@0.19.6(@microsoft/api-extractor@7.56.3(@types/node@25.2.3))(@typescript/native-preview@7.0.0-dev.20260216.1)(typescript@5.9.3))(@types/node@25.2.3)(@typescript/native-preview@7.0.0-dev.20260216.1)(jiti@2.6.1)(typescript@5.9.3)
@@ -124,10 +121,10 @@ importers:
         version: 16.2.7
       markdownlint-cli2:
         specifier: catalog:silk
-        version: 0.20.0
+        version: 0.21.0
       markdownlint-cli2-formatter-codequality:
         specifier: catalog:silk
-        version: 0.0.7(markdownlint-cli2@0.20.0)
+        version: 0.0.7(markdownlint-cli2@0.21.0)
       parse-gitignore:
         specifier: ^2.0.0
         version: 2.0.0
@@ -138,7 +135,7 @@ importers:
         specifier: catalog:silk
         version: 2.8.9
       typescript:
-        specifier: catalog:silk
+        specifier: 5.9.3
         version: 5.9.3
       vitest:
         specifier: catalog:silk
@@ -2364,8 +2361,8 @@ packages:
     resolution: {integrity: sha512-jhIXaOzy1sb8IyocaruWSn1TjmnBVs8Ayhcy83rmxNJ8q2uWKCAj3CnJY+KpGSXCueAPc0i05kVvVKtP1t9S3g==}
     engines: {node: '>=10'}
 
-  globby@15.0.0:
-    resolution: {integrity: sha512-oB4vkQGqlMl682wL1IlWd02tXCbquGWM4voPEI85QmNKCaw8zGTm1f1rubFgkg3Eli2PtKlFgrnmUqasbQWlkw==}
+  globby@16.1.0:
+    resolution: {integrity: sha512-+A4Hq7m7Ze592k9gZRy4gJ27DrXRNnC1vPjxTt1qQxEY8RxagBkBxivkCwg7FxSTG0iLLEMaUx13oOr0R2/qcQ==}
     engines: {node: '>=20'}
 
   gopd@1.2.0:
@@ -2567,6 +2564,10 @@ packages:
   is-obj@2.0.0:
     resolution: {integrity: sha512-drqDG3cbczxxEJRoOXcOjtdp1J/lyp1mNn0xaznRs8+muBhgQcrnbspox5X5fOw0HnMnbfDzvnEMEtqDEJEo8w==}
     engines: {node: '>=8'}
+
+  is-path-inside@4.0.0:
+    resolution: {integrity: sha512-lJJV/5dYS+RcL8uQdBDW9c9uWFLLBNRyFhnAKXw5tVqLlKZ4RMGZKv+YQ/IA3OhD+RpbJa1LLFM1FQPGyIXvOA==}
+    engines: {node: '>=12'}
 
   is-plain-obj@2.1.0:
     resolution: {integrity: sha512-YWnfyRwxL/+SsrWYfOpUtz5b3YD+nyfkHvjbcanzk8zgyO4ASD67uVMRt8k5bM4lLMDnXfriRhOpemw+NfT1eA==}
@@ -2812,8 +2813,8 @@ packages:
     peerDependencies:
       markdownlint-cli2: '>=0.0.4'
 
-  markdownlint-cli2@0.20.0:
-    resolution: {integrity: sha512-esPk+8Qvx/f0bzI7YelUeZp+jCtFOk3KjZ7s9iBQZ6HlymSXoTtWGiIRZP05/9Oy2ehIoIjenVwndxGtxOIJYQ==}
+  markdownlint-cli2@0.21.0:
+    resolution: {integrity: sha512-DzzmbqfMW3EzHsunP66x556oZDzjcdjjlL2bHG4PubwnL58ZPAfz07px4GqteZkoCGnBYi779Y2mg7+vgNCwbw==}
     engines: {node: '>=20'}
     hasBin: true
 
@@ -3201,10 +3202,6 @@ packages:
   path-type@4.0.0:
     resolution: {integrity: sha512-gDKb8aZMDeD/tZWs9P6+q0J9Mwkdl6xMV8TjnGP3qJVJ06bdMgkbBlLU8IdfOsIsFz2BW1rNVT3XuNEl8zPAvw==}
     engines: {node: '>=8'}
-
-  path-type@6.0.0:
-    resolution: {integrity: sha512-Vj7sf++t5pBD637NSfkxpHSMfWaeig5+DKWLhcqIYx6mWQz5hdJTGDVMQiJcw1ZYkhs7AazKDGpRVji1LJCZUQ==}
-    engines: {node: '>=18'}
 
   pathe@2.0.3:
     resolution: {integrity: sha512-WUjGcAqP1gQacoQe+OBJsFA7Ld4DyXuUIjZ5cc75cLHvJ7dtNsTugphxIADwspS+AraAUePCKrSVtPLFj/F88w==}
@@ -3676,9 +3673,9 @@ packages:
     resolution: {integrity: sha512-Hn2tCQpoDt1wv23a68Ctc8Cr/BHpUSfaPYrkajTXOS9IKpxVRx/X5m1K2YkbK2ipgZgxXSgsUinl3x+2YdSSfg==}
     engines: {node: '>=20.18.1'}
 
-  unicorn-magic@0.3.0:
-    resolution: {integrity: sha512-+QBBXBCvifc56fsbuxZQ6Sic3wqqc3WWaqxs58gvJrcOuN83HGTCwz3oS5phzU9LthRNE9VrJCFCLUgHeeFnfA==}
-    engines: {node: '>=18'}
+  unicorn-magic@0.4.0:
+    resolution: {integrity: sha512-wH590V9VNgYH9g3lH9wWjTrUoKsjLF6sGLjhR4sH1LWpLmCOH0Zf7PukhDA8BiS7KHe4oPNkcTHqYkj7SOGUOw==}
+    engines: {node: '>=20'}
 
   unified-lint-rule@3.0.1:
     resolution: {integrity: sha512-HxIeQOmwL19DGsxHXbeyzKHBsoSCFO7UtRVUvT2v61ptw/G+GbysWcrpHdfs5jqbIFDA11MoKngIhQK0BeTVjA==}
@@ -5132,7 +5129,7 @@ snapshots:
       - bufferutil
       - utf-8-validate
 
-  '@savvy-web/lint-staged@0.4.2(eb23e354874266ea52236573fad4cf50)':
+  '@savvy-web/lint-staged@0.4.2(42a8b8831a9e92774b026a297f1abcc3)':
     dependencies:
       '@effect/cli': 0.73.2(@effect/platform@0.94.5(effect@3.19.17))(@effect/printer-ansi@0.47.0(@effect/typeclass@0.38.0(effect@3.19.17))(effect@3.19.17))(@effect/printer@0.47.0(@effect/typeclass@0.38.0(effect@3.19.17))(effect@3.19.17))(effect@3.19.17)
       '@effect/platform': 0.94.5(effect@3.19.17)
@@ -5147,8 +5144,8 @@ snapshots:
       husky: 9.1.7
       jsonc-parser: 3.3.1
       lint-staged: 16.2.7
-      markdownlint-cli2: 0.20.0
-      markdownlint-cli2-formatter-codequality: 0.0.7(markdownlint-cli2@0.20.0)
+      markdownlint-cli2: 0.21.0
+      markdownlint-cli2-formatter-codequality: 0.0.7(markdownlint-cli2@0.21.0)
       prettier: 3.8.1
       sort-package-json: 3.6.1
       typescript: 5.9.3
@@ -6320,14 +6317,14 @@ snapshots:
       merge2: 1.4.1
       slash: 3.0.0
 
-  globby@15.0.0:
+  globby@16.1.0:
     dependencies:
       '@sindresorhus/merge-streams': 4.0.0
       fast-glob: 3.3.3
       ignore: 7.0.5
-      path-type: 6.0.0
+      is-path-inside: 4.0.0
       slash: 5.1.0
-      unicorn-magic: 0.3.0
+      unicorn-magic: 0.4.0
 
   gopd@1.2.0: {}
 
@@ -6499,6 +6496,8 @@ snapshots:
   is-number@7.0.0: {}
 
   is-obj@2.0.0: {}
+
+  is-path-inside@4.0.0: {}
 
   is-plain-obj@2.1.0: {}
 
@@ -6727,22 +6726,22 @@ snapshots:
 
   markdown-table@3.0.4: {}
 
-  markdownlint-cli2-formatter-codequality@0.0.7(markdownlint-cli2@0.20.0):
+  markdownlint-cli2-formatter-codequality@0.0.7(markdownlint-cli2@0.21.0):
     dependencies:
-      markdownlint-cli2: 0.20.0
+      markdownlint-cli2: 0.21.0
 
-  markdownlint-cli2-formatter-default@0.0.6(markdownlint-cli2@0.20.0):
+  markdownlint-cli2-formatter-default@0.0.6(markdownlint-cli2@0.21.0):
     dependencies:
-      markdownlint-cli2: 0.20.0
+      markdownlint-cli2: 0.21.0
 
-  markdownlint-cli2@0.20.0:
+  markdownlint-cli2@0.21.0:
     dependencies:
-      globby: 15.0.0
+      globby: 16.1.0
       js-yaml: 4.1.1
       jsonc-parser: 3.3.1
       markdown-it: 14.1.1
       markdownlint: 0.40.0
-      markdownlint-cli2-formatter-default: 0.0.6(markdownlint-cli2@0.20.0)
+      markdownlint-cli2-formatter-default: 0.0.6(markdownlint-cli2@0.21.0)
       micromatch: 4.0.8
     transitivePeerDependencies:
       - supports-color
@@ -7318,8 +7317,6 @@ snapshots:
 
   path-type@4.0.0: {}
 
-  path-type@6.0.0: {}
-
   pathe@2.0.3: {}
 
   picocolors@1.1.1: {}
@@ -7770,7 +7767,7 @@ snapshots:
 
   undici@7.21.0: {}
 
-  unicorn-magic@0.3.0: {}
+  unicorn-magic@0.4.0: {}
 
   unified-lint-rule@3.0.1:
     dependencies:
