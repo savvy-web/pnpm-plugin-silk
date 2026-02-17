@@ -282,6 +282,29 @@ describe("updateConfig", () => {
 		const sorted = [...(result.onlyBuiltDependencies ?? [])].sort((a, b) => a.localeCompare(b));
 		expect(result.onlyBuiltDependencies).toEqual(sorted);
 	});
+
+	it("returns original config on internal error", () => {
+		const originalSilk = mockCatalogs.silk;
+		Object.defineProperty(mockCatalogs, "silk", {
+			get() {
+				throw new Error("catalog error");
+			},
+			configurable: true,
+		});
+
+		const config: PnpmConfig = {};
+		const result = updateConfig(config);
+
+		expect(result).toBe(config);
+		expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining("Error merging catalogs"), "catalog error");
+
+		// Restore mock property
+		Object.defineProperty(mockCatalogs, "silk", {
+			value: originalSilk,
+			configurable: true,
+			writable: true,
+		});
+	});
 });
 
 describe("formatOverrideWarning", () => {
@@ -473,6 +496,22 @@ describe("findBiomeConfigs", () => {
 			exclude: expect.any(Function),
 		});
 	});
+
+	it("exclude callback matches gitignore patterns", async () => {
+		mockedReadFile.mockResolvedValueOnce("node_modules\ndist\n");
+
+		async function* fakeGlob() {
+			yield "biome.jsonc";
+		}
+		mockedGlob.mockReturnValueOnce(fakeGlob() as ReturnType<typeof glob>);
+
+		await findBiomeConfigs("/root");
+
+		const excludeFn = mockedGlob.mock.calls[0]?.[1]?.exclude as (name: string) => boolean;
+		expect(excludeFn("node_modules")).toBe(true);
+		expect(excludeFn("dist")).toBe(true);
+		expect(excludeFn("src")).toBe(false);
+	});
 });
 
 describe("syncBiomeSchema", () => {
@@ -602,5 +641,22 @@ describe("syncBiomeSchema", () => {
 
 		const writtenContent = mockedWriteFile.mock.calls[0]?.[1] as string;
 		expect(writtenContent).toContain("https://biomejs.dev/schemas/2.3.14/schema.json");
+	});
+
+	it("logs warning on unexpected errors", async () => {
+		mockFs({
+			"package.json": JSON.stringify({ devDependencies: { "@savvy-web/lint-staged": "^0.3.0" } }),
+			".gitignore": "",
+		});
+		mockedGlob.mockImplementationOnce(() => {
+			throw new Error("unexpected glob failure");
+		});
+
+		await syncBiomeSchema("/root", "^2.3.14");
+
+		expect(warnSpy).toHaveBeenCalledWith(
+			expect.stringContaining("Error syncing biome schema"),
+			"unexpected glob failure",
+		);
 	});
 });
