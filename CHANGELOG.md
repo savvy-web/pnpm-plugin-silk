@@ -1,5 +1,12 @@
 # @savvy-web/pnpm-plugin-silk
 
+## 0.6.0
+
+### Features
+
+* [`0303f9a`](https://github.com/savvy-web/pnpm-plugin-silk/commit/0303f9aada1e48b00b6e44cf68c055d631edd9c6) Allows @savvy-web/vitest into onlyBuiltDependencies
+* Allows @savvy-web/github-action-builder into onlyBuiltDependencies
+
 ## 0.5.3
 
 ### Dependencies

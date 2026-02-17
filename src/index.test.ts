@@ -13,47 +13,66 @@ import { updateConfig } from "./hooks/update-config.js";
 import type { Override } from "./hooks/warnings.js";
 import { formatOverrideWarning } from "./hooks/warnings.js";
 
+/**
+ * Stable mock catalogs so tests verify merge behavior, not generated config values.
+ * The real catalogs are auto-generated and change whenever pnpm-workspace.yaml is updated.
+ */
+const { mockCatalogs } = vi.hoisted(() => ({
+	mockCatalogs: {
+		silk: {
+			"@rslib/core": "^0.10.0",
+			typescript: "^5.7.0",
+			vitest: "^3.0.0",
+		},
+		silkPeers: {
+			typescript: "^5.7.0",
+		},
+		silkOverrides: {
+			"@isaacs/brace-expansion": ">=5.0.1",
+			lodash: ">=4.17.23",
+			tmp: "^0.2.4",
+		},
+		silkOnlyBuiltDependencies: ["@parcel/watcher", "esbuild"],
+		silkPublicHoistPattern: ["turbo", "typescript"],
+	},
+}));
+
+vi.mock("./catalogs/generated.js", () => ({
+	silkCatalogs: mockCatalogs,
+}));
+
 describe("silkCatalogs", () => {
-	it("exports silk catalog with current versions", () => {
+	it("exports silk catalog with string version values", () => {
 		expect(silkCatalogs.silk).toBeDefined();
-		expect(typeof silkCatalogs.silk.typescript).toBe("string");
-		expect(silkCatalogs.silk.typescript).toMatch(/^\^5\./);
+		expect(Object.keys(silkCatalogs.silk).length).toBeGreaterThan(0);
+		for (const version of Object.values(silkCatalogs.silk)) {
+			expect(typeof version).toBe("string");
+		}
 	});
 
-	it("exports silkPeers catalog with version ranges", () => {
+	it("exports silkPeers catalog with string version values", () => {
 		expect(silkCatalogs.silkPeers).toBeDefined();
-		expect(typeof silkCatalogs.silkPeers.typescript).toBe("string");
-		expect(silkCatalogs.silkPeers.typescript).toMatch(/^\^5\./);
-	});
-
-	it("includes build tools in silk catalog", () => {
-		expect(silkCatalogs.silk["@rslib/core"]).toBeDefined();
-		expect(silkCatalogs.silk.typescript).toBeDefined();
-	});
-
-	it("includes testing tools in silk catalog", () => {
-		expect(silkCatalogs.silk.vitest).toBeDefined();
+		expect(Object.keys(silkCatalogs.silkPeers).length).toBeGreaterThan(0);
+		for (const version of Object.values(silkCatalogs.silkPeers)) {
+			expect(typeof version).toBe("string");
+		}
 	});
 
 	it("exports silkOverrides for security fixes", () => {
 		expect(silkCatalogs.silkOverrides).toBeDefined();
-		expect(silkCatalogs.silkOverrides["@isaacs/brace-expansion"]).toBe(">=5.0.1");
-		expect(silkCatalogs.silkOverrides.lodash).toBe(">=4.17.23");
-		expect(silkCatalogs.silkOverrides.tmp).toBe("^0.2.4");
+		expect(Object.keys(silkCatalogs.silkOverrides).length).toBeGreaterThan(0);
 	});
 
 	it("exports silkOnlyBuiltDependencies array", () => {
 		expect(silkCatalogs.silkOnlyBuiltDependencies).toBeDefined();
 		expect(Array.isArray(silkCatalogs.silkOnlyBuiltDependencies)).toBe(true);
-		expect(silkCatalogs.silkOnlyBuiltDependencies).toContain("esbuild");
-		expect(silkCatalogs.silkOnlyBuiltDependencies).toContain("@parcel/watcher");
+		expect(silkCatalogs.silkOnlyBuiltDependencies.length).toBeGreaterThan(0);
 	});
 
 	it("exports silkPublicHoistPattern array", () => {
 		expect(silkCatalogs.silkPublicHoistPattern).toBeDefined();
 		expect(Array.isArray(silkCatalogs.silkPublicHoistPattern)).toBe(true);
-		expect(silkCatalogs.silkPublicHoistPattern).toContain("typescript");
-		expect(silkCatalogs.silkPublicHoistPattern).toContain("turbo");
+		expect(silkCatalogs.silkPublicHoistPattern.length).toBeGreaterThan(0);
 	});
 });
 
@@ -158,8 +177,7 @@ describe("updateConfig", () => {
 		const result = updateConfig(config);
 
 		expect(result.overrides).toBeDefined();
-		expect(result.overrides?.["@isaacs/brace-expansion"]).toBe(">=5.0.1");
-		expect(result.overrides?.lodash).toBe(">=4.17.23");
+		expect(result.overrides).toEqual(mockCatalogs.silkOverrides);
 	});
 
 	it("merges local overrides with silk overrides", () => {
@@ -172,7 +190,7 @@ describe("updateConfig", () => {
 
 		// Should have both custom override and silk defaults
 		expect(result.overrides?.["custom-pkg"]).toBe("^1.0.0");
-		expect(result.overrides?.["@isaacs/brace-expansion"]).toBe(">=5.0.1");
+		expect(result.overrides?.["@isaacs/brace-expansion"]).toBe(mockCatalogs.silkOverrides["@isaacs/brace-expansion"]);
 	});
 
 	it("allows local override of silk overrides with warning", () => {
@@ -263,6 +281,29 @@ describe("updateConfig", () => {
 		// Arrays should be sorted
 		const sorted = [...(result.onlyBuiltDependencies ?? [])].sort((a, b) => a.localeCompare(b));
 		expect(result.onlyBuiltDependencies).toEqual(sorted);
+	});
+
+	it("returns original config on internal error", () => {
+		const originalSilk = mockCatalogs.silk;
+		Object.defineProperty(mockCatalogs, "silk", {
+			get() {
+				throw new Error("catalog error");
+			},
+			configurable: true,
+		});
+
+		const config: PnpmConfig = {};
+		const result = updateConfig(config);
+
+		expect(result).toBe(config);
+		expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining("Error merging catalogs"), "catalog error");
+
+		// Restore mock property
+		Object.defineProperty(mockCatalogs, "silk", {
+			value: originalSilk,
+			configurable: true,
+			writable: true,
+		});
 	});
 });
 
@@ -455,6 +496,22 @@ describe("findBiomeConfigs", () => {
 			exclude: expect.any(Function),
 		});
 	});
+
+	it("exclude callback matches gitignore patterns", async () => {
+		mockedReadFile.mockResolvedValueOnce("node_modules\ndist\n");
+
+		async function* fakeGlob() {
+			yield "biome.jsonc";
+		}
+		mockedGlob.mockReturnValueOnce(fakeGlob() as ReturnType<typeof glob>);
+
+		await findBiomeConfigs("/root");
+
+		const excludeFn = mockedGlob.mock.calls[0]?.[1]?.exclude as (name: string) => boolean;
+		expect(excludeFn("node_modules")).toBe(true);
+		expect(excludeFn("dist")).toBe(true);
+		expect(excludeFn("src")).toBe(false);
+	});
 });
 
 describe("syncBiomeSchema", () => {
@@ -584,5 +641,22 @@ describe("syncBiomeSchema", () => {
 
 		const writtenContent = mockedWriteFile.mock.calls[0]?.[1] as string;
 		expect(writtenContent).toContain("https://biomejs.dev/schemas/2.3.14/schema.json");
+	});
+
+	it("logs warning on unexpected errors", async () => {
+		mockFs({
+			"package.json": JSON.stringify({ devDependencies: { "@savvy-web/lint-staged": "^0.3.0" } }),
+			".gitignore": "",
+		});
+		mockedGlob.mockImplementationOnce(() => {
+			throw new Error("unexpected glob failure");
+		});
+
+		await syncBiomeSchema("/root", "^2.3.14");
+
+		expect(warnSpy).toHaveBeenCalledWith(
+			expect.stringContaining("Error syncing biome schema"),
+			"unexpected glob failure",
+		);
 	});
 });
