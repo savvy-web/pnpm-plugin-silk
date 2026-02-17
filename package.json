@@ -55,7 +55,7 @@
 		"@rslib/core": "catalog:silk",
 		"@savvy-web/changesets": "^0.1.1",
 		"@savvy-web/commitlint": "^0.3.3",
-		"@savvy-web/lint-staged": "^0.4.3",
+		"@savvy-web/lint-staged": "^0.4.4",
 		"@savvy-web/rslib-builder": "^0.14.3",
 		"@savvy-web/vitest": "^0.1.0",
 		"@types/node": "catalog:silk",
