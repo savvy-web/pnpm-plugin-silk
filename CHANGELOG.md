@@ -1,5 +1,11 @@
 # @savvy-web/pnpm-plugin-silk
 
+## 0.6.1
+
+### Bug Fixes
+
+* [`f082d2e`](https://github.com/savvy-web/pnpm-plugin-silk/commit/f082d2eaf4d481210973743d1bba3558651f3552) Sets reasonalbe peers for all dependencies
+
 ## 0.6.0
 
 ### Features
