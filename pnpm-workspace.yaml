@@ -63,12 +63,15 @@ publicHoistPattern:
   - "@commitlint/cz-commitlint"
   - "@microsoft/api-extractor"
   - "@rslib/core"
+  - "@types/node"
   - "@typescript/native-preview"
   - "@vitest/coverage-v8"
+  - commitizen
   - husky
   - lint-staged
   - markdownlint-cli2
   - markdownlint-cli2-formatter-codequality
+  - tsx
   - turbo
   - typescript
   - vitest
