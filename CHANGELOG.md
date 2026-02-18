@@ -1,5 +1,11 @@
 # @savvy-web/pnpm-plugin-silk
 
+## 0.6.2
+
+### Bug Fixes
+
+* [`fe6d481`](https://github.com/savvy-web/pnpm-plugin-silk/commit/fe6d481090c0db429508c6a262a2b55d3ac03160) Hoist @types/node, commitizen, tsx
+
 ## 0.6.1
 
 ### Bug Fixes
