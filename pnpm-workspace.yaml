@@ -3,7 +3,7 @@ packages:
 autoInstallPeers: true
 catalogs:
   silk:
-    "@biomejs/biome": 2.4.1
+    "@biomejs/biome": 2.4.2
     "@changesets/cli": ^2.29.8
     "@commitlint/cli": ^20.4.1
     "@commitlint/config-conventional": ^20.4.1
@@ -18,11 +18,11 @@ catalogs:
     markdownlint-cli2: ^0.21.0
     markdownlint-cli2-formatter-codequality: ^0.0.7
     tsx: ^4.21.0
-    turbo: ^2.8.9
+    turbo: ^2.8.10
     typescript: ^5.9.3
     vitest: ^4.0.18
   silkPeers:
-    "@biomejs/biome": 2.4.1
+    "@biomejs/biome": 2.4.2
     "@changesets/cli": ^2.29.0
     "@commitlint/cli": ^20.4.0
     "@commitlint/config-conventional": ^20.4.0
