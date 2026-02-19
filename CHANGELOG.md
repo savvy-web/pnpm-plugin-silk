@@ -1,5 +1,11 @@
 # @savvy-web/pnpm-plugin-silk
 
+## 0.6.3
+
+### Bug Fixes
+
+* [`89ee553`](https://github.com/savvy-web/pnpm-plugin-silk/commit/89ee5535403b9927264a4a57dd90b20a269df2c5) pins @microsoft/api-extractor catalog versions temporarily to prevent [extentionless ESM exports regression](https://github.com/microsoft/rushstack/issues/5644)
+
 ## 0.6.2
 
 ### Bug Fixes
