@@ -5,12 +5,12 @@ catalogs:
   silk:
     "@biomejs/biome": 2.4.1
     "@changesets/cli": ^2.29.8
-    "@commitlint/cli": ^20.4.1
-    "@commitlint/config-conventional": ^20.4.1
-    "@microsoft/api-extractor": ^7.56.3
+    "@commitlint/cli": ^20.4.2
+    "@commitlint/config-conventional": ^20.4.2
+    "@microsoft/api-extractor": 7.56.3
     "@rslib/core": ^0.19.6
-    "@types/node": ^25.2.3
-    "@typescript/native-preview": 7.0.0-dev.20260217.1
+    "@types/node": ^25.3.0
+    "@typescript/native-preview": ^7.0.0-dev.20260219.1
     "@vitest/coverage-v8": ^4.0.18
     commitizen: ^4.3.1
     husky: ^9.1.7
@@ -18,7 +18,7 @@ catalogs:
     markdownlint-cli2: ^0.21.0
     markdownlint-cli2-formatter-codequality: ^0.0.7
     tsx: ^4.21.0
-    turbo: ^2.8.9
+    turbo: ^2.8.10
     typescript: ^5.9.3
     vitest: ^4.0.18
   silkPeers:
@@ -26,7 +26,7 @@ catalogs:
     "@changesets/cli": ^2.29.0
     "@commitlint/cli": ^20.4.0
     "@commitlint/config-conventional": ^20.4.0
-    "@microsoft/api-extractor": ^7.56.0
+    "@microsoft/api-extractor": ">=7.56.0 <7.57.0"
     "@rslib/core": ^0.19.6
     "@types/node": ^25.2.0
     "@typescript/native-preview": ^7.0.0-dev.20260124.1
@@ -37,7 +37,7 @@ catalogs:
     markdownlint-cli2: ^0.21.0
     markdownlint-cli2-formatter-codequality: ^0.0.7
     tsx: ^4.21.0
-    turbo: ^2.8.0
+    turbo: ^2.8.10
     typescript: ^5.9.3
     vitest: ^4.0.18
 loglevel: info
