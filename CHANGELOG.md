@@ -1,5 +1,11 @@
 # @savvy-web/pnpm-plugin-silk
 
+## 0.7.0
+
+### Features
+
+* [`cc6dc9e`](https://github.com/savvy-web/pnpm-plugin-silk/commit/cc6dc9e9348e8ada416ff35ed8525f83b391bbd1) Changes control of Biome, changesets and commitlint peerDependencies to their respective modules
+
 ## 0.6.3
 
 ### Bug Fixes
