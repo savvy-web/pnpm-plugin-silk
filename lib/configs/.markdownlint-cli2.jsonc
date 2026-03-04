@@ -84,7 +84,6 @@
 		},
 		"changeset-heading-hierarchy": false,
 		"changeset-required-sections": false,
-		"changeset-content-structure": false,
-		"changeset-uncategorized-content": false
+		"changeset-content-structure": false
 	}
 }
