@@ -1,5 +1,13 @@
 # @savvy-web/pnpm-plugin-silk
 
+## 0.8.0
+
+### Features
+
+* [`44c4642`](https://github.com/savvy-web/pnpm-plugin-silk/commit/44c46429c2539dfc8b73d28f51f0bfe489f9506a) Reverts contol of most peerDependencies to companion packages
+
+- [`f8ad907`](https://github.com/savvy-web/pnpm-plugin-silk/commit/f8ad9074ed4cd67287351d77974775331ed55c75) Reverts control of vitest and linting peerDependencies to their compantion packages
+
 ## 0.7.0
 
 ### Features
