@@ -3,7 +3,7 @@ packages:
 autoInstallPeers: true
 catalogs:
   silk:
-    "@types/node": ^25.3.3
+    "@types/node": ^25.3.5
     "@typescript/native-preview": ^7.0.0-dev.20260304.1
     husky: ^9.1.7
     tsx: ^4.21.0
