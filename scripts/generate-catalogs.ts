@@ -8,7 +8,7 @@
  * Usage: pnpm run generate:catalogs
  */
 
-import { readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { parse as parseYaml } from "yaml";
@@ -149,6 +149,18 @@ function main(): void {
 		silkPublicHoistPattern,
 	);
 	const outputPath = join(ROOT_DIR, "src/catalogs/generated.ts");
+
+	// Only write if content changed (ignoring the timestamp line)
+	const timestampPattern = / \* Generated: .+/;
+	const stripTimestamp = (s: string) => s.replace(timestampPattern, "");
+
+	if (existsSync(outputPath)) {
+		const existing = readFileSync(outputPath, "utf-8");
+		if (stripTimestamp(existing) === stripTimestamp(content)) {
+			console.log("No catalog changes detected (only timestamp differs). Skipping write.");
+			return;
+		}
+	}
 
 	writeFileSync(outputPath, content, "utf-8");
 	console.log(`Generated: ${outputPath}`);
