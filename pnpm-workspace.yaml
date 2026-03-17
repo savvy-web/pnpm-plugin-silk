@@ -3,8 +3,8 @@ packages:
 autoInstallPeers: true
 catalogs:
   silk:
-    "@types/node": ^25.3.3
-    "@typescript/native-preview": ^7.0.0-dev.20260304.1
+    "@types/node": ^25.5.0
+    "@typescript/native-preview": 7.0.0-dev.20260317.1
     husky: ^9.1.7
     tsx: ^4.21.0
     typescript: ^5.9.3
@@ -29,8 +29,8 @@ overrides:
   "@isaacs/brace-expansion": ^5.0.1
   lodash: ^4.17.23
   markdown-it: ^14.1.1
-  tmp: ^0.2.4
   minimatch: ">=10.2.3"
+  tmp: ^0.2.4
 publicHoistPattern:
   - "@changesets/cli"
   - "@commitlint/cli"
