@@ -42,9 +42,6 @@ catalogs:
     '@effect/typeclass':
       specifier: ^0.39.0
       version: 0.39.0
-    '@effect/vitest':
-      specifier: ^0.28.0
-      version: 0.28.0
     '@types/node':
       specifier: ^25.5.0
       version: 25.5.0
@@ -68,8 +65,8 @@ overrides:
   '@isaacs/brace-expansion': ^5.0.1
   lodash: ^4.17.23
   markdown-it: ^14.1.1
-  tmp: ^0.2.4
   minimatch: '>=10.2.3'
+  tmp: ^0.2.4
 
 importers:
 
@@ -111,9 +108,6 @@ importers:
       '@effect/typeclass':
         specifier: catalog:silk
         version: 0.39.0(effect@3.20.0)
-      '@effect/vitest':
-        specifier: catalog:silk
-        version: 0.28.0(effect@3.20.0)(vitest@4.0.18(@opentelemetry/api@1.9.0)(@types/node@25.5.0)(jiti@2.6.1)(tsx@4.21.0)(yaml@2.8.2))
       '@savvy-web/changesets':
         specifier: ^0.5.1
         version: 0.5.1(@changesets/cli@2.30.0(@types/node@25.5.0))(@effect/cluster@0.57.0(@effect/platform@0.95.0(effect@3.20.0))(@effect/rpc@0.74.0(@effect/platform@0.95.0(effect@3.20.0))(effect@3.20.0))(@effect/sql@0.50.0(@effect/experimental@0.58.0(@effect/platform@0.95.0(effect@3.20.0))(effect@3.20.0))(@effect/platform@0.95.0(effect@3.20.0))(effect@3.20.0))(@effect/workflow@0.16.0(@effect/experimental@0.58.0(@effect/platform@0.95.0(effect@3.20.0))(effect@3.20.0))(@effect/platform@0.95.0(effect@3.20.0))(@effect/rpc@0.74.0(@effect/platform@0.95.0(effect@3.20.0))(effect@3.20.0))(effect@3.20.0))(effect@3.20.0))(@effect/printer-ansi@0.48.0(@effect/typeclass@0.39.0(effect@3.20.0))(effect@3.20.0))(@effect/printer@0.48.0(@effect/typeclass@0.39.0(effect@3.20.0))(effect@3.20.0))(@effect/rpc@0.74.0(@effect/platform@0.95.0(effect@3.20.0))(effect@3.20.0))(@effect/sql@0.50.0(@effect/experimental@0.58.0(@effect/platform@0.95.0(effect@3.20.0))(effect@3.20.0))(@effect/platform@0.95.0(effect@3.20.0))(effect@3.20.0))
@@ -530,12 +524,6 @@ packages:
     resolution: {integrity: sha512-V8qGpm4BTMS4pW9e7aCdxC0sy/TYsdxmnpWtokkNWnggZ6kvh1Psp3AfUuuZLyNmUk4T+lYB/ItEsga/+hryig==}
     peerDependencies:
       effect: ^3.20.0
-
-  '@effect/vitest@0.28.0':
-    resolution: {integrity: sha512-9vyJ1amuJmb8DeQpT/aadalQxWlRKS+qDp8MaYirpI6F6UyZZqDgdLrPs3qNviLkypNubrVc/yPkd6YNH4QKxw==}
-    peerDependencies:
-      effect: ^3.20.0
-      vitest: ^3.2.0
 
   '@effect/workflow@0.16.0':
     resolution: {integrity: sha512-MiAdlxx3TixkgHdbw+Yf1Z3tHAAE0rOQga12kIydJqj05Fnod+W/I+kQGRMY/XWRg+QUsVxhmh1qTr7Ype6lrw==}
@@ -4314,11 +4302,6 @@ snapshots:
   '@effect/typeclass@0.39.0(effect@3.20.0)':
     dependencies:
       effect: 3.20.0
-
-  '@effect/vitest@0.28.0(effect@3.20.0)(vitest@4.0.18(@opentelemetry/api@1.9.0)(@types/node@25.5.0)(jiti@2.6.1)(tsx@4.21.0)(yaml@2.8.2))':
-    dependencies:
-      effect: 3.20.0
-      vitest: 4.0.18(@opentelemetry/api@1.9.0)(@types/node@25.5.0)(jiti@2.6.1)(tsx@4.21.0)(yaml@2.8.2)
 
   '@effect/workflow@0.16.0(@effect/experimental@0.58.0(@effect/platform@0.95.0(effect@3.20.0))(effect@3.20.0))(@effect/platform@0.95.0(effect@3.20.0))(@effect/rpc@0.74.0(@effect/platform@0.95.0(effect@3.20.0))(effect@3.20.0))(effect@3.20.0)':
     dependencies:
