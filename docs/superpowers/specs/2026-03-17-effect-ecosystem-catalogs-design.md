@@ -50,7 +50,7 @@ Repos audited: 30+ across savvy-web and spencerbeggs workspaces.
 
 ### Catalog Ranges
 
-**`silk`** — pinned to the latest published version of each package:
+**`silk`** — set to the latest published version with caret range:
 
 | Package | silk Version |
 | ------- | ------------ |
@@ -69,32 +69,41 @@ Repos audited: 30+ across savvy-web and spencerbeggs workspaces.
 | `@effect/rpc` | `^0.74.0` |
 | `@effect/sql` | `^0.50.0` |
 
-**`silkPeers`** — current-minus-one minor floor for each package:
+**`silkPeers`** — floor-only ranges for peer dependency declarations:
 
 | Package | silkPeers Version |
 | ------- | ----------------- |
 | `effect` | `^3.19.0` |
-| `@effect/platform` | `^0.94.0` |
-| `@effect/platform-node` | `^0.104.0` |
-| `@effect/platform-bun` | `^0.87.0` |
-| `@effect/cli` | `^0.73.0` |
-| `@effect/opentelemetry` | `^0.61.0` |
-| `@effect/printer` | `^0.47.0` |
-| `@effect/printer-ansi` | `^0.47.0` |
-| `@effect/typeclass` | `^0.38.0` |
-| `@effect/vitest` | `^0.27.0` |
-| `@effect/language-service` | `^0.79.0` |
-| `@effect/cluster` | `^0.56.0` |
-| `@effect/rpc` | `^0.73.0` |
-| `@effect/sql` | `^0.49.0` |
+| `@effect/platform` | `>=0.94.0` |
+| `@effect/platform-node` | `>=0.104.0` |
+| `@effect/platform-bun` | `>=0.87.0` |
+| `@effect/cli` | `>=0.73.0` |
+| `@effect/opentelemetry` | `>=0.61.0` |
+| `@effect/printer` | `>=0.47.0` |
+| `@effect/printer-ansi` | `>=0.47.0` |
+| `@effect/typeclass` | `>=0.38.0` |
+| `@effect/vitest` | `>=0.27.0` |
+| `@effect/language-service` | `>=0.79.0` |
+| `@effect/cluster` | `>=0.56.0` |
+| `@effect/rpc` | `>=0.73.0` |
+| `@effect/sql` | `>=0.49.0` |
 
 ### Range Strategy
 
-- **silk**: Uses `^latest` — allows patch updates within current minor. These are
-  the tested, known-good versions.
-- **silkPeers**: Uses `^(latest - 1 minor)` — gives consumers one minor version of
-  flexibility. This matches the existing pattern in github-action-effects
-  (e.g., dev has `effect: ^3.20.0`, peer has `effect: ^3.19.0`).
+- **silk**: Uses `^latest` — allows patch updates within current minor. For 0.x
+  packages, `^0.95.0` means `>=0.95.0 <0.96.0` (patch-only), which is appropriate
+  since Effect treats each minor as a potentially breaking release.
+- **silkPeers**: Uses `>=` floor ranges for 0.x `@effect/*` packages because caret
+  ranges on 0.x versions (`^0.94.0` = `>=0.94.0 <0.95.0`) would not overlap with
+  the `silk` version. The `>=` convention matches existing patterns in
+  github-action-effects (e.g., `@effect/platform: >=0.94.0`). For `effect` itself
+  (3.x), `^3.19.0` correctly includes 3.20.x, so caret is used.
+
+### Coordinated Releases
+
+Effect packages are released in coordinated batches — all packages in a release
+share compatible versions. When updating silk catalogs, all 14 entries should be
+updated together as a batch to maintain compatibility.
 
 ### Out of Scope
 
@@ -116,8 +125,14 @@ Repos audited: 30+ across savvy-web and spencerbeggs workspaces.
 1. Run `pnpm install` after updating workspace YAML to verify all ranges resolve
    without conflicts
 2. Run `pnpm run generate:catalogs` to regenerate TypeScript
-3. Run `pnpm run test` to confirm existing tests pass
+3. Run `pnpm run test` to confirm existing tests pass (update any tests that
+   assert on catalog entry counts or specific keys)
 4. Run `pnpm run build` to verify the generated bundle is correct
+
+### Versioning
+
+This is a minor version bump (new catalog entries, no breaking changes). A
+changeset should accompany the PR.
 
 ### Ordering
 
