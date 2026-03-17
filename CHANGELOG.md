@@ -1,5 +1,18 @@
 # @savvy-web/pnpm-plugin-silk
 
+## 0.9.0
+
+### Features
+
+* [`271ad35`](https://github.com/savvy-web/pnpm-plugin-silk/commit/271ad35e1074ece2a1c4ef8b8dd1d67e02453064) Add 13 Effect ecosystem packages to silk and silkPeers catalogs for centralized
+  version management: effect, @effect/platform, @effect/platform-node,
+  @effect/platform-bun, @effect/cli, @effect/opentelemetry, @effect/printer,
+  @effect/printer-ansi, @effect/typeclass, @effect/language-service,
+  @effect/cluster, @effect/rpc, @effect/sql.
+
+silkPeers uses >= floor ranges for 0.x @effect/\* packages to correctly handle
+semver caret behavior on pre-1.0 versions.
+
 ## 0.8.0
 
 ### Features
