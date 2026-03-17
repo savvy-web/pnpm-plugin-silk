@@ -3,8 +3,8 @@ status: current
 module: pnpm-plugin-silk
 category: architecture
 created: 2026-02-03
-updated: 2026-02-06
-last-synced: 2026-02-06
+updated: 2026-03-17
+last-synced: 2026-03-17
 completeness: 98
 related: []
 dependencies: []
@@ -27,8 +27,9 @@ catalogs, patches, and overrides across multiple Silk ecosystem repositories.
 5. [Data Flow](#data-flow)
 6. [Integration Points](#integration-points)
 7. [Testing Strategy](#testing-strategy)
-8. [Future Enhancements](#future-enhancements)
-9. [Related Documentation](#related-documentation)
+8. [Effect Ecosystem Version Strategy](#effect-ecosystem-version-strategy)
+9. [Future Enhancements](#future-enhancements)
+10. [Related Documentation](#related-documentation)
 
 ---
 
@@ -1020,6 +1021,104 @@ describe("mergeCatalogs", () => {
 - Catalog resolution in lockfile
 - Local override behavior
 - Error recovery (malformed plugin doesn't break install)
+
+---
+
+## Effect Ecosystem Version Strategy
+
+The Silk plugin manages 13 Effect ecosystem packages across the `silk` and `silkPeers` catalogs,
+providing centralized version control for Effect dependencies across all consuming repositories.
+
+### Effect Ecosystem Catalogs
+
+The 13 managed Effect packages span four functional groups:
+
+**Core:**
+
+- `effect` - The core Effect runtime (3.x, stable semver)
+- `@effect/platform` - Cross-platform abstractions
+- `@effect/platform-node` - Node.js platform implementation
+- `@effect/platform-bun` - Bun platform implementation
+
+**CLI Tooling:**
+
+- `@effect/cli` - CLI application framework
+- `@effect/printer` - Pretty-printing combinators
+- `@effect/printer-ansi` - ANSI terminal output
+
+**Telemetry:**
+
+- `@effect/opentelemetry` - OpenTelemetry integration
+
+**Foundational:**
+
+- `@effect/typeclass` - Typeclass definitions
+- `@effect/language-service` - TypeScript language service plugin
+
+**Platform Peers:**
+
+- `@effect/cluster` - Distributed clustering
+- `@effect/rpc` - Remote procedure calls
+- `@effect/sql` - SQL database abstractions
+
+### Range Strategy for 0.x Packages
+
+For `@effect/*` packages (all currently at 0.x), the `silkPeers` catalog uses `>=` floor-only
+ranges instead of the standard `^` caret ranges used for most other packages. This is a deliberate
+choice driven by how semver handles pre-1.0 versions:
+
+- **`^0.x.y` in semver** means `>=0.x.y <0.(x+1).0`, which restricts updates to patch-only. If the
+  `silk` catalog pins `@effect/platform` at `0.88.0` and the `silkPeers` catalog used `^0.87.0`,
+  the peer range would resolve to `>=0.87.0 <0.88.0`, which would NOT overlap with the silk version
+  one minor ahead. This breaks the fundamental contract that `silkPeers` ranges must always include
+  the `silk` pinned version.
+
+- **`>=0.x.y` (floor-only)** avoids the upper bound entirely, allowing any version at or above the
+  floor. This ensures forward compatibility as new Effect versions are released.
+
+This convention matches the Effect ecosystem's own established pattern. For example,
+`github-action-effects` declares `@effect/platform: >=0.94.0` as a peer dependency.
+
+For `effect` itself (currently at 3.x), the standard `^` caret range works correctly because
+`^3.x.y` means `>=3.x.y <4.0.0`, which provides the expected minor+patch flexibility.
+
+### Coordinated Releases
+
+Effect packages are released in coordinated batches where all packages in a release share
+compatible versions. A release of `effect@3.15.0` will be accompanied by corresponding compatible
+versions of all `@effect/*` packages.
+
+When updating the silk catalogs, all 13 Effect package entries should be updated together as a
+single batch to maintain cross-package compatibility. Updating a subset of Effect packages
+independently risks version incompatibilities between the Effect modules.
+
+### Version Management
+
+All 13 Effect packages are added as `devDependencies` in `pnpm-plugin-silk`'s own `package.json`
+using `catalog:silk` references. This enables the standard version update workflow:
+
+```bash
+pnpm up -i -r --latest
+```
+
+Running this command updates the pinned versions in `pnpm-workspace.yaml`, which are then picked up
+by the `generate:catalogs` script during the next build. The updated versions propagate to all
+consuming repositories on the next plugin release.
+
+This approach ensures that the plugin's own dependency resolution validates that all 13 Effect
+packages resolve to compatible versions before they are published to consumers.
+
+### Excluded Effect Packages
+
+Two Effect packages are intentionally excluded from the silk catalogs:
+
+- **`@effect/vitest`** - Excluded because each repository manages its own test framework version.
+  Test runner versions are tightly coupled to local test configuration and should not be centrally
+  dictated.
+
+- **`@effect/schema`** - Excluded because its functionality was merged into the `effect` core
+  package. No repositories in the Savvy Web ecosystem use `@effect/schema` as a standalone
+  dependency.
 
 ---
 
