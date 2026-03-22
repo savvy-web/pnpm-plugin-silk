@@ -25,8 +25,12 @@ centralized catalog management across the Savvy Web ecosystem.
 
 - Architecture: `@./.claude/design/pnpm-plugin-silk/catalog-management.md`
   Load when: adding catalog entries, modifying merge logic, debugging resolution,
-  adding security overrides, modifying Biome schema sync
+  adding security overrides, modifying Biome schema sync, understanding Effect
+  catalog resolver architecture
 - Implementation Plan: `@./.claude/plans/pnpm-plugin-silk-mvp.md` (completed)
+- Effect Catalog Resolver:
+  `@./.claude/skills/effect-catalog-resolver/SKILL.md`
+  Load when: updating Effect ecosystem packages, checking version compatibility
 
 ## Commands
 

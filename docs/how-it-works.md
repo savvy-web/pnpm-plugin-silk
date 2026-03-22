@@ -79,6 +79,28 @@ The bundle is built with [rslib-builder](https://github.com/savvy-web/pnpm-modul
 using the `virtualEntries` feature to produce a CommonJS output from ESM
 TypeScript source.
 
+## Effect Ecosystem Version Resolution
+
+The plugin manages 19 Effect ecosystem packages that are released in coordinated
+batches. All packages in a release share compatible versions, so the silk
+catalogs update all 19 entries together as a single batch.
+
+The `effect-catalog-resolver` Claude Code skill (`/effect-catalog-resolver`)
+automates this process:
+
+1. **Discovery** - Queries the npm registry to find all `@effect/*` packages
+   (50+ total)
+2. **Metadata fetch** - Retrieves per-version peer dependency data for each
+   package
+3. **Version resolution** - Anchors on the latest `effect` core release and
+   iteratively resolves compatible versions for all tracked packages
+4. **Proposal** - Compares resolved versions against current catalog entries and
+   presents a report with updates, new packages, and any conflicts
+
+The resolver uses a deterministic script-driven approach rather than LLM
+reasoning, because version compatibility is a constraint-satisfaction problem
+best solved algorithmically.
+
 ## Error Handling
 
 The plugin is designed to never break `pnpm install`:
