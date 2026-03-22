@@ -37,6 +37,42 @@ Permissive version ranges for peer dependencies. Use in `peerDependencies`:
 The `silkPeers` catalog uses wider ranges so consuming packages do not force
 users to upgrade immediately.
 
+## Effect Ecosystem Packages
+
+The plugin manages 19 Effect ecosystem packages across both catalogs, organized
+into six functional groups:
+
+| Group | Packages |
+| :---- | :------- |
+| Core | `effect`, `@effect/platform`, `@effect/platform-node`, `@effect/platform-bun` |
+| AI | `@effect/ai`, `@effect/ai-anthropic`, `@effect/ai-openai` |
+| CLI Tooling | `@effect/cli`, `@effect/printer`, `@effect/printer-ansi` |
+| Telemetry | `@effect/opentelemetry` |
+| Foundational | `@effect/typeclass`, `@effect/language-service`, `@effect/experimental` |
+| Platform Peers | `@effect/cluster`, `@effect/rpc`, `@effect/sql`, `@effect/sql-sqlite-node`, `@effect/workflow` |
+
+All Effect packages are updated together as a coordinated batch to maintain
+cross-package compatibility. The `effect-catalog-resolver` Claude Code skill
+automates this process by discovering 50+ `@effect/*` packages from npm,
+resolving peer dependency compatibility, and proposing updates.
+
+### Version ranges for 0.x Effect packages
+
+For `@effect/*` packages (all currently at 0.x), the `silkPeers` catalog uses
+`>=` floor-only ranges instead of `^` caret ranges. This is necessary because
+`^0.x.y` in semver restricts updates to patch-only (`>=0.x.y <0.(x+1).0`),
+which would not overlap with the `silk` pinned version one minor version ahead.
+
+For `effect` itself (currently at 3.x), the standard `^` caret range works
+correctly.
+
+### Excluded Effect packages
+
+Two Effect packages are intentionally excluded:
+
+- **`@effect/vitest`** - Test runner versions are managed per-repository
+- **`@effect/schema`** - Functionality merged into `effect` core
+
 ## Security Overrides
 
 The plugin injects pnpm `overrides` for known CVEs in transitive dependencies.

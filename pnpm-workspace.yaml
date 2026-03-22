@@ -3,40 +3,52 @@ packages:
 autoInstallPeers: true
 catalogs:
   silk:
-    "@effect/cli": ^0.74.0
-    "@effect/cluster": ^0.57.0
-    "@effect/language-service": ^0.80.0
-    "@effect/opentelemetry": ^0.62.0
-    "@effect/platform": ^0.95.0
-    "@effect/platform-bun": ^0.88.0
-    "@effect/platform-node": ^0.105.0
-    "@effect/printer": ^0.48.0
-    "@effect/printer-ansi": ^0.48.0
-    "@effect/rpc": ^0.74.0
-    "@effect/sql": ^0.50.0
-    "@effect/typeclass": ^0.39.0
+    "@effect/ai": ^0.35.0
+    "@effect/ai-anthropic": ^0.25.0
+    "@effect/ai-openai": ^0.39.0
+    "@effect/cli": ^0.75.0
+    "@effect/cluster": ^0.58.0
+    "@effect/experimental": ^0.60.0
+    "@effect/language-service": ^0.81.0
+    "@effect/opentelemetry": ^0.63.0
+    "@effect/platform": ^0.96.0
+    "@effect/platform-bun": ^0.89.0
+    "@effect/platform-node": ^0.106.0
+    "@effect/printer": ^0.49.0
+    "@effect/printer-ansi": ^0.49.0
+    "@effect/rpc": ^0.75.0
+    "@effect/sql": ^0.51.0
+    "@effect/sql-sqlite-node": ^0.52.0
+    "@effect/typeclass": ^0.40.0
+    "@effect/workflow": ^0.18.0
     "@types/node": ^25.5.0
-    "@typescript/native-preview": 7.0.0-dev.20260317.1
-    effect: ^3.20.0
+    "@typescript/native-preview": ^7.0.0-dev.20260321.1
+    effect: ^3.21.0
     husky: ^9.1.7
     tsx: ^4.21.0
     typescript: ^5.9.3
   silkPeers:
-    "@effect/cli": ">=0.73.0"
-    "@effect/cluster": ">=0.56.0"
-    "@effect/language-service": ">=0.79.0"
-    "@effect/opentelemetry": ">=0.61.0"
-    "@effect/platform": ">=0.94.0"
-    "@effect/platform-bun": ">=0.87.0"
-    "@effect/platform-node": ">=0.104.0"
-    "@effect/printer": ">=0.47.0"
-    "@effect/printer-ansi": ">=0.47.0"
-    "@effect/rpc": ">=0.73.0"
-    "@effect/sql": ">=0.49.0"
-    "@effect/typeclass": ">=0.38.0"
-    "@types/node": ^25.2.0
+    "@effect/ai": ">=0.35.0"
+    "@effect/ai-anthropic": ">=0.25.0"
+    "@effect/ai-openai": ">=0.39.0"
+    "@effect/cli": ">=0.75.0"
+    "@effect/cluster": ">=0.58.0"
+    "@effect/experimental": ">=0.60.0"
+    "@effect/language-service": ">=0.81.0"
+    "@effect/opentelemetry": ">=0.63.0"
+    "@effect/platform": ">=0.96.0"
+    "@effect/platform-bun": ">=0.89.0"
+    "@effect/platform-node": ">=0.106.0"
+    "@effect/printer": ">=0.49.0"
+    "@effect/printer-ansi": ">=0.49.0"
+    "@effect/rpc": ">=0.75.0"
+    "@effect/sql": ">=0.51.0"
+    "@effect/sql-sqlite-node": ">=0.52.0"
+    "@effect/typeclass": ">=0.40.0"
+    "@effect/workflow": ">=0.18.0"
+    "@types/node": ^25.5.0
     "@typescript/native-preview": ^7.0.0-dev.20260124.1
-    effect: ^3.19.0
+    effect: ">=3.21.0"
     husky: ^9.1.0
     tsx: ^4.21.0
     typescript: ^5.9.3
@@ -48,6 +60,7 @@ onlyBuiltDependencies:
   - "@savvy-web/github-action-builder"
   - "@savvy-web/lint-staged"
   - "@savvy-web/vitest"
+  - better-sqlite3
   - core-js
   - esbuild
   - msgpackr-extract
@@ -76,3 +89,4 @@ publicHoistPattern:
   - turbo
   - typescript
   - vitest
+  - vitest-agent-reporter

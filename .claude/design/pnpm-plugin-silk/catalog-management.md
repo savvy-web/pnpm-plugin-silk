@@ -3,8 +3,8 @@ status: current
 module: pnpm-plugin-silk
 category: architecture
 created: 2026-02-03
-updated: 2026-03-17
-last-synced: 2026-03-17
+updated: 2026-03-21
+last-synced: 2026-03-21
 completeness: 98
 related: []
 dependencies: []
@@ -28,8 +28,9 @@ catalogs, patches, and overrides across multiple Silk ecosystem repositories.
 6. [Integration Points](#integration-points)
 7. [Testing Strategy](#testing-strategy)
 8. [Effect Ecosystem Version Strategy](#effect-ecosystem-version-strategy)
-9. [Future Enhancements](#future-enhancements)
-10. [Related Documentation](#related-documentation)
+9. [Effect Catalog Resolver Skill](#effect-catalog-resolver-skill)
+10. [Future Enhancements](#future-enhancements)
+11. [Related Documentation](#related-documentation)
 
 ---
 
@@ -1026,12 +1027,14 @@ describe("mergeCatalogs", () => {
 
 ## Effect Ecosystem Version Strategy
 
-The Silk plugin manages 13 Effect ecosystem packages across the `silk` and `silkPeers` catalogs,
+The Silk plugin manages 19 Effect ecosystem packages across the `silk` and `silkPeers` catalogs,
 providing centralized version control for Effect dependencies across all consuming repositories.
+Version updates are managed via the [effect-catalog-resolver](#effect-catalog-resolver-skill)
+Claude Code skill, which automates discovery, compatibility checking, and catalog updates.
 
 ### Effect Ecosystem Catalogs
 
-The 13 managed Effect packages span four functional groups:
+The 19 managed Effect packages span six functional groups:
 
 **Core:**
 
@@ -1039,6 +1042,12 @@ The 13 managed Effect packages span four functional groups:
 - `@effect/platform` - Cross-platform abstractions
 - `@effect/platform-node` - Node.js platform implementation
 - `@effect/platform-bun` - Bun platform implementation
+
+**AI:**
+
+- `@effect/ai` - AI provider abstractions
+- `@effect/ai-anthropic` - Anthropic provider implementation
+- `@effect/ai-openai` - OpenAI provider implementation
 
 **CLI Tooling:**
 
@@ -1054,12 +1063,15 @@ The 13 managed Effect packages span four functional groups:
 
 - `@effect/typeclass` - Typeclass definitions
 - `@effect/language-service` - TypeScript language service plugin
+- `@effect/experimental` - Experimental features and APIs
 
 **Platform Peers:**
 
 - `@effect/cluster` - Distributed clustering
 - `@effect/rpc` - Remote procedure calls
 - `@effect/sql` - SQL database abstractions
+- `@effect/sql-sqlite-node` - SQLite Node.js implementation
+- `@effect/workflow` - Workflow orchestration
 
 ### Range Strategy for 0.x Packages
 
@@ -1088,13 +1100,15 @@ Effect packages are released in coordinated batches where all packages in a rele
 compatible versions. A release of `effect@3.15.0` will be accompanied by corresponding compatible
 versions of all `@effect/*` packages.
 
-When updating the silk catalogs, all 13 Effect package entries should be updated together as a
-single batch to maintain cross-package compatibility. Updating a subset of Effect packages
-independently risks version incompatibilities between the Effect modules.
+When updating the silk catalogs, all 19 Effect package entries should be updated together as a
+single batch to maintain cross-package compatibility. The
+[effect-catalog-resolver](#effect-catalog-resolver-skill) skill automates this process by resolving
+a compatible version set anchored on the latest `effect` core release. Updating a subset of Effect
+packages independently risks version incompatibilities between the Effect modules.
 
 ### Version Management
 
-All 13 Effect packages are added as `devDependencies` in `pnpm-plugin-silk`'s own `package.json`
+All 19 Effect packages are added as `devDependencies` in `pnpm-plugin-silk`'s own `package.json`
 using `catalog:silk` references. This enables the standard version update workflow:
 
 ```bash
@@ -1105,7 +1119,7 @@ Running this command updates the pinned versions in `pnpm-workspace.yaml`, which
 by the `generate:catalogs` script during the next build. The updated versions propagate to all
 consuming repositories on the next plugin release.
 
-This approach ensures that the plugin's own dependency resolution validates that all 13 Effect
+This approach ensures that the plugin's own dependency resolution validates that all 19 Effect
 packages resolve to compatible versions before they are published to consumers.
 
 ### Excluded Effect Packages
@@ -1119,6 +1133,147 @@ Two Effect packages are intentionally excluded from the silk catalogs:
 - **`@effect/schema`** - Excluded because its functionality was merged into the `effect` core
   package. No repositories in the Savvy Web ecosystem use `@effect/schema` as a standalone
   dependency.
+
+---
+
+## Effect Catalog Resolver Skill
+
+The effect-catalog-resolver is a Claude Code skill (`.claude/skills/effect-catalog-resolver/`) that
+automates the discovery, compatibility resolution, and catalog update workflow for all Effect
+ecosystem packages. It replaces manual version coordination with a deterministic, script-driven
+approach.
+
+### Architecture
+
+The skill consists of two components:
+
+1. **SKILL.md** - Agent workflow instructions defining the interaction protocol (report presentation,
+   approval flow, edit formatting)
+2. **resolve-effect-versions.ts** - A ~445-line TypeScript script (runs via Bun) that performs all
+   discovery, resolution, and output generation
+
+The key design decision was to use a **script-driven approach** (deterministic resolution) rather
+than an **agent-driven approach** (LLM reasoning about versions). Version compatibility is a
+constraint-satisfaction problem with well-defined rules, making deterministic resolution more
+reliable and reproducible than LLM inference.
+
+### Resolution Pipeline
+
+The script executes a four-stage pipeline:
+
+```text
+[1. Discovery]                    [2. Metadata Fetch]
+npm registry search API           Full packument for each package
++ current catalog entries    -->  Per-version peer deps stored
+= complete package list           for constraint walking
+
+[3. Version Resolution]           [4. Output Generation]
+Anchor on effect@latest           Compare resolved vs current
+Iterative constraint solving -->  Classify: tracked/untracked/conflict
+(up to 5 passes)                  Derive silkPeers minimums
+Cross-package peer dep checks     Structured JSON to stdout
+```
+
+**Stage 1 - Discovery:** Queries `https://registry.npmjs.org/-/v1/search?text=%40effect&size=250`
+to find all `@effect/*` packages. Supplements with currently tracked packages to ensure nothing is
+missed if the search API returns incomplete results. Always includes `effect` core.
+
+**Stage 2 - Metadata Fetch:** For each discovered package, fetches the full packument from
+`https://registry.npmjs.org/<pkg>`. Extracts per-version peer dependency data for all stable
+(non-prerelease) versions. This per-version data is critical for walking back to compatible older
+versions when the latest version has incompatible constraints.
+
+**Stage 3 - Version Resolution:** Anchors on the latest `effect` core version. Packages without
+Effect peer dependencies are resolved to their latest version immediately. Packages with Effect
+peer dependencies enter an iterative resolution loop (maximum 5 passes) that:
+
+- Attempts to use each package's latest version if compatible with the current resolved set
+- Falls back to `findCompatibleVersion()` which walks backwards through stable versions testing
+  peer dep satisfaction
+- Removes packages from the resolved set if no compatible version exists
+- Converges when no changes occur in a pass
+
+After convergence, any packages still failing compatibility checks are reported as conflicts with
+their blocker details and best-available compatible version (if any).
+
+**Stage 4 - Output Generation:** Compares resolved versions against current `pnpm-workspace.yaml`
+catalog entries. Derives `silkPeers` minimums from peer dependency floor analysis (highest floor
+across all packages that peer-depend on a given package). Classifies packages as tracked (in
+current catalogs), untracked (discovered but not in catalogs), or conflicted.
+
+### Version Range Strategy
+
+The resolver applies the same range conventions documented in the
+[Range Strategy for 0.x Packages](#range-strategy-for-0x-packages) section:
+
+- **silk catalog:** `^x.y.z` for all Effect packages (caret range)
+- **silkPeers catalog:** `>=x.y.z` for `@effect/*` 0.x packages (floor-only range), `^x.y.z` for
+  `effect` core (3.x, where caret works correctly)
+
+The `silkPeers` minimum for each package is derived from the highest peer dependency floor declared
+by any other resolved package. For example, if `@effect/cli@0.75.0` declares
+`@effect/platform: ">=0.96.0"` as a peer dependency, then the silkPeers entry for
+`@effect/platform` will be at least `>=0.96.0`.
+
+### Agent Workflow
+
+When the skill is invoked:
+
+1. The agent runs the resolution script with a 60-second timeout
+2. The script outputs structured JSON to stdout (diagnostics go to stderr)
+3. The agent presents a report with three sections:
+   - **Updates Available** - Table of tracked packages with version changes
+   - **New Packages** - Untracked `@effect/*` packages (informational only)
+   - **Conflicts** - Incompatible packages with blocker details
+4. On user approval, the agent edits `pnpm-workspace.yaml` using the Edit tool
+5. Formatting is preserved: silk entries use bare values (`^0.75.0`), silkPeers Effect entries use
+   quoted values (`">=0.74.0"`)
+6. Only already-tracked packages are updated; untracked packages are shown as informational
+
+### Design Decisions
+
+#### Decision 1: Script-Driven vs. Agent-Driven Resolution
+
+**Context:** Need to resolve compatible Effect ecosystem versions for catalog updates.
+
+**Options considered:**
+
+1. **Option A (Chosen): Deterministic TypeScript script**
+   - Pros: Reproducible results, fast execution, testable, no LLM token cost for resolution logic
+   - Cons: Requires maintaining resolution algorithm, less flexible for edge cases
+   - Why chosen: Version compatibility is a constraint-satisfaction problem best solved
+     deterministically
+
+2. **Option B: Agent reasons about versions using npm CLI**
+   - Pros: Flexible, can handle novel situations, no script maintenance
+   - Cons: Non-deterministic, slow (multiple LLM turns), expensive, error-prone for constraint
+     solving
+   - Why rejected: LLMs are not reliable at semver constraint satisfaction
+
+#### Decision 2: npm Registry HTTP API vs. npm CLI
+
+**Context:** Need to discover packages and fetch metadata.
+
+**Options considered:**
+
+1. **Option A (Chosen): Direct HTTP API calls**
+   - Pros: Faster (single packument fetch per package), full per-version data, no CLI overhead
+   - Cons: Must handle HTTP errors, parse JSON manually
+   - Why chosen: Per-version peer deps from packument data are essential for the resolution
+     algorithm; npm CLI does not expose this data efficiently
+
+2. **Option B: `npm view` and `npm search` CLI commands**
+   - Pros: Simpler interface, handles authentication
+   - Cons: Multiple CLI invocations, limited per-version data, slow
+   - Why rejected: Cannot efficiently access per-version peer dependency data
+
+#### Decision 3: Iterative Resolution with Fixed Iteration Cap
+
+**Context:** Cross-package dependencies can create circular resolution needs.
+
+**Why 5 iterations:** Effect packages typically have shallow dependency chains (most depend only on
+`effect` core and possibly `@effect/platform`). In practice, resolution converges in 1-2 passes.
+The cap of 5 provides safety margin without risk of infinite loops.
 
 ---
 
@@ -1190,7 +1345,36 @@ New type declarations:
 Bundle size impact: `pnpmfile.cjs` grew from ~4KB to ~73KB due to bundled `jsonc-parser` and
 `parse-gitignore` libraries.
 
-### Phase 4: Patch Distribution (v1.2.0)
+### Phase 4: Effect Catalog Resolver (v0.5.0) - COMPLETE
+
+- **Automated version resolution** - Claude Code skill that discovers all Effect ecosystem packages
+  from the npm registry, resolves a compatible latest version set, and proposes catalog updates
+- **Script-driven approach** - Deterministic TypeScript resolution script (~445 lines, runs via Bun)
+  rather than LLM-driven version reasoning
+- **Per-version peer dep analysis** - Fetches full packument data to enable walking back to
+  compatible older versions when latest has incompatible constraints
+- **Iterative constraint solving** - Up to 5 resolution passes to handle cross-package dependencies
+- **silkPeers derivation** - Automatically derives minimum peer ranges from peer dependency floor
+  analysis across all resolved packages
+
+**Implementation Details:**
+
+The skill lives at `.claude/skills/effect-catalog-resolver/` with two files:
+
+- `SKILL.md` - Agent workflow definition (report format, approval flow, edit formatting rules)
+- `scripts/resolve-effect-versions.ts` - Resolution script with four-stage pipeline: discovery,
+  metadata fetch, version resolution, and output generation
+
+The resolver uses the npm registry HTTP API directly (`registry.npmjs.org`) rather than the npm CLI,
+enabling efficient access to per-version peer dependency data from packument responses. Output is
+structured JSON consumed by the agent for report presentation and `pnpm-workspace.yaml` editing.
+
+Current catalog state after initial use: 19 tracked Effect packages (expanded from 13), all at
+latest compatible versions anchored on `effect@3.21.0`. Added packages: `@effect/ai`,
+`@effect/ai-anthropic`, `@effect/ai-openai`, `@effect/experimental`, `@effect/workflow`,
+`@effect/sql-sqlite-node`.
+
+### Phase 5: Patch Distribution (v1.2.0)
 
 - **Centralized patches** - Store patch files in plugin package
 - **Patch references** - Plugin sets `patchedDependencies` pointing to bundled patches
@@ -1206,7 +1390,7 @@ patchedDependencies:
 
 The patch files are bundled inside the plugin package and referenced via the config dependency path.
 
-### Phase 5: Advanced Features (v2.0.0)
+### Phase 6: Advanced Features (v2.0.0)
 
 - **Conditional catalogs** - Different catalogs based on repo type or Node version
 - **Catalog validation** - Verify catalog entries resolve to valid packages
@@ -1232,6 +1416,11 @@ Areas that may need refactoring in the future:
 
 - (Future) [Patch Management](./patch-management.md) - Centralized patch distribution
 
+**Claude Code Skills:**
+
+- `.claude/skills/effect-catalog-resolver/SKILL.md` - Effect version resolution workflow
+- `.claude/skills/effect-catalog-resolver/scripts/resolve-effect-versions.ts` - Resolution script
+
 **Package Documentation:**
 
 - `README.md` - Package overview and usage instructions
@@ -1247,9 +1436,9 @@ Areas that may need refactoring in the future:
 ---
 
 **Document Status:** Current (98% complete) - MVP + Security Overrides + Build Config Sync + Biome
-Schema Sync complete
+Schema Sync + Effect Catalog Resolver complete
 
-**Synced:** 2026-02-06
+**Synced:** 2026-03-21
 
 **Implementation Summary:**
 
@@ -1266,6 +1455,9 @@ Schema Sync complete
 - Comment-preserving JSONC edits via `jsonc-parser` for `$schema` URL updates
 - `.gitignore` pattern parsing via `parse-gitignore` for file discovery exclusions
 - Type declarations for `parse-gitignore` at `types/parse-gitignore.d.ts`
+- Effect catalog resolver skill (`.claude/skills/effect-catalog-resolver/`) for automated version
+  resolution via npm registry API, iterative constraint solving, and silkPeers derivation
+- 19 Effect ecosystem packages tracked in silk/silkPeers catalogs (expanded from 13 via resolver)
 - 51 unit tests passing (7 catalog + 17 config merge + 4 warning format + 8 extractSemver +
   4 shouldSync + 2 parseGitignore + 2 findBiomeConfigs + 7 syncBiomeSchema)
 
@@ -1316,4 +1508,4 @@ Schema Sync complete
 
 1. Publish initial version to npm
 2. Test as config dependency in another repo
-3. Phase 4: Add patch distribution
+3. Phase 5: Add patch distribution
