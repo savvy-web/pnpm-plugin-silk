@@ -1,5 +1,11 @@
 # @savvy-web/pnpm-plugin-silk
 
+## 0.10.1
+
+### Bug Fixes
+
+* [`30c4c35`](https://github.com/savvy-web/pnpm-plugin-silk/commit/30c4c35affe6ba099fc469cae90ce9fe9966a26d) Reverts to distributing Biome version through config dependency system
+
 ## 0.10.0
 
 ### Features
