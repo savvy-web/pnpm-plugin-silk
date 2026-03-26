@@ -64,7 +64,7 @@ catalogs:
       specifier: ^0.18.0
       version: 0.18.0
     '@typescript/native-preview':
-      specifier: 7.0.0-dev.20260326.1
+      specifier: ^7.0.0-dev.20260326.1
       version: 7.0.0-dev.20260326.1
     effect:
       specifier: ^3.21.0
