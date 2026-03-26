@@ -2,12 +2,9 @@
  * Biome schema URL synchronization for config files.
  *
  * @remarks
- * When the silk plugin manages `@biomejs/biome`, consuming repos may have
- * stale `$schema` URLs in their `biome.json`/`biome.jsonc` files. This module
- * detects and updates those URLs to match the catalog version.
- *
- * Only activates when `@savvy-web/lint-staged` is a dependency of the
- * workspace root, indicating the repo uses the Silk linting stack.
+ * The silk catalog pins `@biomejs/biome` to a specific version. Consuming repos
+ * may have stale `$schema` URLs in their `biome.json`/`biome.jsonc` files. This
+ * module detects and updates those URLs to match the catalog version.
  *
  * Uses Node's built-in `fs.promises.glob` with `.gitignore`-aware exclusions
  * via `parse-gitignore` to efficiently locate config files.
@@ -35,27 +32,6 @@ const BIOME_GLOB_PATTERN = "**/biome.{json,jsonc}";
  */
 export function extractSemver(versionRange: string): string {
 	return versionRange.replace(/^[^\d]*/, "");
-}
-
-/**
- * Check whether biome schema sync should run for the given workspace.
- *
- * @param workspaceRoot - Absolute path to the workspace root
- * @returns `true` if `@savvy-web/lint-staged` is declared as a dependency
- *
- * @internal
- */
-export async function shouldSyncBiomeSchema(workspaceRoot: string): Promise<boolean> {
-	try {
-		const pkgPath = join(workspaceRoot, "package.json");
-		const pkgJson = JSON.parse(await readFile(pkgPath, "utf-8"));
-		return (
-			pkgJson.dependencies?.["@savvy-web/lint-staged"] !== undefined ||
-			pkgJson.devDependencies?.["@savvy-web/lint-staged"] !== undefined
-		);
-	} catch {
-		return false;
-	}
 }
 
 /**
@@ -111,10 +87,9 @@ function buildSchemaUrl(version: string): string {
  * Synchronize biome config `$schema` URLs with the catalog version.
  *
  * @remarks
- * Only runs when the workspace root has `@savvy-web/lint-staged` as a
- * dependency. Finds all `biome.json`/`biome.jsonc` files, compares their
- * `$schema` URL version against the catalog version, and updates mismatches
- * using comment-preserving JSONC edits.
+ * Finds all `biome.json`/`biome.jsonc` files, compares their `$schema` URL
+ * version against the catalog version, and updates mismatches using
+ * comment-preserving JSONC edits.
  *
  * @param workspaceRoot - Absolute path to the workspace root
  * @param biomeVersion - The biome version from the silk catalog (may include range prefix)
@@ -123,10 +98,6 @@ function buildSchemaUrl(version: string): string {
  */
 export async function syncBiomeSchema(workspaceRoot: string, biomeVersion: string): Promise<void> {
 	try {
-		if (!(await shouldSyncBiomeSchema(workspaceRoot))) {
-			return;
-		}
-
 		const version = extractSemver(biomeVersion);
 		const expectedUrl = buildSchemaUrl(version);
 		const configs = await findBiomeConfigs(workspaceRoot);

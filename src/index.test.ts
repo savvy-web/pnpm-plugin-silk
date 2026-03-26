@@ -1,13 +1,7 @@
 import { glob, readFile, writeFile } from "node:fs/promises";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { silkCatalogs } from "./catalogs/index.js";
-import {
-	extractSemver,
-	findBiomeConfigs,
-	parseGitignorePatterns,
-	shouldSyncBiomeSchema,
-	syncBiomeSchema,
-} from "./hooks/sync-biome-schema.js";
+import { extractSemver, findBiomeConfigs, parseGitignorePatterns, syncBiomeSchema } from "./hooks/sync-biome-schema.js";
 import type { PnpmConfig } from "./hooks/update-config.js";
 import { updateConfig } from "./hooks/update-config.js";
 import type { Override } from "./hooks/warnings.js";
@@ -415,32 +409,6 @@ describe("extractSemver", () => {
 	});
 });
 
-describe("shouldSyncBiomeSchema", () => {
-	afterEach(() => {
-		mockedReadFile.mockReset();
-	});
-
-	it("returns true when @savvy-web/lint-staged is in devDependencies", async () => {
-		mockedReadFile.mockResolvedValueOnce(JSON.stringify({ devDependencies: { "@savvy-web/lint-staged": "^0.3.0" } }));
-		expect(await shouldSyncBiomeSchema("/fake/root")).toBe(true);
-	});
-
-	it("returns true when @savvy-web/lint-staged is in dependencies", async () => {
-		mockedReadFile.mockResolvedValueOnce(JSON.stringify({ dependencies: { "@savvy-web/lint-staged": "^0.3.0" } }));
-		expect(await shouldSyncBiomeSchema("/fake/root")).toBe(true);
-	});
-
-	it("returns false when @savvy-web/lint-staged is absent", async () => {
-		mockedReadFile.mockResolvedValueOnce(JSON.stringify({ devDependencies: { vitest: "^4.0.0" } }));
-		expect(await shouldSyncBiomeSchema("/fake/root")).toBe(false);
-	});
-
-	it("returns false when package.json cannot be read", async () => {
-		mockedReadFile.mockRejectedValueOnce(new Error("ENOENT"));
-		expect(await shouldSyncBiomeSchema("/fake/root")).toBe(false);
-	});
-});
-
 describe("parseGitignorePatterns", () => {
 	afterEach(() => {
 		mockedReadFile.mockReset();
@@ -546,19 +514,9 @@ describe("syncBiomeSchema", () => {
 		mockedWriteFile.mockResolvedValue();
 	}
 
-	it("skips sync when @savvy-web/lint-staged not in package.json", async () => {
-		mockedReadFile.mockResolvedValueOnce(JSON.stringify({ devDependencies: {} }));
-
-		await syncBiomeSchema("/fake/root", "^2.3.14");
-
-		expect(mockedGlob).not.toHaveBeenCalled();
-		expect(mockedWriteFile).not.toHaveBeenCalled();
-	});
-
 	it("updates $schema URL when version mismatches", async () => {
 		const oldContent = '{\n\t"$schema": "https://biomejs.dev/schemas/2.3.10/schema.json",\n\t"root": true\n}\n';
 		mockFs({
-			"package.json": JSON.stringify({ devDependencies: { "@savvy-web/lint-staged": "^0.3.0" } }),
 			".gitignore": "node_modules\n",
 			"biome.json": oldContent,
 		});
@@ -576,7 +534,6 @@ describe("syncBiomeSchema", () => {
 		const jsoncContent =
 			'{\n\t// Biome configuration\n\t"$schema": "https://biomejs.dev/schemas/2.3.10/schema.json",\n\t"root": true\n}\n';
 		mockFs({
-			"package.json": JSON.stringify({ devDependencies: { "@savvy-web/lint-staged": "^0.3.0" } }),
 			".gitignore": "",
 			"biome.jsonc": jsoncContent,
 		});
@@ -592,7 +549,6 @@ describe("syncBiomeSchema", () => {
 
 	it("handles missing $schema field gracefully (no-op)", async () => {
 		mockFs({
-			"package.json": JSON.stringify({ devDependencies: { "@savvy-web/lint-staged": "^0.3.0" } }),
 			".gitignore": "",
 			"biome.json": '{\n\t"root": true\n}\n',
 		});
@@ -605,7 +561,6 @@ describe("syncBiomeSchema", () => {
 
 	it("skips files already at correct version", async () => {
 		mockFs({
-			"package.json": JSON.stringify({ devDependencies: { "@savvy-web/lint-staged": "^0.3.0" } }),
 			".gitignore": "",
 			"biome.json": '{\n\t"$schema": "https://biomejs.dev/schemas/2.3.14/schema.json",\n\t"root": true\n}\n',
 		});
@@ -618,7 +573,6 @@ describe("syncBiomeSchema", () => {
 
 	it("skips files with non-biomejs.dev schema URLs", async () => {
 		mockFs({
-			"package.json": JSON.stringify({ devDependencies: { "@savvy-web/lint-staged": "^0.3.0" } }),
 			".gitignore": "",
 			"biome.json": '{\n\t"$schema": "https://example.com/schemas/biome.json",\n\t"root": true\n}\n',
 		});
@@ -631,7 +585,6 @@ describe("syncBiomeSchema", () => {
 
 	it("strips range prefixes from catalog version", async () => {
 		mockFs({
-			"package.json": JSON.stringify({ devDependencies: { "@savvy-web/lint-staged": "^0.3.0" } }),
 			".gitignore": "",
 			"biome.json": '{\n\t"$schema": "https://biomejs.dev/schemas/2.3.10/schema.json",\n\t"root": true\n}\n',
 		});
@@ -645,7 +598,6 @@ describe("syncBiomeSchema", () => {
 
 	it("logs warning on unexpected errors", async () => {
 		mockFs({
-			"package.json": JSON.stringify({ devDependencies: { "@savvy-web/lint-staged": "^0.3.0" } }),
 			".gitignore": "",
 		});
 		mockedGlob.mockImplementationOnce(() => {
