@@ -23,7 +23,7 @@ catalogs:
     "@effect/typeclass": ^0.40.0
     "@effect/workflow": ^0.18.0
     "@types/node": ^25.5.0
-    "@typescript/native-preview": ^7.0.0-dev.20260326.1
+    "@typescript/native-preview": ^7.0.0-dev.20260327.2
     effect: ^3.21.0
     husky: ^9.1.7
     tsx: ^4.21.0
@@ -72,6 +72,7 @@ overrides:
   markdown-it: ^14.1.1
   minimatch: ">=10.2.3"
   tmp: ^0.2.4
+  smol-toml: ">=1.6.1"
 publicHoistPattern:
   - "@changesets/cli"
   - "@commitlint/cli"
