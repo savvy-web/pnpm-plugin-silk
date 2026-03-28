@@ -1,5 +1,11 @@
 # @savvy-web/pnpm-plugin-silk
 
+## 0.11.0
+
+### Features
+
+* [`7873adc`](https://github.com/savvy-web/pnpm-plugin-silk/commit/7873adc4d0d04e4001483a1d3626998ebe128fa6) Adds smol-toml override to resolve security warnings
+
 ## 0.10.1
 
 ### Bug Fixes
