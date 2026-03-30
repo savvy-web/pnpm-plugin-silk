@@ -1,5 +1,13 @@
 # @savvy-web/pnpm-plugin-silk
 
+## 0.11.1
+
+### Dependencies
+
+* | [`718fe94`](https://github.com/savvy-web/pnpm-plugin-silk/commit/718fe94d1a786811f37f7544650f308b2fa713bf) | Dependency    | Type    | Action | From   | To |
+  | :--------------------------------------------------------------------------------------------------------- | :------------ | :------ | :----- | :----- | -- |
+  | @savvy-web/lint-staged                                                                                     | devDependency | updated | ^0.6.5 | ^0.6.6 |    |
+
 ## 0.11.0
 
 ### Features
