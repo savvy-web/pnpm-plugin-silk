@@ -23,7 +23,7 @@ catalogs:
     "@effect/typeclass": ^0.40.0
     "@effect/workflow": ^0.18.0
     "@types/node": ^25.5.0
-    "@typescript/native-preview": ^7.0.0-dev.20260327.2
+    "@typescript/native-preview": ^7.0.0-dev.20260405.1
     effect: ^3.21.0
     husky: ^9.1.7
     tsx: ^4.21.0
