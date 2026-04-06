@@ -3,14 +3,14 @@ packages:
 autoInstallPeers: true
 catalogs:
   silk:
-    "@biomejs/biome": 2.4.9
+    "@biomejs/biome": 2.4.10
     "@effect/ai": ^0.35.0
     "@effect/ai-anthropic": ^0.25.0
     "@effect/ai-openai": ^0.39.0
     "@effect/cli": ^0.75.0
     "@effect/cluster": ^0.58.0
     "@effect/experimental": ^0.60.0
-    "@effect/language-service": ^0.84.0
+    "@effect/language-service": ^0.84.3
     "@effect/opentelemetry": ^0.63.0
     "@effect/platform": ^0.96.0
     "@effect/platform-bun": ^0.89.0
@@ -29,7 +29,7 @@ catalogs:
     tsx: ^4.21.0
     typescript: ^5.9.3
   silkPeers:
-    "@biomejs/biome": 2.4.9
+    "@biomejs/biome": 2.4.10
     "@effect/ai": ">=0.35.0"
     "@effect/ai-anthropic": ">=0.25.0"
     "@effect/ai-openai": ">=0.39.0"
