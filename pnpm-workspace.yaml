@@ -27,7 +27,7 @@ catalogs:
     "@effect/sql-pg": ^0.52.1
     "@effect/typeclass": ^0.40.0
     "@effect/workflow": ^0.18.0
-    "@types/node": ^25.5.0
+    "@types/node": ^25.6.0
     "@types/react": ^19.2.14
     "@types/react-dom": ^19.2.3
     "@typescript/native-preview": ^7.0.0-dev.20260414.1
