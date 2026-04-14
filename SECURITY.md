@@ -4,8 +4,8 @@
 
 | Version | Supported |
 | --- | --- |
-| 0.3.x | :white_check_mark: |
-| < 0.3 | :x: |
+| 0.11.x | :white_check_mark: |
+| < 0.11 | :x: |
 
 Since this package is in pre-1.0 development, only the latest version receives
 security updates.
@@ -38,7 +38,7 @@ This package is a pnpm config dependency that:
 - Has zero runtime dependencies (all code is bundled)
 - Is loaded during `pnpm install` to merge catalog definitions
 - Does not execute arbitrary code or access network resources
-- Performs local file reads/writes only for Biome schema synchronization
+- Does not perform file system reads or writes
 
 The primary security consideration is ensuring that catalog version definitions
 are accurate and do not inadvertently introduce vulnerable dependency versions.

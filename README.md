@@ -18,10 +18,8 @@ of truth.
   propagate to all consuming repositories
 - **Build configuration sync** - Shared `onlyBuiltDependencies` and
   `publicHoistPattern` settings across repositories
-- **Biome schema sync** - Automatically updates `$schema` URLs in
-  `biome.json`/`biome.jsonc` files to match the catalog version
-- **Effect ecosystem management** - 19 coordinated `@effect/*` packages across
-  six functional groups with compatible version resolution
+- **Effect ecosystem management** - 24 coordinated `@effect/*` packages across
+  seven functional groups with compatible version resolution
 - **Non-destructive merging** - Local definitions always take precedence with
   clear warnings for divergences
 
