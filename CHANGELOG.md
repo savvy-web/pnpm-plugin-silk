@@ -1,5 +1,17 @@
 # @savvy-web/pnpm-plugin-silk
 
+## 0.12.1
+
+### Dependencies
+
+* | [`a3c1c7b`](https://github.com/savvy-web/pnpm-plugin-silk/commit/a3c1c7b2e8c00bab9a8120589bbf714a9c13afec) | Dependency    | Type    | Action  | From    | To |
+  | :--------------------------------------------------------------------------------------------------------- | :------------ | :------ | :------ | :------ | -- |
+  | @savvy-web/changesets                                                                                      | devDependency | updated | ^0.7.4  | ^0.8.0  |    |
+  | @savvy-web/commitlint                                                                                      | devDependency | updated | ^0.5.2  | ^0.6.0  |    |
+  | @savvy-web/lint-staged                                                                                     | devDependency | updated | ^0.7.3  | ^0.8.0  |    |
+  | @savvy-web/rslib-builder                                                                                   | devDependency | updated | ^0.20.0 | ^0.20.1 |    |
+  | @savvy-web/vitest                                                                                          | devDependency | updated | ^1.2.2  | ^1.3.0  |    |
+
 ## 0.12.0
 
 ### Breaking Changes
