@@ -81,9 +81,9 @@ TypeScript source.
 
 ## Effect Ecosystem Version Resolution
 
-The plugin manages 19 Effect ecosystem packages that are released in coordinated
+The plugin manages 24 Effect ecosystem packages that are released in coordinated
 batches. All packages in a release share compatible versions, so the silk
-catalogs update all 19 entries together as a single batch.
+catalogs update all 24 entries together as a single batch.
 
 The `effect-catalog-resolver` Claude Code skill (`/effect-catalog-resolver`)
 automates this process:
@@ -106,5 +106,4 @@ best solved algorithmically.
 The plugin is designed to never break `pnpm install`:
 
 - If catalog merging fails, the original config is returned unchanged
-- If Biome schema sync fails, a warning is logged but install continues
 - All hook exceptions are caught at the top level with fail-safe fallbacks

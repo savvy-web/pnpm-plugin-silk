@@ -6,7 +6,7 @@ and instructions for development.
 ## Prerequisites
 
 - Node.js 24.11.0+
-- pnpm 10.28.2+
+- pnpm 10.33.0+
 
 ## Development Setup
 
@@ -35,16 +35,15 @@ pnpm-plugin-silk/
 │   │   ├── index.ts           # Public exports
 │   │   └── types.ts           # Type definitions
 │   ├── hooks/                 # pnpm hook implementations
-│   │   ├── sync-biome-schema.ts  # Biome $schema URL synchronization
-│   │   ├── update-config.ts      # updateConfig hook with merge logic
-│   │   └── warnings.ts           # Override warning formatter
+│   │   ├── update-config.ts   # updateConfig hook with merge logic
+│   │   └── warnings.ts        # Override warning formatter
 │   ├── index.ts               # Package entry point
 │   ├── index.test.ts          # Unit tests
-│   └── pnpmfile.ts            # pnpm hook entry point (async)
+│   └── pnpmfile.ts            # pnpm hook entry point
 ├── scripts/
 │   └── generate-catalogs.ts   # Reads workspace yaml, writes TypeScript
 ├── types/
-│   └── parse-gitignore.d.ts   # Type declarations for parse-gitignore
+│   └── global.d.ts            # Global type declarations
 ├── dist/
 │   ├── dev/                   # Development build
 │   └── npm/                   # Production build for publishing

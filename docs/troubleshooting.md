@@ -36,27 +36,6 @@ you intentionally pin a different version.
 - If you want to use the Silk default, remove the entry from your local
   `catalogs` or `overrides` section in `pnpm-workspace.yaml`.
 
-## Biome schema not updating
-
-**Symptom:** The `$schema` URL in `biome.json` or `biome.jsonc` does not
-update to match the catalog version.
-
-**Possible causes:**
-
-1. **Missing `@savvy-web/lint-staged`** - Schema sync only activates when
-   `@savvy-web/lint-staged` is declared as a dependency in the workspace root
-   `package.json`.
-
-2. **Non-standard schema URL** - The plugin only updates `$schema` URLs that
-   start with `https://biomejs.dev/schemas/`. Custom URLs are left unchanged.
-
-3. **File in ignored directory** - The plugin respects `.gitignore` patterns
-   when searching for config files. Config files in `node_modules` or other
-   ignored paths are skipped.
-
-4. **Already at correct version** - If the `$schema` URL already matches the
-   catalog version, no update is performed.
-
 ## Build fails after updating catalogs
 
 **Symptom:** `pnpm run build` fails after modifying `pnpm-workspace.yaml`.

@@ -12,8 +12,6 @@
  * @internal
  */
 
-import { silkCatalogs } from "./catalogs/generated.js";
-import { syncBiomeSchema } from "./hooks/sync-biome-schema.js";
 import { updateConfig } from "./hooks/update-config.js";
 
 /**
@@ -25,15 +23,8 @@ import { updateConfig } from "./hooks/update-config.js";
  */
 module.exports = {
 	hooks: {
-		async updateConfig(config: Record<string, unknown>) {
-			const updatedConfig = updateConfig(config);
-
-			const biomeVersion = silkCatalogs.silk["@biomejs/biome"] ?? silkCatalogs.silkPeers["@biomejs/biome"];
-			if (biomeVersion) {
-				await syncBiomeSchema(process.cwd(), biomeVersion);
-			}
-
-			return updatedConfig;
+		updateConfig(config: Record<string, unknown>) {
+			return updateConfig(config);
 		},
 	},
 };

@@ -39,17 +39,18 @@ users to upgrade immediately.
 
 ## Effect Ecosystem Packages
 
-The plugin manages 19 Effect ecosystem packages across both catalogs, organized
-into six functional groups:
+The plugin manages 24 Effect ecosystem packages across both catalogs, organized
+into seven functional groups:
 
 | Group | Packages |
 | :---- | :------- |
-| Core | `effect`, `@effect/platform`, `@effect/platform-node`, `@effect/platform-bun` |
-| AI | `@effect/ai`, `@effect/ai-anthropic`, `@effect/ai-openai` |
+| Core | `effect`, `@effect/platform`, `@effect/platform-node`, `@effect/platform-bun`, `@effect/platform-browser`, `@effect/platform-node-shared` |
+| AI | `@effect/ai`, `@effect/ai-anthropic`, `@effect/ai-openai`, `@effect/ai-amazon-bedrock`, `@effect/ai-google` |
 | CLI Tooling | `@effect/cli`, `@effect/printer`, `@effect/printer-ansi` |
 | Telemetry | `@effect/opentelemetry` |
 | Foundational | `@effect/typeclass`, `@effect/language-service`, `@effect/experimental` |
-| Platform Peers | `@effect/cluster`, `@effect/rpc`, `@effect/sql`, `@effect/sql-sqlite-node`, `@effect/workflow` |
+| Database | `@effect/sql`, `@effect/sql-pg`, `@effect/sql-sqlite-bun`, `@effect/sql-sqlite-node` |
+| Platform Peers | `@effect/cluster`, `@effect/rpc`, `@effect/workflow` |
 
 All Effect packages are updated together as a coordinated batch to maintain
 cross-package compatibility. The `effect-catalog-resolver` Claude Code skill
@@ -83,9 +84,12 @@ Current overrides:
 
 | Package | Minimum Version | Advisory |
 | :------ | :-------------- | :------- |
-| `@isaacs/brace-expansion` | `>=5.0.1` | CVE-2026-25547 |
-| `lodash` | `>=4.17.23` | CVE-2025-13465 |
-| `tmp` | `>=0.2.4` | GHSA-52f5-9888-hmc6 |
+| `@isaacs/brace-expansion` | `^5.0.1` | CVE-2026-25547 |
+| `lodash` | `^4.17.23` | CVE-2025-13465 |
+| `markdown-it` | `^14.1.1` | Security fix |
+| `minimatch` | `>=10.2.3` | Security fix |
+| `smol-toml` | `>=1.6.1` | Security fix |
+| `tmp` | `^0.2.4` | GHSA-52f5-9888-hmc6 |
 
 ## Build Configuration
 
@@ -100,21 +104,6 @@ running while ensuring packages with native binaries build correctly.
 The plugin provides a list of packages that should be hoisted to the virtual
 store root. This is needed for tools like `typescript`, `turbo`, and `husky`
 that expect to be accessible from the project root.
-
-## Biome Schema Sync
-
-When a consuming repository uses `@savvy-web/lint-staged` and has
-`biome.json` or `biome.jsonc` config files, the plugin automatically updates
-the `$schema` URL to match the Biome version in the silk catalog. This keeps
-IDE autocompletion and validation in sync with the installed Biome version.
-
-The sync is:
-
-- **Conditional** - Only activates when `@savvy-web/lint-staged` is a dependency
-- **Gitignore-aware** - Skips config files in ignored directories
-- **Comment-preserving** - Uses JSONC-aware editing to preserve comments and
-  formatting
-- **Safe** - Errors are logged but never break `pnpm install`
 
 ## Local Overrides
 
