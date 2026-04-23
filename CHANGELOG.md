@@ -1,5 +1,25 @@
 # @savvy-web/pnpm-plugin-silk
 
+## 0.12.1
+
+### Bug Fixes
+
+* [`97d9bfd`](https://github.com/savvy-web/pnpm-plugin-silk/commit/97d9bfd36102a6fc1282c0afb25c9e50df9ad4e6) Corrects the Effect catalog resolver's `deriveSilkPeers` function to use the lowest peer dependency floor instead of the highest. Previously, silkPeers ranges converged to match silk values, defeating the purpose of permissive peer ranges.
+
+### Dependencies
+
+* | [`97d9bfd`](https://github.com/savvy-web/pnpm-plugin-silk/commit/97d9bfd36102a6fc1282c0afb25c9e50df9ad4e6) | Dependency    | Type    | Action                | From                 | To |
+  | :--------------------------------------------------------------------------------------------------------- | :------------ | :------ | :-------------------- | :------------------- | -- |
+  | effect                                                                                                     | devDependency | updated | ^3.21.0               | ^3.21.2              |    |
+  | @effect/ai-openai                                                                                          | devDependency | updated | ^0.39.0               | ^0.39.2              |    |
+  | @effect/cli                                                                                                | devDependency | updated | ^0.75.0               | ^0.75.1              |    |
+  | @effect/cluster                                                                                            | devDependency | updated | ^0.58.0               | ^0.58.2              |    |
+  | @effect/platform                                                                                           | devDependency | updated | ^0.96.0               | ^0.96.1              |    |
+  | @effect/rpc                                                                                                | devDependency | updated | ^0.75.0               | ^0.75.1              |    |
+  | @effect/sql                                                                                                | devDependency | updated | ^0.51.0               | ^0.51.1              |    |
+  | @typescript/native-preview                                                                                 | devDependency | updated | ^7.0.0-dev.20260414.1 | 7.0.0-dev.20260422.1 |    |
+  | typescript                                                                                                 | devDependency | updated | ^6.0.2                | ^6.0.3               |    |
+
 ## 0.12.0
 
 ### Breaking Changes
