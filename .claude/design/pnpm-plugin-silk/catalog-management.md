@@ -3,8 +3,8 @@ status: current
 module: pnpm-plugin-silk
 category: architecture
 created: 2026-02-03
-updated: 2026-04-14
-last-synced: 2026-04-14
+updated: 2026-04-22
+last-synced: 2026-04-22
 completeness: 95
 related: []
 dependencies: []
@@ -1026,7 +1026,7 @@ After convergence, any packages still failing compatibility checks are reported 
 their blocker details and best-available compatible version (if any).
 
 **Stage 4 - Output Generation:** Compares resolved versions against current `pnpm-workspace.yaml`
-catalog entries. Derives `silkPeers` minimums from peer dependency floor analysis (highest floor
+catalog entries. Derives `silkPeers` minimums from peer dependency floor analysis (lowest floor
 across all packages that peer-depend on a given package). Classifies packages as tracked (in
 current catalogs), untracked (discovered but not in catalogs), or conflicted.
 
@@ -1039,7 +1039,7 @@ The resolver applies the same range conventions documented in the
 - **silkPeers catalog:** `>=x.y.z` for `@effect/*` 0.x packages (floor-only range), `^x.y.z` for
   `effect` core (3.x, where caret works correctly)
 
-The `silkPeers` minimum for each package is derived from the highest peer dependency floor declared
+The `silkPeers` minimum for each package is derived from the lowest peer dependency floor declared
 by any other resolved package. For example, if `@effect/cli@0.75.0` declares
 `@effect/platform: ">=0.96.0"` as a peer dependency, then the silkPeers entry for
 `@effect/platform` will be at least `>=0.96.0`.

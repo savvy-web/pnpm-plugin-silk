@@ -355,8 +355,8 @@ function deriveSilkPeers(
 	}
 	const silkPeers = new Map<string, string>();
 	for (const [name, floorList] of floors) {
-		const highest = floorList.sort(compareSemver).at(-1);
-		if (highest) silkPeers.set(name, `>=${highest}`);
+		const lowest = floorList.sort(compareSemver).at(0);
+		if (lowest) silkPeers.set(name, `>=${lowest}`);
 	}
 	return silkPeers;
 }
