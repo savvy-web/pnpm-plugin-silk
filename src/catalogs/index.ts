@@ -11,5 +11,5 @@
  * @packageDocumentation
  */
 
-export { silkCatalogs } from "./generated.js";
-export type { Catalog, SilkCatalogs } from "./types.js";
+export { silkCatalogs, silkPeerDependencyRules } from "./generated.js";
+export type { Catalog, SilkCatalogs, SilkPeerDependencyRules } from "./types.js";

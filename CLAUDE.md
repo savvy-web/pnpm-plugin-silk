@@ -8,7 +8,7 @@ code in this repository.
 This is **@savvy-web/pnpm-plugin-silk** - a pnpm config dependency plugin for
 centralized catalog management across the Savvy Web ecosystem.
 
-**Current Phase:** Active Development (v0.3.0)
+**Current Phase:** Active Development (v0.12.x)
 
 **Key Features:**
 
@@ -17,6 +17,7 @@ centralized catalog management across the Savvy Web ecosystem.
 - `silkOverrides` - Security overrides for transitive dependency CVEs
 - `onlyBuiltDependencies` - Allowlist for packages with build scripts
 - `publicHoistPattern` - Packages hoisted to virtual store root
+- `peerDependencyRules` - Syncs allowedVersions, ignoreMissing, allowAny
 - Override warnings - Prominent console output when local versions diverge
 - Auto-generation - Catalogs and overrides generated from `pnpm-workspace.yaml`
 
@@ -38,7 +39,7 @@ centralized catalog management across the Savvy Web ecosystem.
 pnpm run lint              # Check code with Biome
 pnpm run lint:fix          # Auto-fix lint issues
 pnpm run typecheck         # Type-check via Turbo -> tsgo
-pnpm run test              # Run all tests (27 tests)
+pnpm run test              # Run all tests (54 tests: 45 unit + 9 integration)
 pnpm run test:watch        # Run tests in watch mode
 pnpm run test:coverage     # Run tests with coverage report
 ```
@@ -73,22 +74,37 @@ Single-package repository (not a monorepo):
 
 ```text
 src/
-├── index.ts              # Public API exports
-├── index.test.ts         # Unit tests (27 tests)
-├── pnpmfile.ts           # Synchronous pnpm hook entry point
+├── index.ts                # Public API exports
+├── pnpmfile.ts             # Entry point: Effect.runSync with Layer.merge
 ├── catalogs/
-│   ├── types.ts          # Type definitions
-│   ├── generated.ts      # Auto-generated from pnpm-workspace.yaml
-│   └── index.ts          # Re-exports
-└── hooks/
-    ├── update-config.ts  # updateConfig hook implementation
-    └── warnings.ts       # Override warning formatter
+│   ├── types.ts            # Type definitions
+│   ├── generated.ts        # Auto-generated from pnpm-workspace.yaml
+│   └── index.ts            # Re-exports
+├── services/
+│   ├── CatalogProvider.ts           # Effect Context.Tag for catalog data
+│   └── PeerDependencyRulesProvider.ts # Effect Context.Tag for peer rules
+├── hooks/
+│   ├── update-config.ts    # updateConfig Effect program
+│   ├── merge-arrays.ts     # Array merge (onlyBuiltDependencies, etc.)
+│   ├── merge-catalogs.ts   # Catalog merge with override warnings
+│   ├── merge-overrides.ts  # Security override merge
+│   ├── merge-peer-dependency-rules.ts # Peer dep rules merge
+│   └── warnings.ts         # Override warning formatter
+└── generate/
+    └── generate-catalogs.ts # Effect program: reads yaml, writes TypeScript
 
-scripts/
-└── generate-catalogs.ts  # Reads yaml, writes TypeScript
+lib/scripts/
+└── run-generate.ts         # CLI runner for generate-catalogs
+
+__test__/
+├── hooks/                  # Unit tests for each merge module
+├── generate/               # Integration tests with snapshots
+├── integration/            # Pipeline integration tests with snapshots
+├── fixtures/               # Catalog, workspace YAML, peer-rules fixtures
+└── utils/                  # Test layer helpers (catalog-layer, fs-layer)
 
 types/
-└── global.d.ts           # Global type declarations
+└── global.d.ts             # Global type declarations
 ```
 
 ### Build Pipeline
@@ -117,12 +133,23 @@ Uses rslib-builder with `virtualEntries` for CJS output:
 - ES2022/ES2023 targets
 - Import extensions required (`.js` for ESM)
 
+### Effect Architecture
+
+Hooks are Effect programs with dependency-injected services:
+
+- `updateConfig` returns `Effect<PnpmConfig, never, CatalogProvider | PeerDependencyRulesProvider>`
+- `pnpmfile.ts` runs synchronously via `Effect.runSync` with `Layer.merge` of both providers
+- Individual merge functions are pure (not effectful) -- called inside `Effect.gen`
+
 ### Testing
 
 - **Framework**: Vitest with v8 coverage
 - **Pool**: Uses forks (not threads) for Effect-TS compatibility
-- **Config**: `vitest.config.ts` supports project-based filtering via
-  `--project` flag
+- **Config**: `vitest.config.ts` with two projects: `unit` and `int`
+- **Unit tests** (`__test__/hooks/`): Test individual merge functions
+- **Integration tests** (`__test__/generate/`, `__test__/integration/`): Snapshot-based, test full pipeline
+- **Fixtures** (`__test__/fixtures/`): Shared catalog, workspace YAML, and peer-rules data
+- **Test utils** (`__test__/utils/`): Effect test layers for CatalogProvider, PeerDependencyRulesProvider, FS
 
 ## Conventions
 

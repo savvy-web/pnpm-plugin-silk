@@ -12,7 +12,12 @@
  * @internal
  */
 
+import { Effect, Layer } from "effect";
 import { updateConfig } from "./hooks/update-config.js";
+import { CatalogProvider } from "./services/CatalogProvider.js";
+import { PeerDependencyRulesProvider } from "./services/PeerDependencyRulesProvider.js";
+
+const LiveLayer = Layer.merge(CatalogProvider.Live, PeerDependencyRulesProvider.Live);
 
 /**
  * pnpm hooks object exported for the pnpmfile entry point.
@@ -24,7 +29,15 @@ import { updateConfig } from "./hooks/update-config.js";
 module.exports = {
 	hooks: {
 		updateConfig(config: Record<string, unknown>) {
-			return updateConfig(config);
+			try {
+				return Effect.runSync(updateConfig(config).pipe(Effect.provide(LiveLayer)));
+			} catch (error) {
+				console.warn(
+					"[pnpm-plugin-silk] Error merging catalogs, using local config only:",
+					error instanceof Error ? error.message : String(error),
+				);
+				return config;
+			}
 		},
 	},
 };

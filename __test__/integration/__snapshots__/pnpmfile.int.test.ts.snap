@@ -1,0 +1,115 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`pnpmfile integration > merges full catalogs into empty config 1`] = `
+{
+  "catalogs": {
+    "silk": {
+      "@rslib/core": "^0.10.0",
+      "typescript": "^5.7.0",
+      "vitest": "^3.0.0",
+    },
+    "silkPeers": {
+      "typescript": "^5.7.0",
+    },
+  },
+  "onlyBuiltDependencies": [
+    "@parcel/watcher",
+    "esbuild",
+  ],
+  "overrides": {
+    "@isaacs/brace-expansion": ">=5.0.1",
+    "lodash": ">=4.17.23",
+    "tmp": "^0.2.4",
+  },
+  "peerDependencyRules": {
+    "allowAny": [
+      "eslint",
+    ],
+    "allowedVersions": {
+      "@testing-library/react>react": "^18.0.0 || ^19.0.0",
+      "react-dom>react": "^18.0.0 || ^19.0.0",
+    },
+    "ignoreMissing": [
+      "@babel/core",
+    ],
+  },
+  "publicHoistPattern": [
+    "turbo",
+    "typescript",
+  ],
+}
+`;
+
+exports[`pnpmfile integration > merges full catalogs with local overrides 1`] = `
+{
+  "catalogs": {
+    "myApp": {
+      "react": "^18.0.0",
+    },
+    "silk": {
+      "@rslib/core": "^0.10.0",
+      "typescript": "^5.5.0",
+      "vitest": "^3.0.0",
+    },
+    "silkPeers": {
+      "typescript": "^5.7.0",
+    },
+  },
+  "onlyBuiltDependencies": [
+    "@parcel/watcher",
+    "esbuild",
+    "my-native-dep",
+  ],
+  "overrides": {
+    "@isaacs/brace-expansion": ">=5.0.1",
+    "custom-security-fix": "^1.0.0",
+    "lodash": ">=4.17.23",
+    "tmp": "^0.2.4",
+  },
+  "peerDependencyRules": {
+    "allowAny": [
+      "eslint",
+    ],
+    "allowedVersions": {
+      "@testing-library/react>react": "^18.0.0 || ^19.0.0",
+      "react-dom>react": "^18.0.0 || ^19.0.0",
+    },
+    "ignoreMissing": [
+      "@babel/core",
+    ],
+  },
+  "publicHoistPattern": [
+    "my-cli-tool",
+    "turbo",
+    "typescript",
+  ],
+}
+`;
+
+exports[`pnpmfile integration > merges minimal catalogs into empty config 1`] = `
+{
+  "catalogs": {
+    "silk": {
+      "typescript": "^5.7.0",
+      "vitest": "^3.0.0",
+    },
+    "silkPeers": {
+      "typescript": "^5.7.0",
+    },
+  },
+  "onlyBuiltDependencies": [
+    "esbuild",
+  ],
+  "overrides": {
+    "lodash": ">=4.17.23",
+  },
+  "peerDependencyRules": {
+    "allowAny": [],
+    "allowedVersions": {},
+    "ignoreMissing": [],
+  },
+  "publicHoistPattern": [
+    "typescript",
+  ],
+}
+`;

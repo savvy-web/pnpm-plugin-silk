@@ -1,0 +1,20 @@
+packages:
+  - .
+catalogs:
+  silk:
+    "@effect/platform": ^0.96.1
+    effect: ^3.21.2
+    typescript: ^6.0.3
+  silkPeers:
+    "@effect/platform": ">=0.96.0"
+    effect: ">=3.21.0"
+    typescript: ^6.0.0
+overrides:
+  lodash: ^4.17.23
+  tmp: ^0.2.4
+onlyBuiltDependencies:
+  - esbuild
+  - "@parcel/watcher"
+publicHoistPattern:
+  - typescript
+  - turbo

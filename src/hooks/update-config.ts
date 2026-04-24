@@ -3,7 +3,8 @@
  *
  * @remarks
  * Merges Silk catalogs into the pnpm configuration, with local overrides
- * taking precedence while emitting warnings.
+ * taking precedence while emitting warnings. Uses the CatalogProvider
+ * service for dependency-injected catalog data.
  *
  * @see https://pnpm.io/pnpmfile#hooks
  *
@@ -11,8 +12,13 @@
  * @internal
  */
 
-import { silkCatalogs } from "../catalogs/generated.js";
-import type { Catalog } from "../catalogs/types.js";
+import { Effect } from "effect";
+import { CatalogProvider } from "../services/CatalogProvider.js";
+import { PeerDependencyRulesProvider } from "../services/PeerDependencyRulesProvider.js";
+import { mergeStringArrays } from "./merge-arrays.js";
+import { mergeSingleCatalog } from "./merge-catalogs.js";
+import { mergeOverrides } from "./merge-overrides.js";
+import { mergePeerDependencyRules } from "./merge-peer-dependency-rules.js";
 import type { Override } from "./warnings.js";
 import { warnOverrides } from "./warnings.js";
 
@@ -34,103 +40,14 @@ export interface PnpmConfig {
 	onlyBuiltDependencies?: string[];
 	/** Packages to hoist to the virtual store root. */
 	publicHoistPattern?: string[];
+	/** Rules for handling peer dependency warnings and resolution. */
+	peerDependencyRules?: {
+		allowedVersions?: Record<string, string>;
+		ignoreMissing?: string[];
+		allowAny?: string[];
+	};
 	/** Additional pnpm configuration fields (preserved but not modified). */
 	[key: string]: unknown;
-}
-
-/**
- * Merge a single catalog, tracking overrides.
- *
- * @param catalogName - The name of the catalog (e.g., "silk")
- * @param silkCatalog - The Silk-provided catalog entries
- * @param localCatalog - The local catalog entries (may be undefined)
- * @param overrides - Array to collect override information
- * @returns The merged catalog with local entries taking precedence
- */
-function mergeSingleCatalog(
-	catalogName: string,
-	silkCatalog: Catalog,
-	localCatalog: Catalog | undefined,
-	overrides: Override[],
-): Catalog {
-	const merged: Catalog = { ...silkCatalog };
-
-	if (!localCatalog) {
-		return merged;
-	}
-
-	for (const [pkg, localVersion] of Object.entries(localCatalog)) {
-		const silkVersion = silkCatalog[pkg];
-
-		if (silkVersion !== undefined && silkVersion !== localVersion) {
-			overrides.push({
-				catalog: catalogName,
-				package: pkg,
-				silkVersion,
-				localVersion,
-			});
-		}
-
-		merged[pkg] = localVersion;
-	}
-
-	return merged;
-}
-
-/**
- * Merge overrides, tracking divergences.
- *
- * @param silkOverrides - The Silk-provided overrides
- * @param localOverrides - The local overrides (may be undefined)
- * @param overrideWarnings - Array to collect override information
- * @returns The merged overrides with local entries taking precedence
- */
-function mergeOverrides(
-	silkOverrides: Catalog,
-	localOverrides: Catalog | undefined,
-	overrideWarnings: Override[],
-): Catalog {
-	const merged: Catalog = { ...silkOverrides };
-
-	if (!localOverrides) {
-		return merged;
-	}
-
-	for (const [pkg, localVersion] of Object.entries(localOverrides)) {
-		const silkVersion = silkOverrides[pkg];
-
-		if (silkVersion !== undefined && silkVersion !== localVersion) {
-			overrideWarnings.push({
-				catalog: "overrides",
-				package: pkg,
-				silkVersion,
-				localVersion,
-			});
-		}
-
-		merged[pkg] = localVersion;
-	}
-
-	return merged;
-}
-
-/**
- * Merge string arrays, removing duplicates.
- *
- * @param silkArray - The Silk-provided array
- * @param localArray - The local array (may be undefined)
- * @returns The merged array with duplicates removed
- */
-function mergeStringArrays(silkArray: readonly string[], localArray: string[] | undefined): string[] {
-	const merged = new Set(silkArray);
-
-	if (localArray) {
-		for (const item of localArray) {
-			merged.add(item);
-		}
-	}
-
-	return [...merged].sort((a, b) => a.localeCompare(b));
 }
 
 /**
@@ -144,32 +61,30 @@ function mergeStringArrays(silkArray: readonly string[], localArray: string[] | 
  * Also merges `onlyBuiltDependencies` and `publicHoistPattern` arrays,
  * combining Silk defaults with local entries.
  *
- * On error, logs a warning and returns the original config unchanged to avoid
- * breaking the installation process.
- *
  * @param config - The current pnpm configuration
- * @returns The modified configuration with Silk catalogs merged
+ * @returns An Effect that resolves to the modified configuration with Silk catalogs merged
  *
  * @internal
  */
-export function updateConfig(config: PnpmConfig): PnpmConfig {
-	try {
+export function updateConfig(
+	config: PnpmConfig,
+): Effect.Effect<PnpmConfig, never, CatalogProvider | PeerDependencyRulesProvider> {
+	return Effect.gen(function* () {
+		const catalogs = yield* CatalogProvider;
+		const peerDepRules = yield* PeerDependencyRulesProvider;
+
 		const warnings: Override[] = [];
 		const existingCatalogs = config.catalogs ?? {};
 
-		const mergedSilk = mergeSingleCatalog("silk", silkCatalogs.silk, existingCatalogs.silk, warnings);
-		const mergedSilkPeers = mergeSingleCatalog(
-			"silkPeers",
-			silkCatalogs.silkPeers,
-			existingCatalogs.silkPeers,
-			warnings,
-		);
-		const mergedOverrides = mergeOverrides(silkCatalogs.silkOverrides, config.overrides, warnings);
+		const mergedSilk = mergeSingleCatalog("silk", catalogs.silk, existingCatalogs.silk, warnings);
+		const mergedSilkPeers = mergeSingleCatalog("silkPeers", catalogs.silkPeers, existingCatalogs.silkPeers, warnings);
+		const mergedOverrides = mergeOverrides(catalogs.silkOverrides, config.overrides, warnings);
 		const mergedOnlyBuiltDependencies = mergeStringArrays(
-			silkCatalogs.silkOnlyBuiltDependencies,
+			catalogs.silkOnlyBuiltDependencies,
 			config.onlyBuiltDependencies,
 		);
-		const mergedPublicHoistPattern = mergeStringArrays(silkCatalogs.silkPublicHoistPattern, config.publicHoistPattern);
+		const mergedPublicHoistPattern = mergeStringArrays(catalogs.silkPublicHoistPattern, config.publicHoistPattern);
+		const mergedPeerDependencyRules = mergePeerDependencyRules(peerDepRules, config.peerDependencyRules, warnings);
 
 		warnOverrides(warnings);
 
@@ -183,12 +98,7 @@ export function updateConfig(config: PnpmConfig): PnpmConfig {
 			overrides: mergedOverrides,
 			onlyBuiltDependencies: mergedOnlyBuiltDependencies,
 			publicHoistPattern: mergedPublicHoistPattern,
+			peerDependencyRules: mergedPeerDependencyRules,
 		};
-	} catch (error) {
-		console.warn(
-			"[pnpm-plugin-silk] Error merging catalogs, using local config only:",
-			error instanceof Error ? error.message : String(error),
-		);
-		return config;
-	}
+	});
 }

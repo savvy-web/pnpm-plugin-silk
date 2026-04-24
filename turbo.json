@@ -39,18 +39,18 @@
 			"outputs": ["dist/npm/**", ".rslib/declarations/npm/**"]
 		},
 		"generate:catalogs": {
-			"cache": false,
+			"cache": true,
 			"dependsOn": [],
 			"inputs": [
 				"$TURBO_DEFAULT$",
 				"$TURBO_ROOT$/package.json",
 				"$TURBO_ROOT$/pnpm-lock.yaml",
 				"$TURBO_ROOT$/pnpm-workspace.yaml",
-				"scripts/generate-catalogs.ts",
-				"lib/catalogs/**"
+				"src/generate/**",
+				"lib/scripts/run-generate.ts"
 			],
 			"outputLogs": "full",
-			"outputs": ["lib/catalogs/genertated.ts"]
+			"outputs": ["src/catalogs/generated.ts"]
 		},
 		"types:check": {
 			"cache": true,
