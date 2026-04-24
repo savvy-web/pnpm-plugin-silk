@@ -1,0 +1,7 @@
+packages:
+  - .
+catalogs:
+  silk:
+    typescript: ^5.7.0
+  silkPeers:
+    typescript: ^5.7.0

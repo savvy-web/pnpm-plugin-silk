@@ -72,3 +72,26 @@ export interface SilkCatalogs {
 	 */
 	readonly silkPublicHoistPattern: readonly string[];
 }
+
+/**
+ * Peer dependency rules synced from the Silk plugin workspace.
+ *
+ * @public
+ */
+export interface SilkPeerDependencyRules {
+	/**
+	 * Version ranges that suppress unmet peer dependency warnings.
+	 * Keys are "package\>peer" dependency paths.
+	 */
+	readonly allowedVersions: Record<string, string>;
+
+	/**
+	 * Package names whose missing peer dependency warnings are suppressed.
+	 */
+	readonly ignoreMissing: readonly string[];
+
+	/**
+	 * Package patterns that resolve to any version regardless of peer range.
+	 */
+	readonly allowAny: readonly string[];
+}

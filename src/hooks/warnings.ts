@@ -14,7 +14,7 @@ const WARNING_BOX_WIDTH = 75;
  * @internal
  */
 export interface Override {
-	/** The catalog name (e.g., "silk" or "silkPeers"). */
+	/** The config section path (e.g., "silk", "overrides", "peerDependencyRules.allowedVersions"). */
 	readonly catalog: string;
 	/** The package name being overridden. */
 	readonly package: string;
@@ -47,7 +47,11 @@ export function formatOverrideWarning(overrides: readonly Override[]): string {
 	lines.push(`│${" ".repeat(WARNING_BOX_WIDTH - 2)}│`);
 
 	for (const override of overrides) {
-		const catalogPath = `catalogs.${override.catalog}.${override.package}`;
+		const prefix =
+			override.catalog === "silk" || override.catalog === "silkPeers"
+				? `catalogs.${override.catalog}`
+				: override.catalog;
+		const catalogPath = `${prefix}.${override.package}`;
 		const silkLine = `    Silk version:   ${override.silkVersion}`;
 		const localLine = `    Local override: ${override.localVersion}`;
 
@@ -60,7 +64,7 @@ export function formatOverrideWarning(overrides: readonly Override[]): string {
 	lines.push(
 		`│  Local versions will be used. To use Silk defaults, remove these${" ".repeat(WARNING_BOX_WIDTH - 69)}│`,
 	);
-	lines.push(`│  entries from your pnpm-workspace.yaml catalogs section.${" ".repeat(WARNING_BOX_WIDTH - 62)}│`);
+	lines.push(`│  entries from your pnpm-workspace.yaml.${" ".repeat(WARNING_BOX_WIDTH - 44)}│`);
 	lines.push(`└${border}┘`);
 
 	return lines.join("\n");

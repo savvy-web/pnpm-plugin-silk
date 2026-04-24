@@ -3,8 +3,8 @@ status: current
 module: pnpm-plugin-silk
 category: architecture
 created: 2026-02-03
-updated: 2026-04-22
-last-synced: 2026-04-22
+updated: 2026-04-24
+last-synced: 2026-04-24
 completeness: 95
 related: []
 dependencies: []
@@ -32,6 +32,12 @@ catalogs, patches, and overrides across multiple Silk ecosystem repositories.
 10. [Future Enhancements](#future-enhancements)
 11. [Related Documentation](#related-documentation)
 
+**Note:** As of the `feat/better-rules` branch, the hook layer has been rewritten using Effect
+services (`CatalogProvider`, `PeerDependencyRulesProvider`) with dependency injection, the catalog
+generator is now an Effect program using `FileSystem`, and peerDependencyRules syncing has been
+added. See the [Current State](#current-state) and [System Architecture](#system-architecture)
+sections for details.
+
 ---
 
 ## Overview
@@ -42,13 +48,15 @@ compatibility constraints, this plugin serves as a single source of truth that p
 consuming repositories via pnpm's config dependency mechanism.
 
 When a repository adds `@savvy-web/pnpm-plugin-silk` as a config dependency, it automatically
-receives two named catalogs and security overrides:
+receives two named catalogs, security overrides, and peer dependency rules:
 
 - **`catalog:silk`** - Current/latest versions for direct dependencies (kept up-to-date)
 - **`catalog:silkPeers`** - Permissive ranges for peerDependencies (avoids forcing updates)
 - **`overrides`** - Security fixes for transitive dependency CVEs (merged with local overrides)
 - **`onlyBuiltDependencies`** - Packages allowed to run build scripts during install
 - **`publicHoistPattern`** - Packages to hoist to the virtual store root
+- **`peerDependencyRules`** - Centralized rules for suppressing peer dependency warnings
+  (`allowedVersions`, `ignoreMissing`, `allowAny`)
 
 Plus future enhancements:
 
@@ -101,38 +109,48 @@ The plugin consists of three main components that work together to provide catal
 
 **Generation Workflow:**
 
-Catalogs and overrides are generated from `pnpm-workspace.yaml` via `scripts/generate-catalogs.ts`:
+Catalogs and overrides are generated from `pnpm-workspace.yaml` via an Effect program at
+`src/generate/generate-catalogs.ts`, with a CLI runner at `lib/scripts/run-generate.ts`:
 
 ```bash
-pnpm run generate:catalogs  # Reads workspace yaml, generates TypeScript
+pnpm run generate:catalogs  # node --import tsx lib/scripts/run-generate.ts
 pnpm run build              # Runs generate:catalogs via prebuild hook
 ```
 
-The generator reads:
+The generator is an Effect program that uses the `FileSystem` service for all I/O (making it
+testable with mock filesystems). It reads:
 
 - `catalogs.silk` - Direct dependency versions
 - `catalogs.silkPeers` - Peer dependency ranges
 - `overrides` - Security overrides for transitive dependency CVEs
 - `onlyBuiltDependencies` - Packages allowed to run build scripts
 - `publicHoistPattern` - Packages to hoist to virtual store root
+- `peerDependencyRules` - Peer dependency suppression rules (`allowedVersions`, `ignoreMissing`,
+  `allowAny`)
 
 **Key interfaces/APIs:**
 
 ```typescript
 // src/catalogs/types.ts
 interface SilkCatalogs {
-  silk: Record<string, string>;         // Current versions for direct deps
-  silkPeers: Record<string, string>;    // Permissive ranges for peers
-  silkOverrides: Record<string, string>; // Security overrides for CVEs
-  silkOnlyBuiltDependencies: string[];  // Packages allowed to run build scripts
-  silkPublicHoistPattern: string[];     // Packages to hoist to virtual store root
+  readonly silk: Record<string, string>;         // Current versions for direct deps
+  readonly silkPeers: Record<string, string>;    // Permissive ranges for peers
+  readonly silkOverrides: Record<string, string>; // Security overrides for CVEs
+  readonly silkOnlyBuiltDependencies: readonly string[];  // Packages allowed to run build scripts
+  readonly silkPublicHoistPattern: readonly string[];     // Packages to hoist to virtual store root
+}
+
+interface SilkPeerDependencyRules {
+  readonly allowedVersions: Record<string, string>; // "pkg>peer" -> version range
+  readonly ignoreMissing: readonly string[];         // Suppress missing peer warnings
+  readonly allowAny: readonly string[];              // Resolve to any version
 }
 
 // src/catalogs/generated.ts (auto-generated)
 export const silkCatalogs: SilkCatalogs = {
   silk: {
-    typescript: "^6.0.2",
-    effect: "^3.21.0",
+    typescript: "^6.0.3",
+    effect: "^3.21.2",
     react: "^19.2.5",
     // ... more entries from pnpm-workspace.yaml catalogs.silk
   },
@@ -159,41 +177,97 @@ export const silkCatalogs: SilkCatalogs = {
     // ... more entries from pnpm-workspace.yaml publicHoistPattern
   ],
 };
+
+export const silkPeerDependencyRules: SilkPeerDependencyRules = {
+  allowedVersions: {
+    "@typescript-eslint/project-service>typescript": "^6.0.0",
+    // ... more entries from pnpm-workspace.yaml peerDependencyRules.allowedVersions
+  },
+  ignoreMissing: [],
+  allowAny: [],
+};
 ```
 
-#### Component 2: pnpmfile Hooks
+#### Component 2: pnpmfile Hooks (Effect Services)
 
-**Location:** `src/hooks/`
+**Location:** `src/hooks/`, `src/services/`, `src/pnpmfile.ts`
 
-**Purpose:** Implement pnpm hooks that inject catalog entries into consuming repositories
+**Purpose:** Implement pnpm hooks that inject catalog entries into consuming repositories, using
+Effect services for dependency injection and testability.
 
 **Actual Files:**
 
-- `src/hooks/update-config.ts` - Main hook implementation with merge logic
+- `src/services/CatalogProvider.ts` - Effect `Context.Tag` service providing `SilkCatalogs` data
+- `src/services/PeerDependencyRulesProvider.ts` - Effect `Context.Tag` service providing
+  `SilkPeerDependencyRules` data
+- `src/hooks/update-config.ts` - Main hook as Effect program requiring both services
+- `src/hooks/merge-catalogs.ts` - `mergeSingleCatalog()` function for named catalog merging
+- `src/hooks/merge-overrides.ts` - `mergeOverrides()` function for security override merging
+- `src/hooks/merge-arrays.ts` - `mergeStringArrays()` function for array field merging
+- `src/hooks/merge-peer-dependency-rules.ts` - `mergePeerDependencyRules()` function
 - `src/hooks/warnings.ts` - Override warning formatter (box-styled console output)
-- `src/pnpmfile.ts` - Synchronous entry point exporting `module.exports = { hooks: { updateConfig } }`
+- `src/pnpmfile.ts` - Synchronous entry point using `Effect.runSync` with merged Layer
 
 **Key interfaces/APIs:**
 
 ```typescript
+// src/services/CatalogProvider.ts
+import { Context, Layer } from "effect";
+
+export class CatalogProvider extends Context.Tag("CatalogProvider")<
+  CatalogProvider,
+  SilkCatalogs
+>() {
+  static Live = Layer.succeed(CatalogProvider, silkCatalogs);
+}
+
+// src/services/PeerDependencyRulesProvider.ts
+export class PeerDependencyRulesProvider extends Context.Tag("PeerDependencyRulesProvider")<
+  PeerDependencyRulesProvider,
+  SilkPeerDependencyRules
+>() {
+  static Live = Layer.succeed(PeerDependencyRulesProvider, silkPeerDependencyRules);
+}
+
 // src/hooks/update-config.ts
 export interface PnpmConfig {
   catalogs?: Record<string, Record<string, string>>;
   overrides?: Record<string, string>;
   onlyBuiltDependencies?: string[];
   publicHoistPattern?: string[];
+  peerDependencyRules?: {
+    allowedVersions?: Record<string, string>;
+    ignoreMissing?: string[];
+    allowAny?: string[];
+  };
   [key: string]: unknown;
 }
 
-export function updateConfig(config: PnpmConfig): PnpmConfig {
-  // 1. Read plugin catalogs (silkCatalogs.silk, silkCatalogs.silkPeers)
-  // 2. Read plugin overrides (silkCatalogs.silkOverrides)
-  // 3. Read plugin arrays (silkOnlyBuiltDependencies, silkPublicHoistPattern)
-  // 4. Read existing config catalogs, overrides, and arrays
-  // 5. Merge catalogs/overrides (local wins, emit warnings for conflicts)
-  // 6. Merge arrays (combine + dedupe, no warnings)
-  // 7. Return updated config with all merged fields
+export function updateConfig(
+  config: PnpmConfig,
+): Effect.Effect<PnpmConfig, never, CatalogProvider | PeerDependencyRulesProvider> {
+  // 1. yield* CatalogProvider to get silk catalogs
+  // 2. yield* PeerDependencyRulesProvider to get peer rules
+  // 3. Merge catalogs, overrides, arrays, and peerDependencyRules (local wins)
+  // 4. Emit warnings for conflicts
+  // 5. Return merged config
 }
+
+// src/pnpmfile.ts
+const LiveLayer = Layer.merge(CatalogProvider.Live, PeerDependencyRulesProvider.Live);
+
+module.exports = {
+  hooks: {
+    updateConfig(config) {
+      try {
+        return Effect.runSync(updateConfig(config).pipe(Effect.provide(LiveLayer)));
+      } catch (error) {
+        console.warn("[pnpm-plugin-silk] Error merging catalogs...");
+        return config;
+      }
+    },
+  },
+};
 
 // src/hooks/warnings.ts
 export interface Override {
@@ -226,25 +300,32 @@ export function warnOverrides(overrides: Override[]): void;
 │                     @savvy-web/pnpm-plugin-silk                       │
 │                                                                       │
 │  ┌──────────────────┐  ┌──────────────────────┐  ┌───────────────┐  │
-│  │  Catalog Defs    │  │  Hook Handlers       │  │  Patch Files  │  │
-│  │  src/catalogs/   │  │  src/hooks/          │  │  patches/     │  │
-│  │                  │  │  ├─ update-config.ts  │  │               │  │
-│  │                  │  │  └─ warnings.ts       │  │               │  │
-│  └────────┬─────────┘  └──────────┬───────────┘  └───────┬───────┘  │
-│           │                       │                       │          │
-│           └───────────┬───────────┴───────────────────────┘          │
+│  │  Catalog Defs    │  │  Effect Services     │  │  Hook Layer   │  │
+│  │  src/catalogs/   │  │  src/services/       │  │  src/hooks/   │  │
+│  │  ├─ types.ts     │  │  ├─ CatalogProvider  │  │  ├─ update-   │  │
+│  │  ├─ generated.ts │  │  └─ PeerDependency-  │  │  │  config.ts │  │
+│  │  └─ index.ts     │  │     RulesProvider    │  │  ├─ merge-*.ts│  │
+│  └────────┬─────────┘  └──────────┬───────────┘  │  └─ warnings  │  │
+│           │                       │               └───────┬───────┘  │
+│           └───────────────────────┴───────────────────────┘          │
 │                       │                                               │
 │                       ▼                                               │
-│            ┌──────────────────────┐                                  │
-│            │   rslib-builder      │                                  │
-│            │   (CJS bundling)     │                                  │
-│            └──────────┬───────────┘                                  │
-│                       │                                               │
-│                       ▼                                               │
-│            ┌──────────────────────┐                                  │
-│            │  dist/npm/           │                                  │
-│            │  └── pnpmfile.cjs    │  (self-contained CJS bundle)     │
-│            └──────────────────────┘                                  │
+│  ┌──────────────────────┐  ┌──────────────────────────────────────┐  │
+│  │  src/pnpmfile.ts     │  │  src/generate/generate-catalogs.ts  │  │
+│  │  Layer.merge(         │  │  Effect program using FileSystem    │  │
+│  │    CatalogProvider,   │  │  CLI: lib/scripts/run-generate.ts   │  │
+│  │    PeerDepRules)      │  └──────────────────────────────────────┘  │
+│  └──────────┬───────────┘                                             │
+│             ▼                                                         │
+│  ┌──────────────────────┐                                            │
+│  │  rslib-builder       │                                            │
+│  │  (CJS bundling)      │                                            │
+│  └──────────┬───────────┘                                            │
+│             ▼                                                         │
+│  ┌──────────────────────┐                                            │
+│  │  dist/npm/           │                                            │
+│  │  └── pnpmfile.cjs    │  (self-contained CJS bundle)               │
+│  └──────────────────────┘                                            │
 └──────────────────────────────────────────────────────────────────────┘
                               │
                               │ pnpm add --config
@@ -363,78 +444,111 @@ multiple repositories in the Silk ecosystem.
 
 ### Layered Architecture
 
-The plugin uses a simple two-layer architecture: data definition and hook implementation.
+The plugin uses a three-layer architecture: data definition, Effect services, and hook
+implementation.
 
 #### Layer 1: Data Layer
 
 **Responsibilities:**
 
 - Define catalog entries with version ranges
-- Generate TypeScript from pnpm-workspace.yaml
-- Export typed catalog definitions
+- Generate TypeScript from pnpm-workspace.yaml (as an Effect program)
+- Export typed catalog and peer dependency rules definitions
 
 **Components:**
 
-- `pnpm-workspace.yaml` - Source of truth for catalog versions
-- `scripts/generate-catalogs.ts` - Generator script (reads yaml, writes TypeScript)
-- `src/catalogs/types.ts` - Type definitions
-- `src/catalogs/generated.ts` - Auto-generated catalog data
+- `pnpm-workspace.yaml` - Source of truth for catalog versions and peer dependency rules
+- `src/generate/generate-catalogs.ts` - Effect program using `FileSystem` service for I/O
+- `lib/scripts/run-generate.ts` - CLI runner providing `NodeFileSystem.layer`
+- `src/catalogs/types.ts` - Type definitions (`SilkCatalogs`, `SilkPeerDependencyRules`)
+- `src/catalogs/generated.ts` - Auto-generated catalog and peer rules data
 - `src/catalogs/index.ts` - Re-exports for public API
 
-**Communication:** Exports static data structures consumed by hook layer
+**Communication:** Exports static data structures consumed by service layer
 
-#### Layer 2: Hook Layer
+#### Layer 2: Service Layer (Effect)
 
 **Responsibilities:**
 
-- Implement pnpm hook contracts
-- Merge plugin data with local configuration
-- Emit warnings for overrides
+- Provide dependency-injected access to catalog data via Effect `Context.Tag` services
+- Enable testability by allowing mock service implementations in tests
+- Compose into a single Layer for the pnpmfile entry point
 
 **Components:**
 
-- `src/hooks/update-config.ts` - `updateConfig` hook with merge logic (synchronous)
-- `src/hooks/warnings.ts` - Override detection and warning formatter
-- `src/pnpmfile.ts` - Synchronous entry point (`module.exports = { hooks: { updateConfig } }`)
+- `src/services/CatalogProvider.ts` - `Context.Tag` yielding `SilkCatalogs`; `.Live` uses
+  `silkCatalogs` from generated.ts
+- `src/services/PeerDependencyRulesProvider.ts` - `Context.Tag` yielding
+  `SilkPeerDependencyRules`; `.Live` uses `silkPeerDependencyRules` from generated.ts
 
-**Communication:** Called by pnpm during install lifecycle. The `updateConfig` hook is synchronous,
-performing config merging and returning the merged config directly.
+**Communication:** Services are yielded by the hook layer via `yield* CatalogProvider` and
+`yield* PeerDependencyRulesProvider` inside `Effect.gen`
+
+#### Layer 3: Hook Layer
+
+**Responsibilities:**
+
+- Implement pnpm hook contracts as Effect programs
+- Merge plugin data with local configuration (catalogs, overrides, arrays, peer dependency rules)
+- Emit warnings for conflicts
+
+**Components:**
+
+- `src/hooks/update-config.ts` - `updateConfig` as `Effect.Effect<PnpmConfig, never,
+  CatalogProvider | PeerDependencyRulesProvider>`
+- `src/hooks/merge-catalogs.ts` - `mergeSingleCatalog()` for named catalog merging
+- `src/hooks/merge-overrides.ts` - `mergeOverrides()` for security override merging
+- `src/hooks/merge-arrays.ts` - `mergeStringArrays()` for array field merging and deduplication
+- `src/hooks/merge-peer-dependency-rules.ts` - `mergePeerDependencyRules()` combining
+  `allowedVersions`, `ignoreMissing`, and `allowAny`
+- `src/hooks/warnings.ts` - Override detection and warning formatter
+- `src/pnpmfile.ts` - Synchronous entry point using `Effect.runSync` with
+  `Layer.merge(CatalogProvider.Live, PeerDependencyRulesProvider.Live)`
+
+**Communication:** Called by pnpm during install lifecycle. The `updateConfig` hook is an Effect
+program that runs synchronously via `Effect.runSync`. The `try/catch` in `pnpmfile.ts` ensures
+fail-safe behavior if the Effect program throws.
 
 ### Component Interactions
 
-#### Interaction 1: Catalog and Override Injection During Install
+#### Interaction 1: Catalog, Override, and PeerDependencyRules Injection During Install
 
-**Participants:** pnpm, pnpmfile.cjs, Catalog Definitions
+**Participants:** pnpm, pnpmfile.cjs, CatalogProvider, PeerDependencyRulesProvider
 
 **Flow:**
 
 1. User runs `pnpm install` in consuming repo
 2. pnpm loads config dependency's `pnpmfile.cjs`
 3. pnpm calls `updateConfig(currentConfig)`
-4. Hook reads plugin catalog definitions and overrides
-5. Hook merges catalogs with existing config (local wins)
-6. Hook merges overrides with existing config (local wins)
-7. Hook emits warnings for any conflicts
-8. Hook returns modified config
-9. pnpm uses merged catalogs and overrides for resolution
+4. `pnpmfile.ts` runs the Effect program with `LiveLayer`
+5. Effect yields `CatalogProvider` (silk catalogs, overrides, arrays)
+6. Effect yields `PeerDependencyRulesProvider` (allowedVersions, ignoreMissing, allowAny)
+7. Hook merges catalogs, overrides, arrays, and peerDependencyRules (local wins)
+8. Hook emits warnings for any conflicts
+9. Hook returns modified config
+10. pnpm uses merged config for resolution
 
 **Sequence diagram:**
 
 ```text
-pnpm           pnpmfile.cjs    Catalogs
-│                   │              │
-├──────────────────>│              │  1. updateConfig(config)
-│                   ├─────────────>│  2. getCatalogs() + getOverrides()
-│                   │<─────────────┤  3. catalogData + overrideData
-│                   │              │
-│                   │ merge catalogs
-│                   │ merge overrides
-│                   │ emit warnings
-│                   │              │
-│<──────────────────┤              │  4. return mergedConfig
-│                   │              │
-│ use for resolution│              │
-│                   │              │
+pnpm         pnpmfile.cjs    CatalogProvider    PeerDepRulesProvider
+│                 │                 │                    │
+├────────────────>│                 │                    │
+│                 │  Effect.runSync │                    │
+│                 ├────────────────>│                    │  yield* CatalogProvider
+│                 │<────────────────┤                    │  SilkCatalogs
+│                 ├─────────────────┼───────────────────>│  yield* PeerDepRules
+│                 │<────────────────┼────────────────────┤  SilkPeerDependencyRules
+│                 │                 │                    │
+│                 │ merge catalogs  │                    │
+│                 │ merge overrides │                    │
+│                 │ merge arrays    │                    │
+│                 │ merge peerDepRules                   │
+│                 │ emit warnings   │                    │
+│                 │                 │                    │
+│<────────────────┤                 │                    │  return mergedConfig
+│                 │                 │                    │
+│ use for resolution                                    │
 ```
 
 ### Error Handling Strategy
@@ -447,8 +561,8 @@ Hooks must be resilient since failures can break `pnpm install` entirely.
 
 ### Override Warning Strategy
 
-When a local catalog entry or pnpm override conflicts with a Silk-managed version, emit prominent
-console warnings:
+When a local catalog entry, pnpm override, or peerDependencyRules allowedVersions entry conflicts
+with a Silk-managed version, emit prominent console warnings:
 
 ```text
 ┌─────────────────────────────────────────────────────────────────────┐
@@ -496,28 +610,40 @@ interface PnpmConfig {
   catalog?: Record<string, string>;                   // default catalog
   overrides?: Record<string, string>;
   patchedDependencies?: Record<string, string>;
+  peerDependencyRules?: {
+    allowedVersions?: Record<string, string>;
+    ignoreMissing?: string[];
+    allowAny?: string[];
+  };
   // ... other pnpm settings
 }
 
 // Plugin catalog structure
 interface SilkCatalogs {
   // Named catalog for direct dependencies (current/latest versions)
-  silk: Record<string, string>;
+  readonly silk: Record<string, string>;
   // Named catalog for peer dependency ranges (more permissive)
-  silkPeers: Record<string, string>;
+  readonly silkPeers: Record<string, string>;
   // Security overrides for transitive dependency CVEs
-  silkOverrides: Record<string, string>;
+  readonly silkOverrides: Record<string, string>;
   // Packages allowed to run build scripts during install
-  silkOnlyBuiltDependencies: string[];
+  readonly silkOnlyBuiltDependencies: readonly string[];
   // Packages to hoist to virtual store root
-  silkPublicHoistPattern: string[];
+  readonly silkPublicHoistPattern: readonly string[];
+}
+
+// Plugin peer dependency rules structure
+interface SilkPeerDependencyRules {
+  readonly allowedVersions: Record<string, string>;
+  readonly ignoreMissing: readonly string[];
+  readonly allowAny: readonly string[];
 }
 
 // Example catalog definitions
 const silkCatalogs: SilkCatalogs = {
   silk: {
-    typescript: "^6.0.2",      // Current version for direct deps
-    effect: "^3.21.0",
+    typescript: "^6.0.3",      // Current version for direct deps
+    effect: "^3.21.2",
     react: "^19.2.5",
   },
   silkPeers: {
@@ -540,7 +666,18 @@ const silkCatalogs: SilkCatalogs = {
   ],
 };
 
-// Merge result - adds silk catalogs, overrides, and arrays
+// Example peer dependency rules
+const silkPeerDependencyRules: SilkPeerDependencyRules = {
+  allowedVersions: {
+    "@typescript-eslint/project-service>typescript": "^6.0.0",
+    "@typescript-eslint/tsconfig-utils>typescript": "^6.0.0",
+    // ... suppress TypeScript 6 peer warnings from eslint plugins
+  },
+  ignoreMissing: [],
+  allowAny: [],
+};
+
+// Merge result - adds silk catalogs, overrides, arrays, and peer rules
 interface MergedConfig extends PnpmConfig {
   catalogs: {
     silk: Record<string, string>;       // current versions
@@ -550,6 +687,11 @@ interface MergedConfig extends PnpmConfig {
   overrides: Record<string, string>;    // security overrides
   onlyBuiltDependencies: string[];      // build script allowlist (merged)
   publicHoistPattern: string[];         // hoist patterns (merged)
+  peerDependencyRules: {                // peer dependency rules (merged)
+    allowedVersions: Record<string, string>;
+    ignoreMissing: string[];
+    allowAny: string[];
+  };
 }
 ```
 
@@ -566,33 +708,37 @@ interface MergedConfig extends PnpmConfig {
       ▼
 [Call updateConfig(existingConfig)]
       │
-      ├─────────────────────────────────┐
-      │                                 │
-      ▼                                 ▼
-[Read plugin catalogs]          [Read local catalogs]
-      │                                 │
-      └──────────┬──────────────────────┘
+      ▼
+[Effect.runSync with LiveLayer]
+      │
+      ├─────────────────────────────┐
+      │                             │
+      ▼                             ▼
+[yield* CatalogProvider]    [yield* PeerDepRulesProvider]
+      │                             │
+      └──────────┬──────────────────┘
                  │
                  ▼
-        [Merge: local > plugin]
+[Merge catalogs, overrides, arrays, peerDepRules: local > plugin]
                  │
                  ▼
         [Return merged config]
                  │
                  ▼
-[pnpm resolves dependencies using merged catalogs]
+[pnpm resolves dependencies using merged config]
 ```
 
 **Steps:**
 
 1. User runs `pnpm install` in repo with `@savvy-web/pnpm-plugin-silk` config dependency
 2. pnpm automatically loads `pnpmfile.cjs` from the config dependency
-3. `updateConfig` hook receives current pnpm configuration
-4. Plugin reads its bundled catalog definitions
-5. Plugin reads any existing catalogs from local config
-6. Catalogs are merged (local entries override plugin entries)
-7. Merged configuration returned to pnpm
-8. pnpm uses merged catalogs for dependency resolution
+3. `pnpmfile.ts` wraps `updateConfig` in `Effect.runSync` with `LiveLayer`
+4. Effect yields `CatalogProvider` (silk catalogs, overrides, arrays)
+5. Effect yields `PeerDependencyRulesProvider` (allowedVersions, ignoreMissing, allowAny)
+6. Plugin reads any existing catalogs, overrides, arrays, and peerDependencyRules from local config
+7. All fields merged (local entries override plugin entries)
+8. Merged configuration returned to pnpm
+9. pnpm uses merged config for dependency resolution
 
 #### Flow 2: Named Catalog Usage in Consuming Repo
 
@@ -761,87 +907,82 @@ catalogs:
 ### Architecture Testing
 
 The plugin requires testing at multiple levels given its integration with pnpm's install lifecycle.
+Tests use Effect service injection for dependency isolation, replacing mock-heavy approaches with
+typed layers that provide test fixtures.
 
 **Component isolation:**
 
-- Catalog merging logic tested independently of pnpm
-- Hook handlers tested with mock config objects
+- Each merge function tested independently (`merge-catalogs`, `merge-overrides`, `merge-arrays`,
+  `merge-peer-dependency-rules`)
+- Hook handler tested with mock services via Effect test layers
+- Generator tested with mock `FileSystem` service
 - No external dependencies needed for unit tests
 
 **Integration testing:**
 
-- Test actual pnpm install in fixture repository
-- Verify catalogs appear in resolved lockfile
-- Test local override precedence
+- Full `pnpmfile.ts` entry point tested with `Effect.runSync` and live layers
+- Generator integration tests with real `FileSystem`
+- Test actual pnpm install in fixture repository (future)
 
 ### Unit Tests
 
-**Location:** `src/**/*.test.ts`
+**Location:** `__test__/` directory (reorganized from `src/index.test.ts`)
 
 **Coverage target:** 90%+
 
-**Current test count:** 27 tests across 3 describe blocks
+**Current test count:** 56 tests across 8 test files
 
-**Test areas:**
+**Test structure:**
 
-- **silkCatalogs** (7 tests) - Catalog structure, build tools, testing tools, overrides, arrays
-- **updateConfig** (17 tests) - Catalog merging, override warnings, array merging, deduplication
-- **formatOverrideWarning** (3 tests) - Warning formatting, single/multiple overrides, guidance text
-
-**Example test cases:**
-
-```typescript
-describe("mergeCatalogs", () => {
-  it("merges silk catalog with local overrides", () => {
-    const pluginSilk = { typescript: "^6.0.2", effect: "^3.21.0" };
-    const localSilk = { typescript: "^5.8.0" };
-
-    const result = mergeSilkCatalog(pluginSilk, localSilk);
-
-    expect(result).toEqual({
-      typescript: "^5.8.0", // local wins
-      effect: "^3.21.0",    // from plugin
-    });
-  });
-
-  it("provides both silk and silkPeers catalogs", () => {
-    const config = updateConfig({ catalogs: {} });
-
-    expect(config.catalogs.silk).toBeDefined();
-    expect(config.catalogs.silkPeers).toBeDefined();
-    expect(config.catalogs.silk.typescript).toBe("^6.0.2");
-    expect(config.catalogs.silkPeers.typescript).toBe("^6.0.0");
-  });
-
-  it("adds silk overrides to config", () => {
-    const config = updateConfig({});
-
-    expect(config.overrides).toBeDefined();
-    expect(config.overrides["@isaacs/brace-expansion"]).toBe(">=5.0.1");
-    expect(config.overrides.lodash).toBe(">=4.17.23");
-  });
-
-  it("merges local overrides with silk overrides", () => {
-    const config = updateConfig({
-      overrides: { "custom-pkg": "^1.0.0" },
-    });
-
-    expect(config.overrides["custom-pkg"]).toBe("^1.0.0");
-    expect(config.overrides["@isaacs/brace-expansion"]).toBe(">=5.0.1");
-  });
-});
+```text
+__test__/
+├── fixtures/
+│   ├── catalogs/          # SilkCatalogs fixtures (full, minimal)
+│   └── peer-dependency-rules/  # SilkPeerDependencyRules fixtures
+├── generate/
+│   └── generate-catalogs.int.test.ts  # Generator Effect program (8 tests)
+├── hooks/
+│   ├── merge-arrays.test.ts           # Array merging (5 tests)
+│   ├── merge-catalogs.test.ts         # Catalog merging (6 tests)
+│   ├── merge-overrides.test.ts        # Override merging (5 tests)
+│   ├── merge-peer-dependency-rules.test.ts  # PeerDepRules merging (8 tests)
+│   ├── update-config.test.ts          # Full updateConfig Effect (15 tests)
+│   └── warnings.test.ts              # Warning formatting (6 tests)
+├── integration/
+│   └── pnpmfile.int.test.ts          # Entry point integration (3 tests)
+├── utils/
+│   ├── catalog-layer.ts              # Test CatalogProvider layer
+│   ├── fs-layer.ts                   # Test FileSystem layer
+│   └── peer-dependency-rules-layer.ts # Test PeerDependencyRulesProvider layer
+└── lib/                              # (placeholder)
 ```
+
+**Test utilities** (`__test__/utils/`): Shared Effect layers providing test fixture data, allowing
+all hook tests to use dependency-injected mock services instead of importing real generated data.
+
+**Key test areas:**
+
+- **merge-catalogs** (6 tests) - Named catalog merging, local precedence, warning collection
+- **merge-overrides** (5 tests) - Override merging, local precedence, warning collection
+- **merge-arrays** (5 tests) - Array combining, deduplication, empty/undefined handling
+- **merge-peer-dependency-rules** (8 tests) - allowedVersions merging, ignoreMissing/allowAny
+  array merging, combined rules
+- **update-config** (15 tests) - Full Effect program test using test layers, catalog injection,
+  override warnings, array merging, peerDependencyRules injection
+- **warnings** (6 tests) - Warning formatting, single/multiple overrides, guidance text
+- **generate-catalogs** (8 tests) - YAML parsing, content generation, skip-on-no-change,
+  peer dependency rules generation
+- **pnpmfile** (3 tests) - Integration of `Effect.runSync` with live layers, error recovery
 
 ### Integration Tests
 
-**Location:** `tests/integration/`
+**Location:** `__test__/integration/`
 
-**What to test:**
+**What is tested:**
 
-- Full pnpm install with plugin as config dependency
-- Catalog resolution in lockfile
-- Local override behavior
-- Error recovery (malformed plugin doesn't break install)
+- Full pnmfile.ts entry point via `Effect.runSync` with `LiveLayer`
+- Error recovery (try/catch returns unmodified config on failure)
+- End-to-end catalog, override, array, and peerDependencyRules injection
 
 ---
 
@@ -1176,8 +1317,43 @@ enabling efficient access to per-version peer dependency data from packument res
 structured JSON consumed by the agent for report presentation and `pnpm-workspace.yaml` editing.
 
 Current catalog state: 24 tracked Effect packages (expanded from initial 13), all at latest
-compatible versions anchored on `effect@3.21.0`. Includes packages across core, AI (anthropic,
+compatible versions anchored on `effect@3.21.2`. Includes packages across core, AI (anthropic,
 openai, amazon-bedrock, google), CLI, telemetry, SQL, and platform groups.
+
+### Phase 4.5: Effect Rewrite + peerDependencyRules (feat/better-rules branch) - IN PROGRESS
+
+- **Effect service architecture** - Hook layer rewritten as Effect programs with dependency-injected
+  services (`CatalogProvider`, `PeerDependencyRulesProvider` as `Context.Tag`)
+- **peerDependencyRules syncing** - New `PeerDependencyRulesProvider` service and
+  `mergePeerDependencyRules()` function that syncs `allowedVersions`, `ignoreMissing`, and
+  `allowAny` from `pnpm-workspace.yaml`
+- **Generator rewrite** - `scripts/generate-catalogs.ts` moved to
+  `src/generate/generate-catalogs.ts` as Effect program using `FileSystem` service; CLI runner at
+  `lib/scripts/run-generate.ts` provides `NodeFileSystem.layer`
+- **Test reorganization** - Tests moved from `src/index.test.ts` (27 tests) to `__test__/` directory
+  (56 tests) with fixtures, test utility layers, and per-module test files
+
+**Implementation Details:**
+
+The `pnpmfile.ts` entry point now composes services via `Layer.merge(CatalogProvider.Live,
+PeerDependencyRulesProvider.Live)` and runs the updateConfig Effect program synchronously via
+`Effect.runSync`. The try/catch wrapper ensures fail-safe behavior.
+
+Current peerDependencyRules state (from `pnpm-workspace.yaml`):
+
+```yaml
+peerDependencyRules:
+  allowedVersions:
+    "@typescript-eslint/project-service>typescript": ^6.0.0
+    "@typescript-eslint/tsconfig-utils>typescript": ^6.0.0
+    "@typescript-eslint/typescript-estree>typescript": ^6.0.0
+    "@typescript-eslint/util>typescript": ^6.0.0
+    "@typescript-eslint/utils>typescript": ^6.0.0
+    eslint-plugin-tsdoc>typescript: ^6.0.0
+```
+
+These rules suppress peer dependency warnings from TypeScript-ESLint plugins that have not yet
+updated their peer dependency ranges to support TypeScript 6.x.
 
 ### Phase 5: Patch Distribution (v1.2.0)
 
@@ -1207,7 +1383,9 @@ The patch files are bundled inside the plugin package and referenced via the con
 Areas that may need refactoring in the future:
 
 - **Catalog organization** - As catalog grows, may need to split into separate modules/files
-- **Hook composition** - If multiple hooks needed, may need shared context/utilities
+- ~~**Hook composition** - If multiple hooks needed, may need shared context/utilities~~ - Resolved
+  by Effect service architecture (`CatalogProvider`, `PeerDependencyRulesProvider`). Additional
+  services can be added as new `Context.Tag` classes and composed via `Layer.merge`.
 
 ---
 
@@ -1236,27 +1414,36 @@ Areas that may need refactoring in the future:
 
 ---
 
-**Document Status:** Current (95% complete) - MVP + Security Overrides + Effect Catalog Resolver
-complete; Biome Schema Sync removed (migrated to @savvy-web/lint-staged)
+**Document Status:** Current (95% complete) - MVP + Security Overrides + Effect Catalog Resolver +
+Effect Service Rewrite + peerDependencyRules complete; Biome Schema Sync removed (migrated to
+@savvy-web/lint-staged)
 
-**Synced:** 2026-04-14
+**Synced:** 2026-04-24
 
 **Implementation Summary:**
 
 - Package structure created at repo root (single package, not monorepo)
 - Rslib virtualEntries feature (v0.10.0) used for CJS bundling
-- Catalog generation from `pnpm-workspace.yaml` implemented
-- `updateConfig` hook with override warnings implemented (synchronous)
+- Catalog generation rewritten as Effect program (`src/generate/generate-catalogs.ts`) using
+  `FileSystem` service; CLI runner at `lib/scripts/run-generate.ts` provides `NodeFileSystem.layer`
+- Hook layer rewritten using Effect services: `CatalogProvider` and `PeerDependencyRulesProvider`
+  (`Context.Tag`) with dependency injection for testability
+- `updateConfig` returns `Effect.Effect<PnpmConfig, never, CatalogProvider |
+  PeerDependencyRulesProvider>` and runs via `Effect.runSync` with
+  `Layer.merge(CatalogProvider.Live, PeerDependencyRulesProvider.Live)`
+- Merge functions split into individual modules: `merge-catalogs.ts`, `merge-overrides.ts`,
+  `merge-arrays.ts`, `merge-peer-dependency-rules.ts`
+- `peerDependencyRules` syncing from `pnpm-workspace.yaml`: `allowedVersions` (merged with local
+  precedence + warnings), `ignoreMissing` and `allowAny` (array merge + dedup)
 - Security overrides syncing from `pnpm-workspace.yaml` `overrides` section
-- `mergeOverrides()` function with local precedence and conflict warnings
-- `onlyBuiltDependencies` array syncing with deduplication
-- `publicHoistPattern` array syncing with deduplication
-- `mergeStringArrays()` function for combining and deduplicating arrays
+- `onlyBuiltDependencies` and `publicHoistPattern` array syncing with deduplication
 - Effect catalog resolver skill (`.claude/skills/effect-catalog-resolver/`) for automated version
   resolution via npm registry API, iterative constraint solving, and silkPeers derivation
 - 24 Effect ecosystem packages tracked in silk/silkPeers catalogs (expanded from 13 via resolver)
-- Non-Effect catalog entries: react, react-dom, @types/react, @types/react-dom, TypeScript 6.x
-- 27 unit tests passing (7 catalog + 17 config merge + 3 warning format)
+- Non-Effect catalog entries: react, react-dom, @types/react, @types/react-dom, TypeScript 6.x,
+  tsx, @typescript/native-preview
+- Tests reorganized from `src/index.test.ts` (27 tests) to `__test__/` directory (56 tests) with
+  fixtures, test utility layers, and per-module test files following @savvy-web/vitest conventions
 
 **Build Output:**
 
@@ -1274,6 +1461,17 @@ complete; Biome Schema Sync removed (migrated to @savvy-web/lint-staged)
 | `minimatch` | `>=10.2.3` | Security fix |
 | `smol-toml` | `>=1.6.1` | Security fix |
 | `tmp` | `^0.2.4` | GHSA-52f5-9888-hmc6 |
+
+**Current peerDependencyRules.allowedVersions:**
+
+| Dependency Path | Version | Reason |
+| :-------------- | :------ | :----- |
+| `@typescript-eslint/project-service>typescript` | `^6.0.0` | TS 6 peer support not yet declared |
+| `@typescript-eslint/tsconfig-utils>typescript` | `^6.0.0` | TS 6 peer support not yet declared |
+| `@typescript-eslint/typescript-estree>typescript` | `^6.0.0` | TS 6 peer support not yet declared |
+| `@typescript-eslint/util>typescript` | `^6.0.0` | TS 6 peer support not yet declared |
+| `@typescript-eslint/utils>typescript` | `^6.0.0` | TS 6 peer support not yet declared |
+| `eslint-plugin-tsdoc>typescript` | `^6.0.0` | TS 6 peer support not yet declared |
 
 **Current onlyBuiltDependencies:**
 
@@ -1318,5 +1516,6 @@ complete; Biome Schema Sync removed (migrated to @savvy-web/lint-staged)
 
 **Next Steps:**
 
-1. Phase 5: Add patch distribution
-2. Continue expanding catalog entries as ecosystem grows
+1. Merge `feat/better-rules` branch (Effect rewrite + peerDependencyRules)
+2. Phase 5: Add patch distribution
+3. Continue expanding catalog entries as ecosystem grows

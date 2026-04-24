@@ -18,6 +18,8 @@ of truth.
   propagate to all consuming repositories
 - **Build configuration sync** - Shared `onlyBuiltDependencies` and
   `publicHoistPattern` settings across repositories
+- **Peer dependency rules** - Syncs `peerDependencyRules` (allowedVersions,
+  ignoreMissing, allowAny) to suppress common peer warnings
 - **Effect ecosystem management** - 24 coordinated `@effect/*` packages across
   seven functional groups with compatible version resolution
 - **Non-destructive merging** - Local definitions always take precedence with

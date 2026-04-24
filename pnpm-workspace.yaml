@@ -30,7 +30,7 @@ catalogs:
     "@types/node": ^25.6.0
     "@types/react": ^19.2.14
     "@types/react-dom": ^19.2.3
-    "@typescript/native-preview": ^7.0.0-dev.20260422.1
+    "@typescript/native-preview": ^7.0.0-dev.20260424.2
     effect: ^3.21.2
     react: ^19.2.5
     react-dom: ^19.2.5
@@ -89,6 +89,14 @@ overrides:
   minimatch: ">=10.2.3"
   smol-toml: ">=1.6.1"
   tmp: ^0.2.4
+peerDependencyRules:
+  allowedVersions:
+    "@typescript-eslint/project-service>typescript": ^6.0.0
+    "@typescript-eslint/tsconfig-utils>typescript": ^6.0.0
+    "@typescript-eslint/typescript-estree>typescript": ^6.0.0
+    "@typescript-eslint/util>typescript": ^6.0.0
+    "@typescript-eslint/utils>typescript": ^6.0.0
+    eslint-plugin-tsdoc>typescript: ^6.0.0
 publicHoistPattern:
   - "@changesets/cli"
   - "@commitlint/cli"
