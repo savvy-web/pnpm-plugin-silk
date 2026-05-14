@@ -11,7 +11,7 @@ catalogs:
     "@effect/cli": ^0.75.1
     "@effect/cluster": ^0.58.2
     "@effect/experimental": ^0.60.0
-    "@effect/language-service": ^0.85.1
+    "@effect/language-service": ^0.86.1
     "@effect/opentelemetry": ^0.63.0
     "@effect/platform": ^0.96.1
     "@effect/platform-browser": ^0.76.0
@@ -26,14 +26,14 @@ catalogs:
     "@effect/sql-sqlite-bun": ^0.52.0
     "@effect/sql-sqlite-node": ^0.52.0
     "@effect/typeclass": ^0.40.0
-    "@effect/workflow": ^0.18.0
-    "@types/node": ^25.6.0
+    "@effect/workflow": ^0.18.1
+    "@types/node": ^25.7.0
     "@types/react": ^19.2.14
     "@types/react-dom": ^19.2.3
-    "@typescript/native-preview": ^7.0.0-dev.20260424.2
+    "@typescript/native-preview": ^7.0.0-dev.20260513.1
     effect: ^3.21.2
-    react: ^19.2.5
-    react-dom: ^19.2.5
+    react: ^19.2.6
+    react-dom: ^19.2.6
     tsx: ^4.21.0
     typescript: ^6.0.3
   silkPeers:
@@ -45,7 +45,7 @@ catalogs:
     "@effect/cli": ">=0.75.1"
     "@effect/cluster": ">=0.58.0"
     "@effect/experimental": ">=0.60.0"
-    "@effect/language-service": ">=0.85.1"
+    "@effect/language-service": ">=0.86.1"
     "@effect/opentelemetry": ">=0.63.0"
     "@effect/platform": ">=0.96.0"
     "@effect/platform-browser": ">=0.76.0"
@@ -64,7 +64,7 @@ catalogs:
     "@types/node": ^25.6.0
     "@types/react": ^19.2.0
     "@types/react-dom": ^19.2.0
-    "@typescript/native-preview": ^7.0.0-dev.20260124.1
+    "@typescript/native-preview": ^7.0.0-dev.20260513.1
     effect: ">=3.21.0"
     react: ^19.2.0
     react-dom: ^19.2.0
