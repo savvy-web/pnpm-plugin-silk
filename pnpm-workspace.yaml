@@ -34,7 +34,7 @@ catalogs:
     effect: ^3.21.2
     react: ^19.2.6
     react-dom: ^19.2.6
-    tsx: ^4.21.0
+    tsx: ^4.22.1
     typescript: ^6.0.3
   silkPeers:
     "@effect/ai": ">=0.35.0"
@@ -68,7 +68,7 @@ catalogs:
     effect: ">=3.21.0"
     react: ^19.2.0
     react-dom: ^19.2.0
-    tsx: ^4.21.0
+    tsx: ^4.22.1
     typescript: ^6.0.0
 loglevel: info
 onlyBuiltDependencies:
