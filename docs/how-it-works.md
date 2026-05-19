@@ -79,9 +79,9 @@ The bundle is built with [rslib-builder](https://github.com/savvy-web/pnpm-modul
 using the `virtualEntries` feature to produce a CommonJS output from ESM
 TypeScript source.
 
-## Effect Ecosystem Version Resolution
+## Effect ecosystem version resolution
 
-The plugin manages 24 Effect ecosystem packages that are released in coordinated
+The plugin manages 26 Effect ecosystem packages that are released in coordinated
 batches. All packages in a release share compatible versions, so the silk
 catalogs update all 24 entries together as a single batch.
 

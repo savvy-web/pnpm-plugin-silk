@@ -3,8 +3,8 @@ status: current
 module: pnpm-plugin-silk
 category: architecture
 created: 2026-02-03
-updated: 2026-04-24
-last-synced: 2026-04-24
+updated: 2026-05-19
+last-synced: 2026-05-19
 completeness: 95
 related: []
 dependencies: []
@@ -988,14 +988,14 @@ all hook tests to use dependency-injected mock services instead of importing rea
 
 ## Effect Ecosystem Version Strategy
 
-The Silk plugin manages 24 Effect ecosystem packages across the `silk` and `silkPeers` catalogs,
+The Silk plugin manages 26 Effect ecosystem packages across the `silk` and `silkPeers` catalogs,
 providing centralized version control for Effect dependencies across all consuming repositories.
 Version updates are managed via the [effect-catalog-resolver](#effect-catalog-resolver-skill)
 Claude Code skill, which automates discovery, compatibility checking, and catalog updates.
 
 ### Effect Ecosystem Catalogs
 
-The 24 managed Effect packages span seven functional groups:
+The 26 managed Effect packages span eight functional groups:
 
 **Core:**
 
@@ -1043,6 +1043,11 @@ The 24 managed Effect packages span seven functional groups:
 - `@effect/rpc` - Remote procedure calls
 - `@effect/workflow` - Workflow orchestration
 
+**Developer Tooling:**
+
+- `@effect/tsgo` - TypeScript Go compiler (tsgo) for fast type checking
+- `@effect/vitest` - Vitest integration for Effect-aware test helpers
+
 ### Range Strategy for 0.x Packages
 
 For `@effect/*` packages (all currently at 0.x), the `silkPeers` catalog uses `>=` floor-only
@@ -1070,16 +1075,14 @@ Effect packages are released in coordinated batches where all packages in a rele
 compatible versions. A release of `effect@3.15.0` will be accompanied by corresponding compatible
 versions of all `@effect/*` packages.
 
-When updating the silk catalogs, all 24 Effect package entries should be updated together as a
-single batch to maintain cross-package compatibility. The
+When updating the silk catalogs, all 26 Effect package entries should be updated together as a single batch to maintain cross-package compatibility. The
 [effect-catalog-resolver](#effect-catalog-resolver-skill) skill automates this process by resolving
 a compatible version set anchored on the latest `effect` core release. Updating a subset of Effect
 packages independently risks version incompatibilities between the Effect modules.
 
 ### Version Management
 
-All 24 Effect packages are added as `devDependencies` in `pnpm-plugin-silk`'s own `package.json`
-using `catalog:silk` references. This enables the standard version update workflow:
+All 26 Effect packages are added as `devDependencies` in `pnpm-plugin-silk`'s own `package.json` using `catalog:silk` references. This enables the standard version update workflow:
 
 ```bash
 pnpm up -i -r --latest
@@ -1089,20 +1092,13 @@ Running this command updates the pinned versions in `pnpm-workspace.yaml`, which
 by the `generate:catalogs` script during the next build. The updated versions propagate to all
 consuming repositories on the next plugin release.
 
-This approach ensures that the plugin's own dependency resolution validates that all 24 Effect
-packages resolve to compatible versions before they are published to consumers.
+This approach ensures that the plugin's own dependency resolution validates that all 26 Effect packages resolve to compatible versions before they are published to consumers.
 
 ### Excluded Effect Packages
 
 Selected Effect packages have special handling:
 
-- **`@effect/vitest`** - Included in `silkPeers` only (not in `silk`). Each repository manages its
-  own test framework version via local dependencies, but the peer range is provided for packages
-  that declare it as a peer dependency.
-
-- **`@effect/schema`** - Excluded entirely because its functionality was merged into the `effect`
-  core package. No repositories in the Savvy Web ecosystem use `@effect/schema` as a standalone
-  dependency.
+- **`@effect/schema`** - Excluded entirely because its functionality was merged into the `effect` core package. No repositories in the Savvy Web ecosystem use `@effect/schema` as a standalone dependency.
 
 ---
 
@@ -1316,9 +1312,7 @@ The resolver uses the npm registry HTTP API directly (`registry.npmjs.org`) rath
 enabling efficient access to per-version peer dependency data from packument responses. Output is
 structured JSON consumed by the agent for report presentation and `pnpm-workspace.yaml` editing.
 
-Current catalog state: 24 tracked Effect packages (expanded from initial 13), all at latest
-compatible versions anchored on `effect@3.21.2`. Includes packages across core, AI (anthropic,
-openai, amazon-bedrock, google), CLI, telemetry, SQL, and platform groups.
+Current catalog state: 26 tracked Effect packages (expanded from initial 13), all at latest compatible versions anchored on `effect@3.21.2`. Includes packages across core, AI (anthropic, openai, amazon-bedrock, google), CLI, telemetry, SQL, platform and developer tooling groups.
 
 ### Phase 4.5: Effect Rewrite + peerDependencyRules (feat/better-rules branch) - IN PROGRESS
 
@@ -1414,11 +1408,9 @@ Areas that may need refactoring in the future:
 
 ---
 
-**Document Status:** Current (95% complete) - MVP + Security Overrides + Effect Catalog Resolver +
-Effect Service Rewrite + peerDependencyRules complete; Biome Schema Sync removed (migrated to
-@savvy-web/lint-staged)
+**Document Status:** Current (95% complete) - MVP + Security Overrides + Effect Catalog Resolver + Effect Service Rewrite + peerDependencyRules complete; Biome Schema Sync removed (migrated to @savvy-web/lint-staged); `@effect/tsgo` and `@effect/vitest` added to silk/silkPeers catalogs
 
-**Synced:** 2026-04-24
+**Synced:** 2026-05-19
 
 **Implementation Summary:**
 
@@ -1439,7 +1431,7 @@ Effect Service Rewrite + peerDependencyRules complete; Biome Schema Sync removed
 - `onlyBuiltDependencies` and `publicHoistPattern` array syncing with deduplication
 - Effect catalog resolver skill (`.claude/skills/effect-catalog-resolver/`) for automated version
   resolution via npm registry API, iterative constraint solving, and silkPeers derivation
-- 24 Effect ecosystem packages tracked in silk/silkPeers catalogs (expanded from 13 via resolver)
+- 26 Effect ecosystem packages tracked in silk/silkPeers catalogs (expanded from 13 via resolver); includes `@effect/tsgo` and `@effect/vitest` added in feat/effect-vitest
 - Non-Effect catalog entries: react, react-dom, @types/react, @types/react-dom, TypeScript 6.x,
   tsx, @typescript/native-preview
 - Tests reorganized from `src/index.test.ts` (27 tests) to `__test__/` directory (56 tests) with
@@ -1466,6 +1458,7 @@ Effect Service Rewrite + peerDependencyRules complete; Biome Schema Sync removed
 
 | Dependency Path | Version | Reason |
 | :-------------- | :------ | :----- |
+| `@effect/vitest>vitest` | `^4.1.0` | Allows Vitest 4.x with @effect/vitest peer range |
 | `@typescript-eslint/project-service>typescript` | `^6.0.0` | TS 6 peer support not yet declared |
 | `@typescript-eslint/tsconfig-utils>typescript` | `^6.0.0` | TS 6 peer support not yet declared |
 | `@typescript-eslint/typescript-estree>typescript` | `^6.0.0` | TS 6 peer support not yet declared |

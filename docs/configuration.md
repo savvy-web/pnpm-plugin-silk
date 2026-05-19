@@ -37,20 +37,21 @@ Permissive version ranges for peer dependencies. Use in `peerDependencies`:
 The `silkPeers` catalog uses wider ranges so consuming packages do not force
 users to upgrade immediately.
 
-## Effect Ecosystem Packages
+## Effect ecosystem packages
 
-The plugin manages 24 Effect ecosystem packages across both catalogs, organized
-into seven functional groups:
+The plugin manages 26 Effect ecosystem packages across both catalogs, organized
+into eight functional groups:
 
 | Group | Packages |
 | :---- | :------- |
 | Core | `effect`, `@effect/platform`, `@effect/platform-node`, `@effect/platform-bun`, `@effect/platform-browser`, `@effect/platform-node-shared` |
 | AI | `@effect/ai`, `@effect/ai-anthropic`, `@effect/ai-openai`, `@effect/ai-amazon-bedrock`, `@effect/ai-google` |
-| CLI Tooling | `@effect/cli`, `@effect/printer`, `@effect/printer-ansi` |
+| CLI tooling | `@effect/cli`, `@effect/printer`, `@effect/printer-ansi` |
 | Telemetry | `@effect/opentelemetry` |
 | Foundational | `@effect/typeclass`, `@effect/language-service`, `@effect/experimental` |
 | Database | `@effect/sql`, `@effect/sql-pg`, `@effect/sql-sqlite-bun`, `@effect/sql-sqlite-node` |
-| Platform Peers | `@effect/cluster`, `@effect/rpc`, `@effect/workflow` |
+| Platform peers | `@effect/cluster`, `@effect/rpc`, `@effect/workflow` |
+| Developer tooling | `@effect/vitest`, `@effect/tsgo` |
 
 All Effect packages are updated together as a coordinated batch to maintain
 cross-package compatibility. The `effect-catalog-resolver` Claude Code skill
@@ -69,9 +70,8 @@ correctly.
 
 ### Excluded Effect packages
 
-Two Effect packages are intentionally excluded:
+One Effect package is intentionally excluded:
 
-- **`@effect/vitest`** - Test runner versions are managed per-repository
 - **`@effect/schema`** - Functionality merged into `effect` core
 
 ## Security Overrides

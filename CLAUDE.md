@@ -8,7 +8,7 @@ code in this repository.
 This is **@savvy-web/pnpm-plugin-silk** - a pnpm config dependency plugin for
 centralized catalog management across the Savvy Web ecosystem.
 
-**Current Phase:** Active Development (v0.12.x)
+**Current Phase:** Active Development (v0.13.x)
 
 **Key Features:**
 
@@ -23,13 +23,9 @@ centralized catalog management across the Savvy Web ecosystem.
 
 **Design Documentation:**
 
-- Architecture: `@./.claude/design/pnpm-plugin-silk/catalog-management.md`
-  Load when: adding catalog entries, modifying merge logic, debugging resolution,
-  adding security overrides, understanding Effect catalog resolver architecture
+- Architecture: `@./.claude/design/pnpm-plugin-silk/catalog-management.md` — Load when: adding catalog entries, modifying merge logic, debugging resolution, adding security overrides, understanding Effect catalog resolver architecture
 - Implementation Plan: `@./.claude/plans/pnpm-plugin-silk-mvp.md` (completed)
-- Effect Catalog Resolver:
-  `@./.claude/skills/effect-catalog-resolver/SKILL.md`
-  Load when: updating Effect ecosystem packages, checking version compatibility
+- Effect Catalog Resolver: `@./.claude/skills/effect-catalog-resolver/SKILL.md` — Load when: updating Effect ecosystem packages, checking version compatibility, adding new @effect/* packages to catalogs
 
 ## Commands
 
