@@ -1,5 +1,14 @@
 # @savvy-web/pnpm-plugin-silk
 
+## 0.13.2
+
+### Features
+
+* [`5e25dfe`](https://github.com/savvy-web/pnpm-plugin-silk/commit/5e25dfe31c6d01af783e6fcad8b9e4ca78e4e9a0) Add `@effect/vitest` and `@effect/tsgo` to the silk and silkPeers catalogs.
+
+- `@effect/vitest ^0.29.0` (silk) / `>=0.29.0` (silkPeers) — Effect-native Vitest integration
+- `@effect/tsgo ^0.7.4` (silk) / `>=0.7.4` (silkPeers) — Effect Language Service TypeScript-Go extension
+
 ## 0.13.1
 
 ### Dependencies
