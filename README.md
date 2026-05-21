@@ -20,8 +20,7 @@ of truth.
   `publicHoistPattern` settings across repositories
 - **Peer dependency rules** - Syncs `peerDependencyRules` (allowedVersions,
   ignoreMissing, allowAny) to suppress common peer warnings
-- **Effect ecosystem management** - 24 coordinated `@effect/*` packages across
-  seven functional groups with compatible version resolution
+- **Effect ecosystem management** - 26 coordinated `@effect/*` packages across eight functional groups with compatible version resolution
 - **Non-destructive merging** - Local definitions always take precedence with
   clear warnings for divergences
 
