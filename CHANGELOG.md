@@ -1,5 +1,14 @@
 # @savvy-web/pnpm-plugin-silk
 
+## 0.13.3
+
+### Dependencies
+
+* | [`64ce87a`](https://github.com/savvy-web/pnpm-plugin-silk/commit/64ce87a375675022c8ca1e015fef26fb7cbc87eb) | Dependency | Type    | Action                | From                  | To |
+  | :--------------------------------------------------------------------------------------------------------- | :--------- | :------ | :-------------------- | :-------------------- | -- |
+  | @effect/tsgo                                                                                               | config     | updated | ^0.7.5                | ^0.11.0               |    |
+  | @typescript/native-preview                                                                                 | config     | updated | ^7.0.0-dev.20260519.1 | ^7.0.0-dev.20260523.1 |    |
+
 ## 0.13.2
 
 ### Features
