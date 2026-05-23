@@ -25,14 +25,14 @@ catalogs:
     "@effect/sql-pg": ^0.52.1
     "@effect/sql-sqlite-bun": ^0.52.0
     "@effect/sql-sqlite-node": ^0.52.0
-    "@effect/tsgo": ^0.7.5
+    "@effect/tsgo": ^0.11.0
     "@effect/typeclass": ^0.40.0
     "@effect/vitest": ^0.29.0
     "@effect/workflow": ^0.18.1
     "@types/node": ^25.9.1
     "@types/react": ^19.2.15
     "@types/react-dom": ^19.2.3
-    "@typescript/native-preview": ^7.0.0-dev.20260519.1
+    "@typescript/native-preview": ^7.0.0-dev.20260523.1
     effect: ^3.21.2
     react: ^19.2.6
     react-dom: ^19.2.6
@@ -61,7 +61,7 @@ catalogs:
     "@effect/sql-pg": ">=0.52.1"
     "@effect/sql-sqlite-bun": ">=0.52.0"
     "@effect/sql-sqlite-node": ">=0.52.0"
-    "@effect/tsgo": ">=0.7.5"
+    "@effect/tsgo": ">=0.11.0"
     "@effect/typeclass": ">=0.40.0"
     "@effect/vitest": ">=0.29.0"
     "@effect/workflow": ">=0.18.0"
@@ -95,13 +95,13 @@ overrides:
   tmp: ^0.2.4
 peerDependencyRules:
   allowedVersions:
+    "@effect/vitest>vitest": ^4.1.0
     "@typescript-eslint/project-service>typescript": ^6.0.0
     "@typescript-eslint/tsconfig-utils>typescript": ^6.0.0
     "@typescript-eslint/typescript-estree>typescript": ^6.0.0
     "@typescript-eslint/util>typescript": ^6.0.0
     "@typescript-eslint/utils>typescript": ^6.0.0
     eslint-plugin-tsdoc>typescript: ^6.0.0
-    "@effect/vitest>vitest": ^4.1.0
 publicHoistPattern:
   - "@changesets/cli"
   - "@commitlint/cli"
