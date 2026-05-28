@@ -1,5 +1,11 @@
 # @savvy-web/pnpm-plugin-silk
 
+## 0.13.4
+
+### Bug Fixes
+
+* [`7661e8f`](https://github.com/savvy-web/pnpm-plugin-silk/commit/7661e8f92e07d27b1fdf7ea393188535d33023c9) Security release to remove issues with tmp < 0.27.0
+
 ## 0.13.3
 
 ### Dependencies
