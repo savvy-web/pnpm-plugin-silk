@@ -25,7 +25,7 @@ catalogs:
     "@effect/sql-pg": ^0.52.1
     "@effect/sql-sqlite-bun": ^0.52.0
     "@effect/sql-sqlite-node": ^0.52.0
-    "@effect/tsgo": ^0.11.4
+    "@effect/tsgo": ^0.13.0
     "@effect/typeclass": ^0.40.0
     "@effect/vitest": ^0.29.0
     "@effect/workflow": ^0.18.1
@@ -36,7 +36,7 @@ catalogs:
     effect: ^3.21.2
     react: ^19.2.6
     react-dom: ^19.2.6
-    tsx: ^4.22.3
+    tsx: ^4.22.4
     typescript: ^6.0.3
   silkPeers:
     "@effect/ai": ">=0.35.0"
