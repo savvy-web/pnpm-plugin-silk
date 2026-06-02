@@ -1,5 +1,11 @@
 # @savvy-web/pnpm-plugin-silk
 
+## 0.14.1
+
+### Other
+
+* [`56001b1`](https://github.com/savvy-web/pnpm-plugin-silk/commit/56001b14cfafcb6b70967fd7eaa57a9b696931e4) Temporarily disable minimumReleaseAge for certain dependencies
+
 ## 0.14.0
 
 ### Features
