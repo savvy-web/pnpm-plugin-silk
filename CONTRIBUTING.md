@@ -1,14 +1,13 @@
 # Contributing
 
-Thank you for your interest in contributing! This document provides guidelines
-and instructions for development.
+Thank you for your interest in contributing! This document provides guidelines and instructions for development.
 
 ## Prerequisites
 
-- Node.js 24.11.0+
-- pnpm 10.33.0+
+- Node.js 26+
+- pnpm 11+
 
-## Development Setup
+## Development setup
 
 ```bash
 # Clone the repository
@@ -25,7 +24,7 @@ pnpm run build
 pnpm run test
 ```
 
-## Project Structure
+## Project structure
 
 ```text
 pnpm-plugin-silk/
@@ -35,23 +34,27 @@ pnpm-plugin-silk/
 │   │   ├── index.ts           # Public exports
 │   │   └── types.ts           # Type definitions
 │   ├── hooks/                 # pnpm hook implementations
-│   │   ├── update-config.ts   # updateConfig hook with merge logic
-│   │   └── warnings.ts        # Override warning formatter
+│   │   ├── update-config.ts   # updateConfig Effect program
+│   │   ├── merge-arrays.ts    # Array union merge
+│   │   ├── merge-catalogs.ts  # Catalog merge with override warnings
+│   │   ├── merge-overrides.ts # Security override merge
+│   │   ├── merge-peer-dependency-rules.ts
+│   │   └── warnings.ts        # Warning formatter
+│   ├── services/              # Effect dependency-injection tags
 │   ├── index.ts               # Package entry point
-│   ├── index.test.ts          # Unit tests
 │   └── pnpmfile.ts            # pnpm hook entry point
-├── scripts/
-│   └── generate-catalogs.ts   # Reads workspace yaml, writes TypeScript
+├── lib/
+│   └── scripts/
+│       └── run-generate.ts    # CLI runner for generate-catalogs
+├── __test__/                  # Unit and integration tests
 ├── types/
 │   └── global.d.ts            # Global type declarations
-├── dist/
-│   ├── dev/                   # Development build
-│   └── npm/                   # Production build for publishing
-└── lib/
-    └── configs/               # Shared configuration files
+└── dist/
+    ├── dev/                   # Development build (with source maps)
+    └── npm/                   # Production build for publishing
 ```
 
-## Available Scripts
+## Available scripts
 
 | Script | Description |
 | --- | --- |
@@ -67,7 +70,7 @@ pnpm-plugin-silk/
 | `pnpm run typecheck` | Type-check with tsgo (TypeScript native) |
 | `pnpm run generate:catalogs` | Regenerate catalogs from workspace yaml |
 
-## Code Quality
+## Code quality
 
 This project uses:
 
@@ -75,10 +78,9 @@ This project uses:
 - **Commitlint** for enforcing conventional commits
 - **Husky** for Git hooks
 
-### Commit Format
+### Commit format
 
-All commits must follow the [Conventional Commits](https://conventionalcommits.org)
-specification and include a DCO signoff:
+All commits must follow the [Conventional Commits](https://conventionalcommits.org) specification and include a DCO signoff:
 
 ```text
 feat: add new catalog entries
@@ -86,13 +88,13 @@ feat: add new catalog entries
 Signed-off-by: Your Name <your.email@example.com>
 ```
 
-### Git Hooks
+### Git hooks
 
 The following checks run automatically via Husky:
 
+- **pre-commit**: Runs lint-staged (Biome format + lint on changed files)
 - **commit-msg**: Validates conventional commit format via commitlint
-- **post-checkout**: Ensures shell script permissions are correct
-- **post-merge**: Ensures shell script permissions are correct
+- **pre-push**: Runs tests for affected packages
 
 ## Testing
 
@@ -115,7 +117,7 @@ pnpm run test:coverage
 - ES2022/ES2023 targets
 - Import extensions required (`.js` for ESM)
 
-### Import Conventions
+### Import conventions
 
 ```typescript
 // Use .js extensions for relative imports (ESM requirement)
@@ -128,7 +130,7 @@ import { readFileSync } from "node:fs";
 import type { SilkCatalogs } from "./catalogs/types.js";
 ```
 
-## Submitting Changes
+## Submitting changes
 
 1. Fork the repository
 2. Create a feature branch: `git checkout -b feat/my-feature`
@@ -140,5 +142,4 @@ import type { SilkCatalogs } from "./catalogs/types.js";
 
 ## License
 
-By contributing, you agree that your contributions will be licensed under the
-MIT License.
+By contributing, you agree that your contributions will be licensed under the MIT License.

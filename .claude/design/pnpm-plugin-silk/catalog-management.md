@@ -3,9 +3,9 @@ status: current
 module: pnpm-plugin-silk
 category: architecture
 created: 2026-02-03
-updated: 2026-05-19
-last-synced: 2026-05-19
-completeness: 95
+updated: 2026-06-02
+last-synced: 2026-06-02
+completeness: 97
 related: []
 dependencies: []
 implementation-plans:
@@ -32,12 +32,6 @@ catalogs, patches, and overrides across multiple Silk ecosystem repositories.
 10. [Future Enhancements](#future-enhancements)
 11. [Related Documentation](#related-documentation)
 
-**Note:** As of the `feat/better-rules` branch, the hook layer has been rewritten using Effect
-services (`CatalogProvider`, `PeerDependencyRulesProvider`) with dependency injection, the catalog
-generator is now an Effect program using `FileSystem`, and peerDependencyRules syncing has been
-added. See the [Current State](#current-state) and [System Architecture](#system-architecture)
-sections for details.
-
 ---
 
 ## Overview
@@ -53,10 +47,11 @@ receives two named catalogs, security overrides, and peer dependency rules:
 - **`catalog:silk`** - Current/latest versions for direct dependencies (kept up-to-date)
 - **`catalog:silkPeers`** - Permissive ranges for peerDependencies (avoids forcing updates)
 - **`overrides`** - Security fixes for transitive dependency CVEs (merged with local overrides)
-- **`onlyBuiltDependencies`** - Packages allowed to run build scripts during install
+- **`allowBuilds`** - Boolean map of packages permitted to run build scripts (pnpm 11; replaces deprecated `onlyBuiltDependencies`)
 - **`publicHoistPattern`** - Packages to hoist to the virtual store root
-- **`peerDependencyRules`** - Centralized rules for suppressing peer dependency warnings
-  (`allowedVersions`, `ignoreMissing`, `allowAny`)
+- **`peerDependencyRules`** - Centralized rules for suppressing peer dependency warnings (`allowedVersions`, `ignoreMissing`, `allowAny`)
+- **`strictDepBuilds`, `blockExoticSubdeps`, `minimumReleaseAge`** - pnpm 11 build/security defaults injected by Silk; child repos may override but receive a security warning when they weaken any default
+- **`packageExtensions`, `allowedDeprecatedVersions`, `supportedArchitectures`, `auditConfig`** - Additional pnpm settings merged with child-wins semantics
 
 Plus future enhancements:
 
@@ -69,10 +64,8 @@ its own devDependencies while declaring `peerDependencies: { typescript: catalog
 
 **Key Design Principles:**
 
-- **Zero runtime dependencies** - Config dependencies cannot have their own dependencies; all code
-  must be self-contained and bundled
-- **CommonJS export required** - pnpm loads `pnpmfile.cjs` from the package root; ESM source must
-  compile to CJS
+- **Zero runtime dependencies** - Config dependencies cannot have their own dependencies; all code must be self-contained and bundled
+- **ESM named export** - pnpm 11 loads `pnpmfile.mjs` first (falling back to `pnpmfile.cjs`); the bundle must export `export const hooks = { ... }` as an ESM named export
 - **Named catalogs** - Use `silk` and `silkPeers` namespaces; don't override user's default catalog
 - **Dual version strategy** - Current versions for direct deps, permissive ranges for peers
 - **Non-destructive merging** - Plugin catalogs merge with (not replace) local catalogs; local
@@ -84,7 +77,7 @@ its own devDependencies while declaring `peerDependencies: { typescript: catalog
 
 - When adding new catalog entries to the plugin
 - When modifying the catalog merging strategy
-- When updating rslib-builder to support CJS output
+- When updating tsdown configuration for the ESM bundle
 - When debugging catalog resolution issues in consuming repos
 
 ---
@@ -123,21 +116,30 @@ testable with mock filesystems). It reads:
 - `catalogs.silk` - Direct dependency versions
 - `catalogs.silkPeers` - Peer dependency ranges
 - `overrides` - Security overrides for transitive dependency CVEs
-- `onlyBuiltDependencies` - Packages allowed to run build scripts
+- `onlyBuiltDependencies` - Folded into `allowBuilds` as `name: true` (legacy support)
 - `publicHoistPattern` - Packages to hoist to virtual store root
-- `peerDependencyRules` - Peer dependency suppression rules (`allowedVersions`, `ignoreMissing`,
-  `allowAny`)
+- `peerDependencyRules` - Peer dependency suppression rules (`allowedVersions`, `ignoreMissing`, `allowAny`)
+- `strictDepBuilds`, `blockExoticSubdeps`, `minimumReleaseAge`, `minimumReleaseAgeExclude` - pnpm 11 security settings
+- `packageExtensions`, `allowedDeprecatedVersions`, `supportedArchitectures`, `auditConfig` - Extended merge settings
 
 **Key interfaces/APIs:**
 
 ```typescript
 // src/catalogs/types.ts
 interface SilkCatalogs {
-  readonly silk: Record<string, string>;         // Current versions for direct deps
-  readonly silkPeers: Record<string, string>;    // Permissive ranges for peers
+  readonly silk: Record<string, string>;          // Current versions for direct deps
+  readonly silkPeers: Record<string, string>;     // Permissive ranges for peers
   readonly silkOverrides: Record<string, string>; // Security overrides for CVEs
-  readonly silkOnlyBuiltDependencies: readonly string[];  // Packages allowed to run build scripts
-  readonly silkPublicHoistPattern: readonly string[];     // Packages to hoist to virtual store root
+  readonly silkAllowBuilds: Record<string, boolean>; // Build-script allowlist map (pnpm 11)
+  readonly silkPublicHoistPattern: readonly string[];
+  readonly silkStrictDepBuilds?: boolean;
+  readonly silkBlockExoticSubdeps?: boolean;
+  readonly silkMinimumReleaseAge?: number;
+  readonly silkMinimumReleaseAgeExclude: readonly string[];
+  readonly silkPackageExtensions: Record<string, PackageExtension>;
+  readonly silkAllowedDeprecatedVersions: Record<string, string>;
+  readonly silkSupportedArchitectures: SupportedArchitectures;
+  readonly silkAuditConfig: AuditConfig;
 }
 
 interface SilkPeerDependencyRules {
@@ -166,11 +168,11 @@ export const silkCatalogs: SilkCatalogs = {
     tmp: "^0.2.4",                        // GHSA-52f5-9888-hmc6
     // ... more entries from pnpm-workspace.yaml overrides
   },
-  silkOnlyBuiltDependencies: [
-    "@parcel/watcher",
-    "esbuild",
-    // ... more entries from pnpm-workspace.yaml onlyBuiltDependencies
-  ],
+  silkAllowBuilds: {
+    "@parcel/watcher": true,
+    "esbuild": true,
+    // ... more entries from pnpm-workspace.yaml onlyBuiltDependencies (folded to allowBuilds)
+  },
   silkPublicHoistPattern: [
     "typescript",
     "turbo",
@@ -201,11 +203,14 @@ Effect services for dependency injection and testability.
 - `src/services/PeerDependencyRulesProvider.ts` - Effect `Context.Tag` service providing
   `SilkPeerDependencyRules` data
 - `src/hooks/update-config.ts` - Main hook as Effect program requiring both services
-- `src/hooks/merge-catalogs.ts` - `mergeSingleCatalog()` function for named catalog merging
-- `src/hooks/merge-overrides.ts` - `mergeOverrides()` function for security override merging
-- `src/hooks/merge-arrays.ts` - `mergeStringArrays()` function for array field merging
-- `src/hooks/merge-peer-dependency-rules.ts` - `mergePeerDependencyRules()` function
-- `src/hooks/warnings.ts` - Override warning formatter (box-styled console output)
+- `src/hooks/merge-catalogs.ts` - `mergeSingleCatalog()` for named catalog merging
+- `src/hooks/merge-overrides.ts` - `mergeOverrides()` for security override merging
+- `src/hooks/merge-arrays.ts` - `mergeStringArrays()` (array union + dedup) and `mergeArrayRecord()` (union per key, for `supportedArchitectures` and `auditConfig`)
+- `src/hooks/merge-map.ts` - `mergeMap()` (child-wins per key, for `allowBuilds`, `packageExtensions`, `allowedDeprecatedVersions`)
+- `src/hooks/merge-scalar.ts` - `mergeScalar()` (child value else silk default, for boolean flags and `minimumReleaseAge`)
+- `src/hooks/merge-peer-dependency-rules.ts` - `mergePeerDependencyRules()`
+- `src/hooks/security-warnings.ts` - Detectors for child configs that loosen silk security defaults (`detectAllowBuildsLoosening`, `detectFlagLoosening`, `detectMinReleaseAgeLoosening`)
+- `src/hooks/warnings.ts` - Override warning formatter (`warnOverrides`) and security warning formatter (`warnSecurity`)
 - `src/pnpmfile.ts` - Synchronous entry point using `Effect.runSync` with merged Layer
 
 **Key interfaces/APIs:**
@@ -229,12 +234,16 @@ export class PeerDependencyRulesProvider extends Context.Tag("PeerDependencyRule
   static Live = Layer.succeed(PeerDependencyRulesProvider, silkPeerDependencyRules);
 }
 
-// src/hooks/update-config.ts
+// src/hooks/update-config.ts (abbreviated — see source for full list of pnpm 11 fields)
 export interface PnpmConfig {
   catalogs?: Record<string, Record<string, string>>;
   overrides?: Record<string, string>;
-  onlyBuiltDependencies?: string[];
+  allowBuilds?: Record<string, boolean>;
   publicHoistPattern?: string[];
+  strictDepBuilds?: boolean;
+  blockExoticSubdeps?: boolean;
+  minimumReleaseAge?: number;
+  // ... packageExtensions, allowedDeprecatedVersions, supportedArchitectures, auditConfig
   peerDependencyRules?: {
     allowedVersions?: Record<string, string>;
     ignoreMissing?: string[];
@@ -248,24 +257,24 @@ export function updateConfig(
 ): Effect.Effect<PnpmConfig, never, CatalogProvider | PeerDependencyRulesProvider> {
   // 1. yield* CatalogProvider to get silk catalogs
   // 2. yield* PeerDependencyRulesProvider to get peer rules
-  // 3. Merge catalogs, overrides, arrays, and peerDependencyRules (local wins)
-  // 4. Emit warnings for conflicts
-  // 5. Return merged config
+  // 3. Merge catalogs, overrides, allowBuilds, publicHoistPattern, scalar settings,
+  //    extended settings, and peerDependencyRules (local wins or union per semantics)
+  // 4. Detect security-loosening child overrides
+  // 5. Emit override warnings and security warnings
+  // 6. Return merged config
 }
 
 // src/pnpmfile.ts
 const LiveLayer = Layer.merge(CatalogProvider.Live, PeerDependencyRulesProvider.Live);
 
-module.exports = {
-  hooks: {
-    updateConfig(config) {
-      try {
-        return Effect.runSync(updateConfig(config).pipe(Effect.provide(LiveLayer)));
-      } catch (error) {
-        console.warn("[pnpm-plugin-silk] Error merging catalogs...");
-        return config;
-      }
-    },
+export const hooks = {
+  updateConfig(config: Record<string, unknown>) {
+    try {
+      return Effect.runSync(updateConfig(config).pipe(Effect.provide(LiveLayer)));
+    } catch (error) {
+      console.warn("[pnpm-plugin-silk] Error merging catalogs...");
+      return config;
+    }
   },
 };
 
@@ -283,15 +292,15 @@ export function warnOverrides(overrides: Override[]): void;
 
 #### Component 3: Bundle Output
 
-**Location:** `dist/npm/pnpmfile.cjs`
+**Location:** `dist/npm/pnpmfile.mjs`
 
-**Purpose:** Self-contained CommonJS bundle that pnpm can load directly
+**Purpose:** Self-contained ESM bundle that pnpm 11 loads as a config dependency
 
 **Responsibilities:**
 
-- Bundle all source code into single CJS file
+- Bundle all source code into a single ESM file (effect bundled in via `deps.alwaysBundle`)
 - Include catalog definitions inline (no external imports)
-- Maintain compatibility with pnpm's hook loading mechanism
+- Maintain compatibility with pnpm's hook loading mechanism (`export const hooks`)
 
 ### Architecture Diagram
 
@@ -318,13 +327,13 @@ export function warnOverrides(overrides: Override[]): void;
 │  └──────────┬───────────┘                                             │
 │             ▼                                                         │
 │  ┌──────────────────────┐                                            │
-│  │  rslib-builder       │                                            │
-│  │  (CJS bundling)      │                                            │
+│  │  tsdown              │                                            │
+│  │  (ESM bundling)      │                                            │
 │  └──────────┬───────────┘                                            │
 │             ▼                                                         │
 │  ┌──────────────────────┐                                            │
 │  │  dist/npm/           │                                            │
-│  │  └── pnpmfile.cjs    │  (self-contained CJS bundle)               │
+│  │  └── pnpmfile.mjs    │  (self-contained ESM bundle)               │
 │  └──────────────────────┘                                            │
 └──────────────────────────────────────────────────────────────────────┘
                               │
@@ -349,15 +358,13 @@ export function warnOverrides(overrides: Override[]): void;
 
 Known limitations of the current architecture:
 
-- **No transitive config dependencies** - Config dependencies cannot have their own dependencies;
-  everything must be bundled into the plugin
-- **CommonJS only** - pnpm requires `pnpmfile.cjs`; ESM is not supported for hooks
-- **Exact versions required** - Config dependencies must use exact versions with integrity
-  checksums, not ranges
+- **No transitive config dependencies** - Config dependencies cannot have their own dependencies; everything must be bundled into the plugin
+- **Self-contained bundle required** - The artifact must include all runtime code; satisfied by tsdown bundling effect in via `deps.alwaysBundle`
+- **Exact versions required** - Config dependencies must use exact versions with integrity checksums, not ranges
 
 ### Resolved Limitations
 
-- ~~**rslib-builder CJS gap**~~ - Resolved in rslib-builder v0.10.0 via `virtualEntries` feature
+- ~~**rslib-builder CJS gap**~~ - Resolved in tsdown migration (feat/pnpm-11); plugin now ships `pnpmfile.mjs` (ESM), which pnpm 11 loads natively
 
 ---
 
@@ -373,13 +380,12 @@ multiple repositories in the Silk ecosystem.
 **Options considered:**
 
 1. **Option A (Chosen): pnpm Config Dependencies**
-   - Pros: Native pnpm integration, automatic hook loading, versioned with integrity checks,
-     installs before other dependencies
-   - Cons: Must bundle everything (no dependencies), CJS only, relatively new feature
+   - Pros: Native pnpm integration, automatic hook loading, versioned with integrity checks, installs before other dependencies
+   - Cons: Must bundle everything (no external runtime dependencies), relatively new feature
    - Why chosen: Purpose-built for this exact use case; provides the cleanest integration
 
 2. **Option B: Shared npm package with manual pnpmfile import**
-   - Pros: More flexible, can have dependencies, supports ESM
+   - Pros: More flexible, can have dependencies
    - Cons: Requires manual `.pnpmfile.cjs` setup in each repo, version sync is manual
    - Why rejected: Defeats the purpose of centralization; too much boilerplate per repo
 
@@ -414,23 +420,23 @@ multiple repositories in the Silk ecosystem.
 
 #### Pattern 2: Self-Contained Bundle
 
-- **Where used:** Build output (pnpmfile.cjs)
+- **Where used:** Build output (`pnpmfile.mjs`)
 - **Why used:** Config dependencies cannot have their own dependencies
-- **Implementation:** rslib-builder bundles all source + data into single CJS file
+- **Implementation:** tsdown bundles all source + data into a single ESM file (`deps.alwaysBundle: ["effect"]`)
 
 ### Constraints and Trade-offs
 
-#### Constraint 1: No Dependencies Allowed
+#### Constraint 1: No Runtime Dependencies Allowed
 
 - **Description:** pnpm config dependencies cannot declare dependencies in package.json
-- **Impact:** Cannot use any external libraries; must bundle everything or write from scratch
-- **Mitigation:** Use rslib-builder to bundle all code; keep implementation minimal
+- **Impact:** Cannot rely on any external libraries at runtime; must bundle everything
+- **Mitigation:** Use tsdown with `deps.alwaysBundle: ["effect"]` to produce a self-contained `pnpmfile.mjs`
 
-#### Constraint 2: CommonJS Export Required
+#### Constraint 2: Self-Contained ESM Bundle Required
 
-- **Description:** pnpm loads `pnpmfile.cjs` specifically; ESM not supported
-- **Impact:** Must transpile ESM source to CJS; need to update rslib-builder
-- **Mitigation:** Add CJS output format support to rslib-builder configuration
+- **Description:** pnpm 11 loads `pnpmfile.mjs` (ESM named export) from the config dependency; the bundle must be entirely self-contained with no import-time side effects from unbundled packages
+- **Impact:** All runtime code including effect must be inlined into the artifact
+- **Mitigation:** tsdown `fixedExtension: true` emits `.mjs`; `deps.alwaysBundle: ["effect"]` ensures effect is inlined
 
 #### Trade-off 1: Centralization vs. Flexibility
 
@@ -494,16 +500,16 @@ implementation.
 
 **Components:**
 
-- `src/hooks/update-config.ts` - `updateConfig` as `Effect.Effect<PnpmConfig, never,
-  CatalogProvider | PeerDependencyRulesProvider>`
+- `src/hooks/update-config.ts` - `updateConfig` as `Effect.Effect<PnpmConfig, never, CatalogProvider | PeerDependencyRulesProvider>`
 - `src/hooks/merge-catalogs.ts` - `mergeSingleCatalog()` for named catalog merging
 - `src/hooks/merge-overrides.ts` - `mergeOverrides()` for security override merging
-- `src/hooks/merge-arrays.ts` - `mergeStringArrays()` for array field merging and deduplication
-- `src/hooks/merge-peer-dependency-rules.ts` - `mergePeerDependencyRules()` combining
-  `allowedVersions`, `ignoreMissing`, and `allowAny`
-- `src/hooks/warnings.ts` - Override detection and warning formatter
-- `src/pnpmfile.ts` - Synchronous entry point using `Effect.runSync` with
-  `Layer.merge(CatalogProvider.Live, PeerDependencyRulesProvider.Live)`
+- `src/hooks/merge-arrays.ts` - `mergeStringArrays()` (array union + dedup) and `mergeArrayRecord()` (union per key, for `supportedArchitectures` and `auditConfig`)
+- `src/hooks/merge-map.ts` - `mergeMap()` child-wins per key (for `allowBuilds`, `packageExtensions`, `allowedDeprecatedVersions`)
+- `src/hooks/merge-scalar.ts` - `mergeScalar()` child value else silk default (for boolean flags and `minimumReleaseAge`)
+- `src/hooks/merge-peer-dependency-rules.ts` - `mergePeerDependencyRules()` combining `allowedVersions`, `ignoreMissing` and `allowAny`
+- `src/hooks/security-warnings.ts` - Detects when child config weakens a silk security default; see `SecurityWarning` interface
+- `src/hooks/warnings.ts` - Override warning formatter (`warnOverrides`) and security warning formatter (`warnSecurity`)
+- `src/pnpmfile.ts` - Synchronous entry point using `Effect.runSync` with `Layer.merge(CatalogProvider.Live, PeerDependencyRulesProvider.Live)`
 
 **Communication:** Called by pnpm during install lifecycle. The `updateConfig` hook is an Effect
 program that runs synchronously via `Effect.runSync`. The `try/catch` in `pnpmfile.ts` ensures
@@ -513,25 +519,25 @@ fail-safe behavior if the Effect program throws.
 
 #### Interaction 1: Catalog, Override, and PeerDependencyRules Injection During Install
 
-**Participants:** pnpm, pnpmfile.cjs, CatalogProvider, PeerDependencyRulesProvider
+**Participants:** pnpm, pnpmfile.mjs, CatalogProvider, PeerDependencyRulesProvider
 
 **Flow:**
 
 1. User runs `pnpm install` in consuming repo
-2. pnpm loads config dependency's `pnpmfile.cjs`
+2. pnpm 11 loads config dependency's `pnpmfile.mjs`
 3. pnpm calls `updateConfig(currentConfig)`
 4. `pnpmfile.ts` runs the Effect program with `LiveLayer`
-5. Effect yields `CatalogProvider` (silk catalogs, overrides, arrays)
+5. Effect yields `CatalogProvider` (silk catalogs, overrides, allowBuilds, scalar settings, extended settings)
 6. Effect yields `PeerDependencyRulesProvider` (allowedVersions, ignoreMissing, allowAny)
-7. Hook merges catalogs, overrides, arrays, and peerDependencyRules (local wins)
-8. Hook emits warnings for any conflicts
+7. Hook merges all managed settings (local wins or union per field semantics)
+8. Hook detects security-loosening overrides and emits override + security warning boxes
 9. Hook returns modified config
 10. pnpm uses merged config for resolution
 
 **Sequence diagram:**
 
 ```text
-pnpm         pnpmfile.cjs    CatalogProvider    PeerDepRulesProvider
+pnpm         pnpmfile.mjs    CatalogProvider    PeerDepRulesProvider
 │                 │                 │                    │
 ├────────────────>│                 │                    │
 │                 │  Effect.runSync │                    │
@@ -540,11 +546,15 @@ pnpm         pnpmfile.cjs    CatalogProvider    PeerDepRulesProvider
 │                 ├─────────────────┼───────────────────>│  yield* PeerDepRules
 │                 │<────────────────┼────────────────────┤  SilkPeerDependencyRules
 │                 │                 │                    │
-│                 │ merge catalogs  │                    │
-│                 │ merge overrides │                    │
-│                 │ merge arrays    │                    │
-│                 │ merge peerDepRules                   │
-│                 │ emit warnings   │                    │
+│                 │ merge catalogs             │                    │
+│                 │ merge overrides            │                    │
+│                 │ merge arrays (publicHoist) │                    │
+│                 │ merge allowBuilds map      │                    │
+│                 │ merge scalar settings      │                    │
+│                 │ merge new settings         │                    │
+│                 │ merge peerDepRules         │                    │
+│                 │ emit override warnings     │                    │
+│                 │ emit security warnings     │                    │
 │                 │                 │                    │
 │<────────────────┤                 │                    │  return mergedConfig
 │                 │                 │                    │
@@ -595,6 +605,31 @@ This ensures:
 - **Guidance:** Instructions on how to revert to Silk defaults
 - **Security awareness:** Alerts when local overrides may downgrade security fixes
 
+### Managed Settings Contract
+
+Each Silk-managed setting belongs to one merge category, and a subset emit a
+security warning when a child config weakens the Silk posture:
+
+| Setting | Type | Merge category | Security-loosening warning |
+| --- | --- | --- | --- |
+| `catalogs.silk` / `silkPeers` | map | child-wins per key | version-divergence box |
+| `overrides` | map | child-wins per key | version-divergence box |
+| `allowBuilds` | boolean map | child-wins per key | child `true` where Silk `false` |
+| `publicHoistPattern` | array | union | none |
+| `strictDepBuilds` | boolean | child value else Silk default | child `false` where Silk `true` |
+| `blockExoticSubdeps` | boolean | child value else Silk default | child `false` where Silk `true` |
+| `minimumReleaseAge` | number | child value else Silk default | child lower than Silk |
+| `minimumReleaseAgeExclude` | array | union | none |
+| `packageExtensions` | nested map | child-wins per key | none |
+| `allowedDeprecatedVersions` | map | child-wins per key | none |
+| `supportedArchitectures` | axis arrays | union per axis | none |
+| `auditConfig` | axis arrays | union per axis | none |
+| `peerDependencyRules` | nested | per-field merge | allowedVersions divergence |
+
+`allowBuilds` replaces the deprecated pnpm 10 build settings
+(`onlyBuiltDependencies` and friends). The generator folds any legacy
+`onlyBuiltDependencies` list into `allowBuilds` as `name: true`.
+
 ---
 
 ## Data Flow
@@ -606,30 +641,42 @@ Key data structures used throughout the plugin.
 ```typescript
 // pnpm config object passed to updateConfig hook
 interface PnpmConfig {
-  catalogs?: Record<string, Record<string, string>>; // named catalogs
-  catalog?: Record<string, string>;                   // default catalog
+  catalogs?: Record<string, Record<string, string>>;
+  catalog?: Record<string, string>;
   overrides?: Record<string, string>;
-  patchedDependencies?: Record<string, string>;
+  publicHoistPattern?: string[];
+  allowBuilds?: Record<string, boolean>;
+  strictDepBuilds?: boolean;
+  blockExoticSubdeps?: boolean;
+  minimumReleaseAge?: number;
+  minimumReleaseAgeExclude?: string[];
+  packageExtensions?: Record<string, PackageExtension>;
+  allowedDeprecatedVersions?: Record<string, string>;
+  supportedArchitectures?: SupportedArchitectures;
+  auditConfig?: AuditConfig;
   peerDependencyRules?: {
     allowedVersions?: Record<string, string>;
     ignoreMissing?: string[];
     allowAny?: string[];
   };
-  // ... other pnpm settings
+  [key: string]: unknown;
 }
 
-// Plugin catalog structure
+// Plugin catalog structure (see src/catalogs/types.ts for full definition)
 interface SilkCatalogs {
-  // Named catalog for direct dependencies (current/latest versions)
-  readonly silk: Record<string, string>;
-  // Named catalog for peer dependency ranges (more permissive)
-  readonly silkPeers: Record<string, string>;
-  // Security overrides for transitive dependency CVEs
-  readonly silkOverrides: Record<string, string>;
-  // Packages allowed to run build scripts during install
-  readonly silkOnlyBuiltDependencies: readonly string[];
-  // Packages to hoist to virtual store root
+  readonly silk: Record<string, string>;           // direct dep versions
+  readonly silkPeers: Record<string, string>;      // peer dep ranges
+  readonly silkOverrides: Record<string, string>;  // CVE overrides
+  readonly silkAllowBuilds: Record<string, boolean>; // build-script allowlist
   readonly silkPublicHoistPattern: readonly string[];
+  readonly silkStrictDepBuilds?: boolean;
+  readonly silkBlockExoticSubdeps?: boolean;
+  readonly silkMinimumReleaseAge?: number;
+  readonly silkMinimumReleaseAgeExclude: readonly string[];
+  readonly silkPackageExtensions: Record<string, PackageExtension>;
+  readonly silkAllowedDeprecatedVersions: Record<string, string>;
+  readonly silkSupportedArchitectures: SupportedArchitectures;
+  readonly silkAuditConfig: AuditConfig;
 }
 
 // Plugin peer dependency rules structure
@@ -656,10 +703,10 @@ const silkCatalogs: SilkCatalogs = {
     "lodash": "^4.17.23",                 // CVE-2025-13465
     "tmp": "^0.2.4",                      // GHSA-52f5-9888-hmc6
   },
-  silkOnlyBuiltDependencies: [
-    "@parcel/watcher",         // Native file watcher
-    "esbuild",                 // Native bundler
-  ],
+  silkAllowBuilds: {
+    "@parcel/watcher": true,   // Native file watcher
+    "esbuild": true,           // Native bundler
+  },
   silkPublicHoistPattern: [
     "typescript",              // IDE needs access
     "turbo",                   // Build orchestration
@@ -677,21 +724,30 @@ const silkPeerDependencyRules: SilkPeerDependencyRules = {
   allowAny: [],
 };
 
-// Merge result - adds silk catalogs, overrides, arrays, and peer rules
+// Merge result - adds silk catalogs, overrides, and all managed settings
 interface MergedConfig extends PnpmConfig {
   catalogs: {
-    silk: Record<string, string>;       // current versions
-    silkPeers: Record<string, string>;  // peer ranges
+    silk: Record<string, string>;
+    silkPeers: Record<string, string>;
     [other: string]: Record<string, string>;
   };
-  overrides: Record<string, string>;    // security overrides
-  onlyBuiltDependencies: string[];      // build script allowlist (merged)
-  publicHoistPattern: string[];         // hoist patterns (merged)
-  peerDependencyRules: {                // peer dependency rules (merged)
+  overrides: Record<string, string>;
+  allowBuilds: Record<string, boolean>;   // child-wins map (pnpm 11)
+  publicHoistPattern: string[];           // union array
+  peerDependencyRules: {
     allowedVersions: Record<string, string>;
     ignoreMissing: string[];
     allowAny: string[];
   };
+  // scalar security defaults (present only when silk or child defines a value)
+  strictDepBuilds?: boolean;
+  blockExoticSubdeps?: boolean;
+  minimumReleaseAge?: number;
+  minimumReleaseAgeExclude: string[];
+  packageExtensions: Record<string, PackageExtension>;
+  allowedDeprecatedVersions: Record<string, string>;
+  supportedArchitectures: SupportedArchitectures;
+  auditConfig: AuditConfig;
 }
 ```
 
@@ -703,7 +759,7 @@ interface MergedConfig extends PnpmConfig {
 [pnpm install]
       │
       ▼
-[Load pnpmfile.cjs from config dependency]
+[Load pnpmfile.mjs from config dependency]
       │
       ▼
 [Call updateConfig(existingConfig)]
@@ -731,12 +787,12 @@ interface MergedConfig extends PnpmConfig {
 **Steps:**
 
 1. User runs `pnpm install` in repo with `@savvy-web/pnpm-plugin-silk` config dependency
-2. pnpm automatically loads `pnpmfile.cjs` from the config dependency
+2. pnpm 11 automatically loads `pnpmfile.mjs` from the config dependency
 3. `pnpmfile.ts` wraps `updateConfig` in `Effect.runSync` with `LiveLayer`
-4. Effect yields `CatalogProvider` (silk catalogs, overrides, arrays)
+4. Effect yields `CatalogProvider` (silk catalogs, overrides, allowBuilds, scalar settings, extended settings)
 5. Effect yields `PeerDependencyRulesProvider` (allowedVersions, ignoreMissing, allowAny)
-6. Plugin reads any existing catalogs, overrides, arrays, and peerDependencyRules from local config
-7. All fields merged (local entries override plugin entries)
+6. Hook reads existing local config fields
+7. All managed settings merged per their semantics (child-wins, union, or scalar)
 8. Merged configuration returned to pnpm
 9. pnpm uses merged config for dependency resolution
 
@@ -788,36 +844,36 @@ The plugin is largely stateless--all catalog data is determined at hook invocati
 
 ### Internal Integrations
 
-#### Integration 1: rslib-builder
+#### Integration 1: tsdown
 
-**How it integrates:** Uses `virtualEntries` feature (v0.10.0+) to bundle pnpmfile.cjs
+**How it integrates:** Bundles `src/pnpmfile.ts` to a self-contained `pnpmfile.mjs` via `tsdown.config.ts`, loaded with `--config-loader tsx`
 
 **Actual Configuration:**
 
 ```typescript
-// rslib.config.ts
-import { NodeLibraryBuilder } from "@savvy-web/rslib-builder";
+// tsdown.config.ts
+import { defineConfig } from "tsdown";
+import { emitDistPackage } from "./lib/packaging/package-json.js";
 
-export default NodeLibraryBuilder.create({
-  virtualEntries: {
-    "pnpmfile.cjs": {
-      source: "./src/pnpmfile.ts",
-      format: "cjs",
+export default defineConfig({
+  entry: { pnpmfile: "src/pnpmfile.ts" },
+  format: "esm",
+  platform: "node",
+  fixedExtension: true, // → pnpmfile.mjs
+  deps: { alwaysBundle: ["effect"] }, // keep the bundle self-contained
+  dts: false,
+  clean: true,
+  hooks: {
+    "build:done": (ctx) => {
+      emitDistPackage(ctx.options.outDir);
     },
-  },
-  transform({ pkg }) {
-    delete pkg.devDependencies;
-    delete pkg.scripts;
-    delete pkg.publishConfig;
-    delete pkg.devEngines;
-    return pkg;
   },
 });
 ```
 
-**Data exchange:** TypeScript source → bundled CommonJS (self-contained CJS bundle)
+**Data exchange:** TypeScript ESM source → self-contained ESM bundle (`pnpmfile.mjs`)
 
-**Feature:** `virtualEntries` added to rslib-builder v0.10.0 specifically for this use case
+**`build:done` hook:** `lib/packaging/package-json.ts` writes the trimmed publishable `package.json` and copies LICENSE/README into the output directory
 
 #### Integration 2: Silk Ecosystem Modules
 
@@ -828,7 +884,6 @@ export default NodeLibraryBuilder.create({
 ```typescript
 // Example catalog entries for Silk modules
 const silkModules = {
-  "@savvy-web/rslib-builder": "^1.0.0",
   "@savvy-web/lint-staged": "^1.0.0",
   "@savvy-web/commitlint": "^1.0.0",
 };
@@ -842,17 +897,15 @@ const silkModules = {
 
 **Purpose:** Primary integration point; pnpm calls exported hooks during install
 
-**Protocol:** CommonJS module.exports with hooks object
+**Protocol:** ESM named export (`export const hooks`) from `pnpmfile.mjs`; pnpm 11 prefers `.mjs`, falling back to `.cjs`
 
 **Interface:**
 
 ```javascript
-// pnpmfile.cjs
-module.exports = {
-  hooks: {
-    updateConfig(config) {
-      return updateConfig(config);
-    },
+// pnpmfile.mjs
+export const hooks = {
+  updateConfig(config) {
+    return updateConfig(config);
   },
 };
 ```
@@ -930,59 +983,55 @@ typed layers that provide test fixtures.
 
 **Coverage target:** 90%+
 
-**Current test count:** 56 tests across 8 test files
-
 **Test structure:**
 
 ```text
 __test__/
 ├── fixtures/
-│   ├── catalogs/          # SilkCatalogs fixtures (full, minimal)
+│   ├── catalogs/               # SilkCatalogs fixtures (full, minimal)
 │   └── peer-dependency-rules/  # SilkPeerDependencyRules fixtures
 ├── generate/
-│   └── generate-catalogs.int.test.ts  # Generator Effect program (8 tests)
+│   └── generate-catalogs.int.test.ts  # Generator Effect program
 ├── hooks/
-│   ├── merge-arrays.test.ts           # Array merging (5 tests)
-│   ├── merge-catalogs.test.ts         # Catalog merging (6 tests)
-│   ├── merge-overrides.test.ts        # Override merging (5 tests)
-│   ├── merge-peer-dependency-rules.test.ts  # PeerDepRules merging (8 tests)
-│   ├── update-config.test.ts          # Full updateConfig Effect (15 tests)
-│   └── warnings.test.ts              # Warning formatting (6 tests)
+│   ├── merge-array-record.test.ts     # mergeArrayRecord (supportedArchitectures / auditConfig)
+│   ├── merge-arrays.test.ts           # mergeStringArrays
+│   ├── merge-catalogs.test.ts         # Named catalog merging
+│   ├── merge-map.test.ts              # mergeMap (allowBuilds, packageExtensions)
+│   ├── merge-overrides.test.ts        # Override merging
+│   ├── merge-peer-dependency-rules.test.ts
+│   ├── merge-scalar.test.ts           # mergeScalar (boolean flags, minimumReleaseAge)
+│   ├── security-warning-format.test.ts # formatSecurityWarning box rendering
+│   ├── security-warnings.test.ts      # detectAllowBuildsLoosening and friends
+│   ├── update-config.test.ts          # Full updateConfig Effect program
+│   └── warnings.test.ts              # formatOverrideWarning / warnOverrides
 ├── integration/
-│   └── pnpmfile.int.test.ts          # Entry point integration (3 tests)
-├── utils/
-│   ├── catalog-layer.ts              # Test CatalogProvider layer
-│   ├── fs-layer.ts                   # Test FileSystem layer
-│   └── peer-dependency-rules-layer.ts # Test PeerDependencyRulesProvider layer
-└── lib/                              # (placeholder)
+│   └── pnpmfile.int.test.ts          # Entry point integration
+├── packaging/
+│   └── package-json.test.ts          # createDistPackageJson helper
+└── utils/
+    ├── catalog-layer.ts              # Test CatalogProvider layer
+    ├── fs-layer.ts                   # Test FileSystem layer
+    └── peer-dependency-rules-layer.ts # Test PeerDependencyRulesProvider layer
 ```
 
-**Test utilities** (`__test__/utils/`): Shared Effect layers providing test fixture data, allowing
-all hook tests to use dependency-injected mock services instead of importing real generated data.
+**Test utilities** (`__test__/utils/`): Shared Effect layers providing test fixture data, allowing all hook tests to use dependency-injected mock services instead of importing real generated data.
 
-**Key test areas:**
+**Notable test areas:**
 
-- **merge-catalogs** (6 tests) - Named catalog merging, local precedence, warning collection
-- **merge-overrides** (5 tests) - Override merging, local precedence, warning collection
-- **merge-arrays** (5 tests) - Array combining, deduplication, empty/undefined handling
-- **merge-peer-dependency-rules** (8 tests) - allowedVersions merging, ignoreMissing/allowAny
-  array merging, combined rules
-- **update-config** (15 tests) - Full Effect program test using test layers, catalog injection,
-  override warnings, array merging, peerDependencyRules injection
-- **warnings** (6 tests) - Warning formatting, single/multiple overrides, guidance text
-- **generate-catalogs** (8 tests) - YAML parsing, content generation, skip-on-no-change,
-  peer dependency rules generation
-- **pnpmfile** (3 tests) - Integration of `Effect.runSync` with live layers, error recovery
+- **security-warnings** - Detects loosening of `allowBuilds`, boolean flags, and `minimumReleaseAge`; companion `security-warning-format` covers box rendering
+- **merge-map / merge-scalar / merge-array-record** - Unit tests for the three new generic merge primitives added in feat/pnpm-11
+- **packaging/package-json** - `createDistPackageJson` strips build-only fields and sets the `files` list to `["LICENSE", "README.md", "package.json", "pnpmfile.mjs"]`
+- **update-config** - Full Effect program exercising all merge operations and both warning paths
 
 ### Integration Tests
 
-**Location:** `__test__/integration/`
+**Locations:** `__test__/integration/`, `__test__/generate/`, `__test__/packaging/`
 
 **What is tested:**
 
-- Full pnmfile.ts entry point via `Effect.runSync` with `LiveLayer`
-- Error recovery (try/catch returns unmodified config on failure)
-- End-to-end catalog, override, array, and peerDependencyRules injection
+- Full pnpmfile.ts entry point via `Effect.runSync` with `LiveLayer` (error recovery, all merge operations)
+- Generator Effect program: YAML parsing, `allowBuilds` emission (folded from `onlyBuiltDependencies`), peer dependency rules generation, skip-on-no-change
+- `lib/packaging/package-json.ts` helper: strips build-only fields, sets `files` to `["LICENSE", "README.md", "package.json", "pnpmfile.mjs"]`, preserves `type: "module"`
 
 ---
 
@@ -1248,7 +1297,7 @@ The cap of 5 provides safety margin without risk of infinite loops.
 ### Phase 1: MVP (v1.0.0) - COMPLETE
 
 - **Catalog management** - Core catalog merging via updateConfig hook
-- **CJS bundling** - Add CJS output support to rslib-builder
+- **Bundle output** - Self-contained pnpmfile bundle (initially CJS via rslib-builder, migrated to ESM via tsdown in feat/pnpm-11)
 - **Initial catalogs** - Define versions for Silk ecosystem modules
 
 ### Phase 2: Security Overrides (v1.1.0) - COMPLETE
@@ -1314,24 +1363,16 @@ structured JSON consumed by the agent for report presentation and `pnpm-workspac
 
 Current catalog state: 26 tracked Effect packages (expanded from initial 13), all at latest compatible versions anchored on `effect@3.21.2`. Includes packages across core, AI (anthropic, openai, amazon-bedrock, google), CLI, telemetry, SQL, platform and developer tooling groups.
 
-### Phase 4.5: Effect Rewrite + peerDependencyRules (feat/better-rules branch) - IN PROGRESS
+### Phase 4.5: Effect Rewrite + peerDependencyRules - COMPLETE
 
-- **Effect service architecture** - Hook layer rewritten as Effect programs with dependency-injected
-  services (`CatalogProvider`, `PeerDependencyRulesProvider` as `Context.Tag`)
-- **peerDependencyRules syncing** - New `PeerDependencyRulesProvider` service and
-  `mergePeerDependencyRules()` function that syncs `allowedVersions`, `ignoreMissing`, and
-  `allowAny` from `pnpm-workspace.yaml`
-- **Generator rewrite** - `scripts/generate-catalogs.ts` moved to
-  `src/generate/generate-catalogs.ts` as Effect program using `FileSystem` service; CLI runner at
-  `lib/scripts/run-generate.ts` provides `NodeFileSystem.layer`
-- **Test reorganization** - Tests moved from `src/index.test.ts` (27 tests) to `__test__/` directory
-  (56 tests) with fixtures, test utility layers, and per-module test files
+- **Effect service architecture** - Hook layer rewritten as Effect programs with dependency-injected services (`CatalogProvider`, `PeerDependencyRulesProvider` as `Context.Tag`)
+- **peerDependencyRules syncing** - New `PeerDependencyRulesProvider` service and `mergePeerDependencyRules()` function that syncs `allowedVersions`, `ignoreMissing` and `allowAny` from `pnpm-workspace.yaml`
+- **Generator rewrite** - `scripts/generate-catalogs.ts` moved to `src/generate/generate-catalogs.ts` as Effect program using `FileSystem` service; CLI runner at `lib/scripts/run-generate.ts` provides `NodeFileSystem.layer`
+- **Test reorganization** - Tests moved from `src/index.test.ts` (27 tests) to `__test__/` directory with fixtures, test utility layers and per-module test files; expanded further in feat/pnpm-11 with tests for new merge primitives and `lib/packaging/`
 
 **Implementation Details:**
 
-The `pnpmfile.ts` entry point now composes services via `Layer.merge(CatalogProvider.Live,
-PeerDependencyRulesProvider.Live)` and runs the updateConfig Effect program synchronously via
-`Effect.runSync`. The try/catch wrapper ensures fail-safe behavior.
+The `pnpmfile.ts` entry point composes services via `Layer.merge(CatalogProvider.Live, PeerDependencyRulesProvider.Live)` and runs the updateConfig Effect program synchronously via `Effect.runSync`. It exports `export const hooks = { updateConfig }` as an ESM named export (bundled to `pnpmfile.mjs` by tsdown). The try/catch wrapper ensures fail-safe behavior.
 
 Current peerDependencyRules state (from `pnpm-workspace.yaml`):
 
@@ -1346,8 +1387,16 @@ peerDependencyRules:
     eslint-plugin-tsdoc>typescript: ^6.0.0
 ```
 
-These rules suppress peer dependency warnings from TypeScript-ESLint plugins that have not yet
-updated their peer dependency ranges to support TypeScript 6.x.
+These rules suppress peer dependency warnings from TypeScript-ESLint plugins that have not yet updated their peer dependency ranges to support TypeScript 6.x.
+
+### Phase 4.6: pnpm 11 settings inheritance (feat/pnpm-11) - COMPLETE
+
+- **`allowBuilds` migration** - Replaced deprecated `onlyBuiltDependencies` with the pnpm 11 boolean map; generator folds any legacy `onlyBuiltDependencies` list into `allowBuilds` as `name: true`
+- **Security defaults** - Silk now owns and injects `strictDepBuilds`, `blockExoticSubdeps`, `minimumReleaseAge` and `minimumReleaseAgeExclude`; a security-warning box fires when a child weakens any of these
+- **Extended merge surface** - Added `packageExtensions`, `allowedDeprecatedVersions`, `supportedArchitectures` and `auditConfig` to the merge pipeline with child-wins or union-per-axis semantics
+- **New merge primitives** - `merge-map.ts` (child-wins map), `merge-scalar.ts` (child else silk), `mergeArrayRecord` in `merge-arrays.ts` (union per key)
+- **tsdown migration** - Replaced `@savvy-web/rslib-builder` with a hand-rolled `tsdown.config.ts` (loaded via `--config-loader tsx`) that emits `pnpmfile.mjs` (ESM); `lib/packaging/package-json.ts` `build:done` hook writes the trimmed publishable `package.json`
+- **pnpm 10 → 11 bump** - Silk repo itself upgraded to pnpm 11
 
 ### Phase 5: Patch Distribution (v1.2.0)
 
@@ -1408,14 +1457,14 @@ Areas that may need refactoring in the future:
 
 ---
 
-**Document Status:** Current (95% complete) - MVP + Security Overrides + Effect Catalog Resolver + Effect Service Rewrite + peerDependencyRules complete; Biome Schema Sync removed (migrated to @savvy-web/lint-staged); `@effect/tsgo` and `@effect/vitest` added to silk/silkPeers catalogs
+**Document Status:** Current (97% complete) - MVP + Security Overrides + Effect Catalog Resolver + Effect Service Rewrite + peerDependencyRules complete; pnpm 11 settings inheritance (allowBuilds, security defaults, extended merge surface) complete in feat/pnpm-11; tsdown migration (CJS → ESM `pnpmfile.mjs`) complete; Biome Schema Sync removed (migrated to @savvy-web/lint-staged); `@effect/tsgo` and `@effect/vitest` added to silk/silkPeers catalogs
 
-**Synced:** 2026-05-19
+**Synced:** 2026-06-02
 
 **Implementation Summary:**
 
 - Package structure created at repo root (single package, not monorepo)
-- Rslib virtualEntries feature (v0.10.0) used for CJS bundling
+- tsdown used for ESM bundling (`tsdown.config.ts`); produces self-contained `pnpmfile.mjs` with effect inlined via `deps.alwaysBundle`; `build:done` hook (`lib/packaging/package-json.ts`) writes publishable `package.json` and copies assets
 - Catalog generation rewritten as Effect program (`src/generate/generate-catalogs.ts`) using
   `FileSystem` service; CLI runner at `lib/scripts/run-generate.ts` provides `NodeFileSystem.layer`
 - Hook layer rewritten using Effect services: `CatalogProvider` and `PeerDependencyRulesProvider`
@@ -1428,20 +1477,22 @@ Areas that may need refactoring in the future:
 - `peerDependencyRules` syncing from `pnpm-workspace.yaml`: `allowedVersions` (merged with local
   precedence + warnings), `ignoreMissing` and `allowAny` (array merge + dedup)
 - Security overrides syncing from `pnpm-workspace.yaml` `overrides` section
-- `onlyBuiltDependencies` and `publicHoistPattern` array syncing with deduplication
+- `allowBuilds` boolean map syncing (replaces deprecated `onlyBuiltDependencies`; generator folds legacy list into map); `publicHoistPattern` array syncing with deduplication
+- `strictDepBuilds`, `blockExoticSubdeps`, `minimumReleaseAge` and `minimumReleaseAgeExclude` scalar and array defaults with security-warning detection
+- `packageExtensions`, `allowedDeprecatedVersions`, `supportedArchitectures` and `auditConfig` extended merge with child-wins or union-per-axis semantics
 - Effect catalog resolver skill (`.claude/skills/effect-catalog-resolver/`) for automated version
   resolution via npm registry API, iterative constraint solving, and silkPeers derivation
 - 26 Effect ecosystem packages tracked in silk/silkPeers catalogs (expanded from 13 via resolver); includes `@effect/tsgo` and `@effect/vitest` added in feat/effect-vitest
-- Non-Effect catalog entries: react, react-dom, @types/react, @types/react-dom, TypeScript 6.x,
-  tsx, @typescript/native-preview
-- Tests reorganized from `src/index.test.ts` (27 tests) to `__test__/` directory (56 tests) with
-  fixtures, test utility layers, and per-module test files following @savvy-web/vitest conventions
+- Non-Effect catalog entries: react, react-dom, @types/react, @types/react-dom, TypeScript 6.x, tsx, @typescript/native-preview
+- Tests reorganized from `src/index.test.ts` to `__test__/` directory with fixtures, test utility layers and per-module test files; expanded in feat/pnpm-11 with tests for new merge primitives, security-warnings and `lib/packaging/`
 
 **Build Output:**
 
-- `dist/npm/pnpmfile.cjs` - Self-contained CJS bundle
-- `dist/npm/index.js` - ESM public API
-- `dist/npm/index.d.ts` - Type declarations
+- `dist/npm/pnpmfile.mjs` - Self-contained ESM bundle (loaded by pnpm 11 as config dependency)
+- `dist/npm/package.json` - Trimmed publishable package.json (written by `lib/packaging/package-json.ts` in the `build:done` hook)
+- `dist/npm/LICENSE`, `dist/npm/README.md` - Copied by the same hook
+
+The build emits only `pnpmfile.mjs`. There is no separate `index.js` public API artifact; the plugin is consumed exclusively as a pnpm config dependency.
 
 **Current Security Overrides:**
 
@@ -1466,7 +1517,7 @@ Areas that may need refactoring in the future:
 | `@typescript-eslint/utils>typescript` | `^6.0.0` | TS 6 peer support not yet declared |
 | `eslint-plugin-tsdoc>typescript` | `^6.0.0` | TS 6 peer support not yet declared |
 
-**Current onlyBuiltDependencies:**
+**Current allowBuilds (all set to `true`):**
 
 | Package | Reason |
 | :------ | :----- |
@@ -1509,6 +1560,5 @@ Areas that may need refactoring in the future:
 
 **Next Steps:**
 
-1. Merge `feat/better-rules` branch (Effect rewrite + peerDependencyRules)
-2. Phase 5: Add patch distribution
-3. Continue expanding catalog entries as ecosystem grows
+1. Phase 5: Add patch distribution
+2. Continue expanding catalog entries as ecosystem grows

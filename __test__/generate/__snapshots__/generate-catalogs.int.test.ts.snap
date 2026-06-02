@@ -16,12 +16,6 @@ import type { SilkCatalogs, SilkPeerDependencyRules } from "./types.js";
 
 /**
  * The complete Silk catalogs generated from pnpm-workspace.yaml.
- *
- * - \`silk\`: Current/latest versions for direct dependencies
- * - \`silkPeers\`: Permissive ranges for peerDependencies
- * - \`silkOverrides\`: Security overrides for known CVEs
- * - \`silkOnlyBuiltDependencies\`: Packages allowed to run build scripts
- * - \`silkPublicHoistPattern\`: Packages to hoist to virtual store root
  */
 export const silkCatalogs: SilkCatalogs = {
 	silk: {
@@ -38,14 +32,46 @@ export const silkCatalogs: SilkCatalogs = {
 		lodash: "^4.17.23",
 		tmp: "^0.2.4",
 	},
-	silkOnlyBuiltDependencies: [
-		"@parcel/watcher",
-		"esbuild",
-	],
 	silkPublicHoistPattern: [
 		"turbo",
 		"typescript",
 	],
+	silkAllowBuilds: {
+		"@parcel/watcher": true,
+		"core-js": false,
+		esbuild: true,
+	},
+	silkStrictDepBuilds: true,
+	silkBlockExoticSubdeps: true,
+	silkMinimumReleaseAge: 1440,
+	silkMinimumReleaseAgeExclude: [
+		"@savvy-web/*",
+	],
+	silkPackageExtensions: {
+		"react-redux": {
+			"peerDependencies": {
+				"react-dom": "*"
+			}
+		}
+	},
+	silkAllowedDeprecatedVersions: {
+		request: "*",
+	},
+	silkSupportedArchitectures: {
+		"cpu": [
+			"x64",
+			"arm64"
+		],
+		"os": [
+			"linux",
+			"darwin"
+		]
+	},
+	silkAuditConfig: {
+		"ignoreGhsas": [
+			"GHSA-xxxx-yyyy-zzzz"
+		]
+	},
 };
 
 /**
@@ -75,12 +101,6 @@ import type { SilkCatalogs, SilkPeerDependencyRules } from "./types.js";
 
 /**
  * The complete Silk catalogs generated from pnpm-workspace.yaml.
- *
- * - \`silk\`: Current/latest versions for direct dependencies
- * - \`silkPeers\`: Permissive ranges for peerDependencies
- * - \`silkOverrides\`: Security overrides for known CVEs
- * - \`silkOnlyBuiltDependencies\`: Packages allowed to run build scripts
- * - \`silkPublicHoistPattern\`: Packages to hoist to virtual store root
  */
 export const silkCatalogs: SilkCatalogs = {
 	silk: {
@@ -92,12 +112,16 @@ export const silkCatalogs: SilkCatalogs = {
 	silkOverrides: {
 
 	},
-	silkOnlyBuiltDependencies: [
-
-	],
 	silkPublicHoistPattern: [
 
 	],
+	silkAllowBuilds: {},
+
+	silkMinimumReleaseAgeExclude: [],
+	silkPackageExtensions: {},
+	silkAllowedDeprecatedVersions: {},
+	silkSupportedArchitectures: {},
+	silkAuditConfig: {},
 };
 
 /**

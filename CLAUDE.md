@@ -15,11 +15,14 @@ centralized catalog management across the Savvy Web ecosystem.
 - `catalog:silk` - Current/latest versions for direct dependencies
 - `catalog:silkPeers` - Permissive ranges for peerDependencies
 - `silkOverrides` - Security overrides for transitive dependency CVEs
-- `onlyBuiltDependencies` - Allowlist for packages with build scripts
+- `allowBuilds` - pnpm 11 build-script allowlist map (replaces `onlyBuiltDependencies`)
+- Security defaults - Silk owns `strictDepBuilds`, `blockExoticSubdeps`, and `minimumReleaseAge` (child repos may override)
+- `packageExtensions`, `allowedDeprecatedVersions`, `supportedArchitectures`, `auditConfig` - Inherited and merged from Silk
 - `publicHoistPattern` - Packages hoisted to virtual store root
 - `peerDependencyRules` - Syncs allowedVersions, ignoreMissing, allowAny
 - Override warnings - Prominent console output when local versions diverge
-- Auto-generation - Catalogs and overrides generated from `pnpm-workspace.yaml`
+- Security warnings - Prominent output when a child weakens a Silk security default
+- Auto-generation - Catalogs and settings generated from `pnpm-workspace.yaml`
 
 **Design Documentation:**
 
@@ -35,7 +38,7 @@ centralized catalog management across the Savvy Web ecosystem.
 pnpm run lint              # Check code with Biome
 pnpm run lint:fix          # Auto-fix lint issues
 pnpm run typecheck         # Type-check via Turbo -> tsgo
-pnpm run test              # Run all tests (54 tests: 45 unit + 9 integration)
+pnpm run test              # Run all tests (93 tests: 83 unit + 10 integration)
 pnpm run test:watch        # Run tests in watch mode
 pnpm run test:coverage     # Run tests with coverage report
 ```
@@ -44,7 +47,7 @@ pnpm run test:coverage     # Run tests with coverage report
 
 ```bash
 pnpm run generate:catalogs # Regenerate catalogs from pnpm-workspace.yaml
-pnpm run build             # Build (runs generate:catalogs via prebuild)
+pnpm run build             # Build (runs generate:catalogs + types:check via Turbo)
 pnpm run build:dev         # Build development output only
 pnpm run build:prod        # Build production/npm output only
 ```
@@ -81,11 +84,14 @@ src/
 │   └── PeerDependencyRulesProvider.ts # Effect Context.Tag for peer rules
 ├── hooks/
 │   ├── update-config.ts    # updateConfig Effect program
-│   ├── merge-arrays.ts     # Array merge (onlyBuiltDependencies, etc.)
+│   ├── merge-arrays.ts     # Array merge (union + dedup; mergeArrayRecord for axis maps)
 │   ├── merge-catalogs.ts   # Catalog merge with override warnings
+│   ├── merge-map.ts        # Map merge child-wins per key (allowBuilds, packageExtensions)
 │   ├── merge-overrides.ts  # Security override merge
 │   ├── merge-peer-dependency-rules.ts # Peer dep rules merge
-│   └── warnings.ts         # Override warning formatter
+│   ├── merge-scalar.ts     # Scalar merge child value else silk default (flags, minimumReleaseAge)
+│   ├── security-warnings.ts # Detects child configs that weaken silk security defaults
+│   └── warnings.ts         # Override and security warning formatters
 └── generate/
     └── generate-catalogs.ts # Effect program: reads yaml, writes TypeScript
 
@@ -96,6 +102,7 @@ __test__/
 ├── hooks/                  # Unit tests for each merge module
 ├── generate/               # Integration tests with snapshots
 ├── integration/            # Pipeline integration tests with snapshots
+├── packaging/              # Unit tests for lib/packaging/package-json.ts
 ├── fixtures/               # Catalog, workspace YAML, peer-rules fixtures
 └── utils/                  # Test layer helpers (catalog-layer, fs-layer)
 
@@ -105,13 +112,19 @@ types/
 
 ### Build Pipeline
 
-Uses rslib-builder with `virtualEntries` for CJS output:
+Uses tsdown to bundle a single self-contained ESM `pnpmfile.mjs`:
 
-1. `prebuild` - Runs `generate:catalogs` + `lint:fix`
-2. `build:dev` - Development build with source maps
-3. `build:prod` - Production build for npm
+1. `generate:catalogs` + `types:check` - Run first via Turbo `dependsOn`
+2. `build:dev` - Development build (sourcemaps) → `dist/dev`
+3. `build:prod` - Production build (minified) → `dist/npm`
 
-**Key Output:** `dist/npm/pnpmfile.cjs` (self-contained CJS bundle)
+The tsdown config (`tsdown.config.ts`, loaded via `--config-loader tsx`) bundles
+`effect` in (`deps.alwaysBundle`) and emits `pnpmfile.mjs` (`fixedExtension`). A
+`build:done` hook (`lib/packaging/package-json.ts`) writes the trimmed
+publishable `package.json` (deps/scripts/private stripped, `files` set) and
+copies `LICENSE`/`README.md` into each output directory.
+
+**Key Output:** `dist/npm/pnpmfile.mjs` (self-contained ESM bundle, loaded by pnpm 11 as a config dependency)
 
 ### Code Quality
 

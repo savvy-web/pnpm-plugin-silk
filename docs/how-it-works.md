@@ -1,25 +1,21 @@
-# How It Works
+# How it works
 
-This document explains how `@savvy-web/pnpm-plugin-silk` integrates with pnpm
-to deliver centralized dependency management.
+This document explains how `@savvy-web/pnpm-plugin-silk` integrates with pnpm to deliver centralized dependency management.
 
-## pnpm Config Dependencies
+## pnpm config dependencies
 
-The plugin is a [pnpm config dependency](https://pnpm.io/config-dependencies).
-Config dependencies are special packages that pnpm installs before all other
-dependencies and loads as [pnpmfile hooks](https://pnpm.io/pnpmfile).
+The plugin is a [pnpm config dependency](https://pnpm.io/config-dependencies). Config dependencies are special packages that pnpm installs before all other dependencies and loads as [pnpmfile hooks](https://pnpm.io/pnpmfile).
 
 When you run `pnpm install`:
 
 1. pnpm installs config dependencies first
-2. pnpm loads `pnpmfile.cjs` from each config dependency
+2. pnpm loads `pnpmfile.mjs` from each config dependency
 3. pnpm calls the `updateConfig` hook with the current workspace configuration
 4. The hook returns a modified configuration that pnpm uses for resolution
 
-## Merge Strategy
+## Merge strategy
 
-The plugin uses a **non-destructive merge** strategy. For catalogs and
-overrides, it spreads the plugin values first, then overlays local values:
+The plugin uses a **non-destructive merge** strategy. For catalogs and overrides, it spreads the plugin values first, then overlays local values:
 
 ```text
 merged = { ...silkCatalog, ...localCatalog }
@@ -32,13 +28,17 @@ This means:
 - Entries only in Silk are added
 - Entries only in local are preserved
 
-For array fields (`onlyBuiltDependencies`, `publicHoistPattern`), the plugin
-combines both arrays and removes duplicates.
+Settings fall into three merge categories:
 
-## Override Warnings
+- **Maps** merge child-wins per key: catalogs, `overrides`, `allowBuilds`, `packageExtensions`, `allowedDeprecatedVersions`.
+- **Scalars** take the child value if set, otherwise the Silk default: `strictDepBuilds`, `blockExoticSubdeps`, `minimumReleaseAge`.
+- **Arrays** union and deduplicate: `publicHoistPattern`, `minimumReleaseAgeExclude` and each axis of `supportedArchitectures` and `auditConfig`.
 
-When a local entry conflicts with a Silk-managed version, the plugin prints
-a prominent warning box during `pnpm install`:
+When a child config weakens a Silk security default — enabling a build that Silk blocked, disabling `strictDepBuilds` or `blockExoticSubdeps`, or lowering `minimumReleaseAge` — the plugin prints a prominent security warning box.
+
+## Override warnings
+
+When a local entry conflicts with a Silk-managed version, the plugin prints a prominent warning box during `pnpm install`:
 
 ```text
 +-------------------------------------------------------------------------+
@@ -55,53 +55,39 @@ a prominent warning box during `pnpm install`:
 
 This ensures overrides are intentional and visible to the entire team.
 
-## Catalog Generation
+## Catalog generation
 
-The plugin's catalog data is generated from `pnpm-workspace.yaml` at build
-time via `scripts/generate-catalogs.ts`. The generator reads:
+The plugin's catalog data is generated from `pnpm-workspace.yaml` at build time via `lib/scripts/run-generate.ts`. The generator reads:
 
-- `catalogs.silk` - Direct dependency versions
-- `catalogs.silkPeers` - Peer dependency ranges
-- `overrides` - Security overrides
-- `onlyBuiltDependencies` - Build script allowlist
-- `publicHoistPattern` - Hoist patterns
+- `catalogs.silk` — Direct dependency versions
+- `catalogs.silkPeers` — Peer dependency ranges
+- `overrides` — Security overrides
+- `allowBuilds` — Build script allowlist (pnpm 11)
+- `publicHoistPattern` — Hoist patterns
+- `strictDepBuilds`, `blockExoticSubdeps`, `minimumReleaseAge` — Security defaults
 
-This data is written to `src/catalogs/generated.ts` and bundled into the
-self-contained `pnpmfile.cjs` output.
+This data is written to `src/catalogs/generated.ts` and bundled into the self-contained `pnpmfile.mjs` output.
 
-## Bundle Architecture
+## Bundle architecture
 
-The published package includes a single `pnpmfile.cjs` file that contains all
-catalog data and hook logic. This is necessary because pnpm config dependencies
-cannot have their own runtime dependencies -- everything must be bundled.
+The published package includes a single `pnpmfile.mjs` file that contains all catalog data and hook logic. This is necessary because pnpm config dependencies cannot have their own runtime dependencies — everything must be bundled.
 
-The bundle is built with [rslib-builder](https://github.com/savvy-web/pnpm-module-template)
-using the `virtualEntries` feature to produce a CommonJS output from ESM
-TypeScript source.
+The bundle is built with [tsdown](https://tsdown.dev) from the ESM TypeScript source, producing a self-contained ESM `pnpmfile.mjs` that pnpm 11 loads directly (pnpm 11 prefers `pnpmfile.mjs`, falling back to `pnpmfile.cjs`).
 
 ## Effect ecosystem version resolution
 
-The plugin manages 26 Effect ecosystem packages that are released in coordinated
-batches. All packages in a release share compatible versions, so the silk
-catalogs update all 24 entries together as a single batch.
+The plugin manages 26 Effect ecosystem packages that are released in coordinated batches. All packages in a release share compatible versions, so the silk catalogs update all 26 entries together as a single batch.
 
-The `effect-catalog-resolver` Claude Code skill (`/effect-catalog-resolver`)
-automates this process:
+The `effect-catalog-resolver` Claude Code skill (`/effect-catalog-resolver`) automates this process:
 
-1. **Discovery** - Queries the npm registry to find all `@effect/*` packages
-   (50+ total)
-2. **Metadata fetch** - Retrieves per-version peer dependency data for each
-   package
-3. **Version resolution** - Anchors on the latest `effect` core release and
-   iteratively resolves compatible versions for all tracked packages
-4. **Proposal** - Compares resolved versions against current catalog entries and
-   presents a report with updates, new packages, and any conflicts
+1. **Discovery** — Queries the npm registry to find all `@effect/*` packages (50+ total)
+2. **Metadata fetch** — Retrieves per-version peer dependency data for each package
+3. **Version resolution** — Anchors on the latest `effect` core release and iteratively resolves compatible versions for all tracked packages
+4. **Proposal** — Compares resolved versions against current catalog entries and presents a report with updates, new packages and any conflicts
 
-The resolver uses a deterministic script-driven approach rather than LLM
-reasoning, because version compatibility is a constraint-satisfaction problem
-best solved algorithmically.
+The resolver uses a deterministic script-driven approach rather than LLM reasoning, because version compatibility is a constraint-satisfaction problem best solved algorithmically.
 
-## Error Handling
+## Error handling
 
 The plugin is designed to never break `pnpm install`:
 

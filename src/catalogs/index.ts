@@ -12,4 +12,11 @@
  */
 
 export { silkCatalogs, silkPeerDependencyRules } from "./generated.js";
-export type { Catalog, SilkCatalogs, SilkPeerDependencyRules } from "./types.js";
+export type {
+	AuditConfig,
+	Catalog,
+	PackageExtension,
+	SilkCatalogs,
+	SilkPeerDependencyRules,
+	SupportedArchitectures,
+} from "./types.js";

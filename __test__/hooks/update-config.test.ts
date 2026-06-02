@@ -107,21 +107,20 @@ describe("updateConfig", () => {
 		expect(warnSpy).toHaveBeenCalled();
 	});
 
-	it("adds silk onlyBuiltDependencies to empty config", () => {
+	it("adds silk allowBuilds to empty config", () => {
 		const result = runUpdateConfig({});
 
-		expect(result.onlyBuiltDependencies).toContain("esbuild");
-		expect(result.onlyBuiltDependencies).toContain("@parcel/watcher");
+		expect(result.allowBuilds?.esbuild).toBe(true);
+		expect(result.allowBuilds?.["@parcel/watcher"]).toBe(true);
 	});
 
-	it("merges and deduplicates onlyBuiltDependencies", () => {
+	it("merges allowBuilds with child entries winning per key", () => {
 		const result = runUpdateConfig({
-			onlyBuiltDependencies: ["esbuild", "custom-dep"],
+			allowBuilds: { "custom-dep": true },
 		});
 
-		const esbuildCount = result.onlyBuiltDependencies?.filter((d) => d === "esbuild").length;
-		expect(esbuildCount).toBe(1);
-		expect(result.onlyBuiltDependencies).toContain("custom-dep");
+		expect(result.allowBuilds?.["custom-dep"]).toBe(true);
+		expect(result.allowBuilds?.esbuild).toBe(true);
 	});
 
 	it("adds silk publicHoistPattern to empty config", () => {
@@ -143,11 +142,11 @@ describe("updateConfig", () => {
 
 	it("sorts merged arrays alphabetically", () => {
 		const result = runUpdateConfig({
-			onlyBuiltDependencies: ["zzz-last", "aaa-first"],
+			publicHoistPattern: ["zzz-last", "aaa-first"],
 		});
 
-		const sorted = [...(result.onlyBuiltDependencies ?? [])].sort((a, b) => a.localeCompare(b));
-		expect(result.onlyBuiltDependencies).toEqual(sorted);
+		const sorted = [...(result.publicHoistPattern ?? [])].sort((a, b) => a.localeCompare(b));
+		expect(result.publicHoistPattern).toEqual(sorted);
 	});
 
 	it("adds silk peerDependencyRules to empty config", () => {

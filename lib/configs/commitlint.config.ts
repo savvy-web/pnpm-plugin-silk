@@ -1,3 +1,6 @@
-import { CommitlintConfig } from "@savvy-web/commitlint";
+import type { CommitlintUserConfig } from "@savvy-web/silk/commitlint";
+import { CommitlintConfig } from "@savvy-web/silk/commitlint";
 
-export default CommitlintConfig.silk();
+const config: CommitlintUserConfig = CommitlintConfig.silk();
+
+export default config;

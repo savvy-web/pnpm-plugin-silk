@@ -1,30 +1,24 @@
 # @savvy-web/pnpm-plugin-silk
 
-[![npm version](https://img.shields.io/npm/v/@savvy-web/pnpm-plugin-silk)](https://www.npmjs.com/package/@savvy-web/pnpm-plugin-silk)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Node.js](https://img.shields.io/badge/node-%3E%3D24-brightgreen)](https://nodejs.org/)
-[![pnpm](https://img.shields.io/badge/pnpm-%3E%3D10-orange)](https://pnpm.io/)
+[![npm](https://img.shields.io/npm/v/@savvy-web%2Fpnpm-plugin-silk?label=npm&color=cb3837)](https://www.npmjs.com/package/@savvy-web/pnpm-plugin-silk)
+[![License: MIT](https://img.shields.io/badge/License-MIT-4caf50.svg)](https://opensource.org/licenses/MIT)
+[![TypeScript 6.0](https://img.shields.io/badge/TypeScript-6.0-3178c6.svg)](https://www.typescriptlang.org/)
+[![pnpm](https://img.shields.io/badge/pnpm-%3E%3D11-orange)](https://pnpm.io/)
 
-Centralized dependency version management for the Silk ecosystem via pnpm
-config dependencies. Share curated dependency catalogs, security overrides,
-and build configurations across multiple repositories from a single source
-of truth.
+Centralized dependency version management for the Silk ecosystem via pnpm config dependencies. Share curated dependency catalogs, security overrides and build configurations across multiple repositories from a single source of truth.
 
 ## Features
 
-- **Dual catalog strategy** - Current versions for direct dependencies
-  (`catalog:silk`), permissive ranges for peer dependencies (`catalog:silkPeers`)
-- **Security overrides** - Centralized CVE fixes via `silkOverrides` that
-  propagate to all consuming repositories
-- **Build configuration sync** - Shared `onlyBuiltDependencies` and
-  `publicHoistPattern` settings across repositories
-- **Peer dependency rules** - Syncs `peerDependencyRules` (allowedVersions,
-  ignoreMissing, allowAny) to suppress common peer warnings
-- **Effect ecosystem management** - 26 coordinated `@effect/*` packages across eight functional groups with compatible version resolution
-- **Non-destructive merging** - Local definitions always take precedence with
-  clear warnings for divergences
+- **Dual catalog strategy** — Current versions for direct dependencies (`catalog:silk`), permissive ranges for peer dependencies (`catalog:silkPeers`)
+- **Security overrides** — Centralized CVE fixes via `overrides` that propagate to all consuming repositories
+- **Build allowlist** — `allowBuilds` map (pnpm 11) controls which packages may run install scripts; local repos can extend it per-key
+- **Security defaults** — `strictDepBuilds`, `blockExoticSubdeps` and `minimumReleaseAge` are enforced by default; weakening them triggers a prominent warning
+- **Workspace settings inheritance** — `publicHoistPattern`, `packageExtensions`, `allowedDeprecatedVersions`, `supportedArchitectures` and `auditConfig` all merge into child workspaces
+- **Peer dependency rules** — Syncs `peerDependencyRules` (allowedVersions, ignoreMissing, allowAny) to suppress common peer warnings
+- **Effect ecosystem management** — 26 coordinated `@effect/*` packages across eight functional groups with compatible version resolution
+- **Non-destructive merging** — Local definitions always take precedence, with clear warnings for divergences
 
-## Installation
+## Install
 
 Add as a config dependency using pnpm:
 
@@ -32,15 +26,14 @@ Add as a config dependency using pnpm:
 pnpm add --config @savvy-web/pnpm-plugin-silk
 ```
 
-This adds the package to your `pnpm-workspace.yaml` with the required integrity
-hash:
+This adds the package to your `pnpm-workspace.yaml` with the required integrity hash (pnpm fills in the version and hash automatically):
 
 ```yaml
 configDependencies:
-  "@savvy-web/pnpm-plugin-silk": "0.3.0+sha512-..."
+  "@savvy-web/pnpm-plugin-silk": "npm:@savvy-web/pnpm-plugin-silk@<version>+sha512-..."
 ```
 
-## Quick Start
+## Quick start
 
 Reference Silk catalogs in your `package.json`:
 
@@ -56,23 +49,21 @@ Reference Silk catalogs in your `package.json`:
 }
 ```
 
-The `silk` catalog provides current/latest versions for direct dependencies,
-while `silkPeers` provides permissive ranges for peer dependencies. Security
-overrides, build script allowlists, and hoist patterns are automatically
-merged during `pnpm install`.
+The `silk` catalog provides current/latest versions for direct dependencies, while `silkPeers` provides permissive ranges for peer dependencies. Security overrides, build script allowlists and hoist patterns are automatically merged during `pnpm install`.
 
 ## Documentation
 
-For configuration details, architecture overview, and advanced usage, see
-[docs/](./docs/).
+- [Configuration](./docs/configuration.md) — Catalogs, overrides, Effect ecosystem packages, `allowBuilds`, security settings and workspace configuration
+- [How it works](./docs/how-it-works.md) — Architecture overview, merge strategy and bundle details
+- [Troubleshooting](./docs/troubleshooting.md) — Common issues and solutions
 
-## More Information
+## More information
 
-- [Changelog](./CHANGELOG.md) - Release history
-- [Contributing](./CONTRIBUTING.md) - Development setup and guidelines
-- [Security Policy](./SECURITY.md) - Vulnerability reporting
-- [Code of Conduct](./CODE_OF_CONDUCT.md) - Community guidelines
+- [Changelog](./CHANGELOG.md) — Release history
+- [Contributing](./CONTRIBUTING.md) — Development setup and guidelines
+- [Security Policy](./SECURITY.md) — Vulnerability reporting
+- [Code of Conduct](./CODE_OF_CONDUCT.md) — Community guidelines
 
 ## License
 
-[MIT](./LICENSE)
+[MIT](LICENSE)
