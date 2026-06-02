@@ -111,6 +111,8 @@ minimumReleaseAgeExclude:
   - "@typescript/*"
   - "@rsbuild/*"
   - "@rspack/*"
+  - fuse.js
+  - sort-package-json
 overrides:
   "@isaacs/brace-expansion": ^5.0.1
   lodash: ^4.17.23

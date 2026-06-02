@@ -119,7 +119,7 @@ catalogs:
       version: 19.2.3
     '@typescript/native-preview':
       specifier: ^7.0.0-dev.20260601.1
-      version: 7.0.0-dev.20260601.1
+      version: 7.0.0-dev.20260602.1
     effect:
       specifier: ^3.21.2
       version: 3.21.2
@@ -252,10 +252,10 @@ importers:
         version: 0.18.1(@effect/experimental@0.60.0(@effect/platform@0.96.1(effect@3.21.2))(effect@3.21.2))(@effect/platform@0.96.1(effect@3.21.2))(@effect/rpc@0.75.1(@effect/platform@0.96.1(effect@3.21.2))(effect@3.21.2))(effect@3.21.2)
       '@savvy-web/silk':
         specifier: ^0.2.1
-        version: 0.2.1(38a9851bb9bc305a614e463c279ac683)
+        version: 0.2.1(908473a21b6819b621f531e4d5c11de5)
       '@savvy-web/vitest':
         specifier: ^1.3.2
-        version: 1.3.2(dbcdc9a88bbc71279da0bc0f6a444303)
+        version: 1.3.2(ef2ff37263df19263a926d5367a83e18)
       '@types/node':
         specifier: catalog:silk
         version: 25.9.1
@@ -267,7 +267,7 @@ importers:
         version: 19.2.3(@types/react@19.2.16)
       '@typescript/native-preview':
         specifier: catalog:silk
-        version: 7.0.0-dev.20260601.1
+        version: 7.0.0-dev.20260602.1
       effect:
         specifier: catalog:silk
         version: 3.21.2
@@ -279,7 +279,7 @@ importers:
         version: 19.2.7(react@19.2.7)
       tsdown:
         specifier: ^0.22.1
-        version: 0.22.1(@typescript/native-preview@7.0.0-dev.20260601.1)(tsx@4.22.4)(typescript@6.0.3)
+        version: 0.22.1(@typescript/native-preview@7.0.0-dev.20260602.1)(tsx@4.22.4)(typescript@6.0.3)
       tsx:
         specifier: catalog:silk
         version: 4.22.4
@@ -1781,50 +1781,50 @@ packages:
   '@types/yargs@17.0.35':
     resolution: {integrity: sha512-qUHkeCyQFxMXg79wQfTtfndEC+N9ZZg76HJftDJp+qH2tV7Gj4OJi7l+PiWwJ+pWtW8GwSmqsDj/oymhrTWXjg==}
 
-  '@typescript/native-preview-darwin-arm64@7.0.0-dev.20260601.1':
-    resolution: {integrity: sha512-d4PVG8gcotwb5eJiMK14GdFOXRCH3tx4nAJxBcwJ3ZxPJ8Se3eQ54NZMeuuulU9isMJgtVxusAgjI8Qkhg4xDg==}
+  '@typescript/native-preview-darwin-arm64@7.0.0-dev.20260602.1':
+    resolution: {integrity: sha512-eSPHtC/iz2jp6H4qVXg2f8C03/dbtZCBVTNg6v8iajGRgD/V23kcOArVk4IQAR0VyqKRCkzQK+TLqKGwrQxP1Q==}
     engines: {node: '>=16.20.0'}
     cpu: [arm64]
     os: [darwin]
 
-  '@typescript/native-preview-darwin-x64@7.0.0-dev.20260601.1':
-    resolution: {integrity: sha512-JJ34gLHbemqkRRuWshdWYL+WFXVYMmivRKD6qyHkhLGWmq3AmPaAsjNoscdaDRWU3GrQm1gI2hx8N+BpaJow7Q==}
+  '@typescript/native-preview-darwin-x64@7.0.0-dev.20260602.1':
+    resolution: {integrity: sha512-tw/714Iw8hsleZowmqxaKrBr1TSAuJU99vEXBjVcBQTW9mChWSt7HDSDNaM2Y3XFLiCj8MAJvzf83uP3wIqBtQ==}
     engines: {node: '>=16.20.0'}
     cpu: [x64]
     os: [darwin]
 
-  '@typescript/native-preview-linux-arm64@7.0.0-dev.20260601.1':
-    resolution: {integrity: sha512-Pr3/dVouvJ1So1buF6OZ5sUJ2Ij8BOX2vZXugJeoyeSgCjkhsZO4IJ3hW87aY3KpFrgJMLimKy2Ud1S3o9wPxQ==}
+  '@typescript/native-preview-linux-arm64@7.0.0-dev.20260602.1':
+    resolution: {integrity: sha512-uh5XGYggWJWf8QVNI4oylUK04pe74WCTq0DqpZx3y/CnnHzVrgWPlEFe+wn2MhknwVAhOtCIYu2F0UKUqHucTA==}
     engines: {node: '>=16.20.0'}
     cpu: [arm64]
     os: [linux]
 
-  '@typescript/native-preview-linux-arm@7.0.0-dev.20260601.1':
-    resolution: {integrity: sha512-8jMjFrryB4hosxgKY6R1RJA9imUvxwk99AoRcfmy4xHZ7pLQ/QgAxElZaISOT8/gXQfVWppfI2Sj5YakgiAqyQ==}
+  '@typescript/native-preview-linux-arm@7.0.0-dev.20260602.1':
+    resolution: {integrity: sha512-rtGXfkDyUCjASRw/NXhVwOUfDzqSZrfTGBievr71XBcehVlMBZF9DxWVaIfRMKzXfFpVsmD9C+2JnFgDUBrBaQ==}
     engines: {node: '>=16.20.0'}
     cpu: [arm]
     os: [linux]
 
-  '@typescript/native-preview-linux-x64@7.0.0-dev.20260601.1':
-    resolution: {integrity: sha512-FJUXnaSz8OWZSQiX02Sd51pXQSpZEHvkChuM/UxTsJ1kfRCzx59jB5fmN3JLiRoUizJIa0rhxu/+YA+/c/euqw==}
+  '@typescript/native-preview-linux-x64@7.0.0-dev.20260602.1':
+    resolution: {integrity: sha512-ZKNmZkJCh39uLzHSWC6jeH0d7lTO8ddj1hLm+Gu+4O0maaInZfWLC3xGxME183adMp54tCasCJcZ8XhDgO2NEw==}
     engines: {node: '>=16.20.0'}
     cpu: [x64]
     os: [linux]
 
-  '@typescript/native-preview-win32-arm64@7.0.0-dev.20260601.1':
-    resolution: {integrity: sha512-tzc4eMCpdu+rHKxNUzWclm107WoCIbbcYrDg5DU5/07Wk5QlXG6bXsaKILpXxA60tyseVLbRe4wv6Ww79X7EgA==}
+  '@typescript/native-preview-win32-arm64@7.0.0-dev.20260602.1':
+    resolution: {integrity: sha512-YZ3wcQ/nN0C71CII0P8Sx6jAvh7WX6zwa3wwGXQOOO4SvxQgUu1ijznsOz+Gz3KpjyyXAloGppkA+0JT5BhbmQ==}
     engines: {node: '>=16.20.0'}
     cpu: [arm64]
     os: [win32]
 
-  '@typescript/native-preview-win32-x64@7.0.0-dev.20260601.1':
-    resolution: {integrity: sha512-H0YctU7f48BpxTaGTdK7f1UT5+1EY6pg7vMK9zBQXVhc8wSrCpQg4O/rf7kM8vyLUsC/pJpTE5OLUlxk+addCg==}
+  '@typescript/native-preview-win32-x64@7.0.0-dev.20260602.1':
+    resolution: {integrity: sha512-ENQpKND75VD7WgtGwj1xXpOQKBM0bmjtzC4W9rzxJjInYfbu22VOXnfzEZlb7fmo/EnyZL6QF6P/zx4ojRMX9Q==}
     engines: {node: '>=16.20.0'}
     cpu: [x64]
     os: [win32]
 
-  '@typescript/native-preview@7.0.0-dev.20260601.1':
-    resolution: {integrity: sha512-IAoqEMiW2aw3m74TLQbNI1V235p9Sk8XhvvKTw2U5YAOfkPEFZaoYFvmoqWA/d2OLap1D3atyNbtD/dub7Jn9g==}
+  '@typescript/native-preview@7.0.0-dev.20260602.1':
+    resolution: {integrity: sha512-Gfnju5EahMkyN5Mn9EIFTXabj/yfixdxtLcb1u8fSDWLD9AOflOLO95GuQcyZHPjCNukTE+9uAvjpMKcRNmbXQ==}
     engines: {node: '>=16.20.0'}
     hasBin: true
 
@@ -2777,8 +2777,8 @@ packages:
   function-bind@1.1.2:
     resolution: {integrity: sha512-7XHNxH7qX9xG5mIwxkhumTox/MIRNcOgDrxWsMt2pAr23WHp6MrRlN7FBSFpCpr+oVO0F744iUgR82nJMfG2SA==}
 
-  fuse.js@7.4.0:
-    resolution: {integrity: sha512-3UqmoSFwzX1sNB1YSk+Co0EdH29XCW2p9g48OAiy93cjKqzuABsqw2VIgSN3CmsT/wo6pIJ3F0Jxeiiby8rhIQ==}
+  fuse.js@7.4.1:
+    resolution: {integrity: sha512-AY7lKAXK71hi3WgUvDy6oZL67UEHOOtvCAwVdOXHyJd6ZzftBy7QqxuXt4HxmmAhYjmp/YCuOELZtIvAdlZ+fw==}
     engines: {node: '>=10'}
 
   generate-function@2.3.1:
@@ -4353,9 +4353,9 @@ packages:
   sort-object-keys@2.1.0:
     resolution: {integrity: sha512-SOiEnthkJKPv2L6ec6HMwhUcN0/lppkeYuN1x63PbyPRrgSPIuBJCiYxYyvWRTtjMlOi14vQUCGUJqS6PLVm8g==}
 
-  sort-package-json@3.6.1:
-    resolution: {integrity: sha512-Chgejw1+10p2D0U2tB7au1lHtz6TkFnxmvZktyBCRyV0GgmF6nl1IxXxAsPtJVsUyg/fo+BfCMAVVFUVRkAHrQ==}
-    engines: {node: '>=20'}
+  sort-package-json@3.7.0:
+    resolution: {integrity: sha512-/Xx1zmdiImiBNKox5E4r9QTV/KuqycvtokxouII9Wd4TQcsIzs2PsXr8hJyS4QyA8iAtBTsEJXMSsy9Z42Z7aw==}
+    engines: {node: '>=22'}
     hasBin: true
 
   source-map-js@1.2.1:
@@ -6372,7 +6372,7 @@ snapshots:
       '@modelcontextprotocol/sdk': 1.29.0(zod@4.4.3)
       '@savvy-web/silk-effects': 0.6.0(@effect/platform@0.96.1(effect@3.21.2))(effect@3.21.2)
       effect: 3.21.2
-      fuse.js: 7.4.0
+      fuse.js: 7.4.1
       workspaces-effect: 1.1.0(@effect/platform@0.96.1(effect@3.21.2))(effect@3.21.2)
       zod: 4.4.3
     transitivePeerDependencies:
@@ -6399,7 +6399,7 @@ snapshots:
       remark-stringify: 11.0.0
       semver-effect: 0.2.1(effect@3.21.2)
       shell-quote: 1.8.4
-      sort-package-json: 3.6.1
+      sort-package-json: 3.7.0
       tinyglobby: 0.2.17
       unified: 11.0.5
       unified-lint-rule: 3.0.1
@@ -6412,7 +6412,7 @@ snapshots:
       - encoding
       - supports-color
 
-  '@savvy-web/silk@0.2.1(38a9851bb9bc305a614e463c279ac683)':
+  '@savvy-web/silk@0.2.1(908473a21b6819b621f531e4d5c11de5)':
     dependencies:
       '@changesets/cli': 2.31.0(@types/node@25.9.1)
       '@commitlint/cli': 21.0.2(@types/node@25.9.1)(conventional-commits-parser@6.4.0)(typescript@6.0.3)
@@ -6420,7 +6420,7 @@ snapshots:
       '@savvy-web/cli': 0.2.1(@effect/cluster@0.58.2(@effect/platform@0.96.1(effect@3.21.2))(@effect/rpc@0.75.1(@effect/platform@0.96.1(effect@3.21.2))(effect@3.21.2))(@effect/sql@0.51.1(@effect/experimental@0.60.0(@effect/platform@0.96.1(effect@3.21.2))(effect@3.21.2))(@effect/platform@0.96.1(effect@3.21.2))(effect@3.21.2))(@effect/workflow@0.18.1(@effect/experimental@0.60.0(@effect/platform@0.96.1(effect@3.21.2))(effect@3.21.2))(@effect/platform@0.96.1(effect@3.21.2))(@effect/rpc@0.75.1(@effect/platform@0.96.1(effect@3.21.2))(effect@3.21.2))(effect@3.21.2))(effect@3.21.2))(@effect/printer-ansi@0.49.0(@effect/typeclass@0.40.0(effect@3.21.2))(effect@3.21.2))(@effect/printer@0.49.0(@effect/typeclass@0.40.0(effect@3.21.2))(effect@3.21.2))(@effect/rpc@0.75.1(@effect/platform@0.96.1(effect@3.21.2))(effect@3.21.2))(@effect/sql@0.51.1(@effect/experimental@0.60.0(@effect/platform@0.96.1(effect@3.21.2))(effect@3.21.2))(@effect/platform@0.96.1(effect@3.21.2))(effect@3.21.2))
       '@savvy-web/mcp': 0.2.1(@effect/cluster@0.58.2(@effect/platform@0.96.1(effect@3.21.2))(@effect/rpc@0.75.1(@effect/platform@0.96.1(effect@3.21.2))(effect@3.21.2))(@effect/sql@0.51.1(@effect/experimental@0.60.0(@effect/platform@0.96.1(effect@3.21.2))(effect@3.21.2))(@effect/platform@0.96.1(effect@3.21.2))(effect@3.21.2))(@effect/workflow@0.18.1(@effect/experimental@0.60.0(@effect/platform@0.96.1(effect@3.21.2))(effect@3.21.2))(@effect/platform@0.96.1(effect@3.21.2))(@effect/rpc@0.75.1(@effect/platform@0.96.1(effect@3.21.2))(effect@3.21.2))(effect@3.21.2))(effect@3.21.2))(@effect/rpc@0.75.1(@effect/platform@0.96.1(effect@3.21.2))(effect@3.21.2))(@effect/sql@0.51.1(@effect/experimental@0.60.0(@effect/platform@0.96.1(effect@3.21.2))(effect@3.21.2))(@effect/platform@0.96.1(effect@3.21.2))(effect@3.21.2))
       '@types/node': 25.9.1
-      '@typescript/native-preview': 7.0.0-dev.20260601.1
+      '@typescript/native-preview': 7.0.0-dev.20260602.1
       commitizen: 4.3.1(@types/node@25.9.1)(typescript@6.0.3)
       husky: 9.1.7
       lint-staged: 17.0.7
@@ -6429,10 +6429,10 @@ snapshots:
       turbo: 2.9.16
       typescript: 6.0.3
 
-  '@savvy-web/vitest@1.3.2(dbcdc9a88bbc71279da0bc0f6a444303)':
+  '@savvy-web/vitest@1.3.2(ef2ff37263df19263a926d5367a83e18)':
     dependencies:
       '@types/node': 25.9.1
-      '@typescript/native-preview': 7.0.0-dev.20260601.1
+      '@typescript/native-preview': 7.0.0-dev.20260602.1
       '@vitest/coverage-v8': 4.1.8(vitest@4.1.8)
       typescript: 6.0.3
       vitest: 4.1.8(@opentelemetry/api@1.9.1)(@types/node@25.9.1)(@vitest/coverage-v8@4.1.8)(vite@8.0.16(@types/node@25.9.1)(esbuild@0.28.0)(jiti@2.6.1)(terser@5.48.0)(tsx@4.22.4)(yaml@2.9.0))
@@ -6585,36 +6585,36 @@ snapshots:
     dependencies:
       '@types/yargs-parser': 21.0.3
 
-  '@typescript/native-preview-darwin-arm64@7.0.0-dev.20260601.1':
+  '@typescript/native-preview-darwin-arm64@7.0.0-dev.20260602.1':
     optional: true
 
-  '@typescript/native-preview-darwin-x64@7.0.0-dev.20260601.1':
+  '@typescript/native-preview-darwin-x64@7.0.0-dev.20260602.1':
     optional: true
 
-  '@typescript/native-preview-linux-arm64@7.0.0-dev.20260601.1':
+  '@typescript/native-preview-linux-arm64@7.0.0-dev.20260602.1':
     optional: true
 
-  '@typescript/native-preview-linux-arm@7.0.0-dev.20260601.1':
+  '@typescript/native-preview-linux-arm@7.0.0-dev.20260602.1':
     optional: true
 
-  '@typescript/native-preview-linux-x64@7.0.0-dev.20260601.1':
+  '@typescript/native-preview-linux-x64@7.0.0-dev.20260602.1':
     optional: true
 
-  '@typescript/native-preview-win32-arm64@7.0.0-dev.20260601.1':
+  '@typescript/native-preview-win32-arm64@7.0.0-dev.20260602.1':
     optional: true
 
-  '@typescript/native-preview-win32-x64@7.0.0-dev.20260601.1':
+  '@typescript/native-preview-win32-x64@7.0.0-dev.20260602.1':
     optional: true
 
-  '@typescript/native-preview@7.0.0-dev.20260601.1':
+  '@typescript/native-preview@7.0.0-dev.20260602.1':
     optionalDependencies:
-      '@typescript/native-preview-darwin-arm64': 7.0.0-dev.20260601.1
-      '@typescript/native-preview-darwin-x64': 7.0.0-dev.20260601.1
-      '@typescript/native-preview-linux-arm': 7.0.0-dev.20260601.1
-      '@typescript/native-preview-linux-arm64': 7.0.0-dev.20260601.1
-      '@typescript/native-preview-linux-x64': 7.0.0-dev.20260601.1
-      '@typescript/native-preview-win32-arm64': 7.0.0-dev.20260601.1
-      '@typescript/native-preview-win32-x64': 7.0.0-dev.20260601.1
+      '@typescript/native-preview-darwin-arm64': 7.0.0-dev.20260602.1
+      '@typescript/native-preview-darwin-x64': 7.0.0-dev.20260602.1
+      '@typescript/native-preview-linux-arm': 7.0.0-dev.20260602.1
+      '@typescript/native-preview-linux-arm64': 7.0.0-dev.20260602.1
+      '@typescript/native-preview-linux-x64': 7.0.0-dev.20260602.1
+      '@typescript/native-preview-win32-arm64': 7.0.0-dev.20260602.1
+      '@typescript/native-preview-win32-x64': 7.0.0-dev.20260602.1
 
   '@typespec/ts-http-runtime@0.3.5':
     dependencies:
@@ -7488,7 +7488,7 @@ snapshots:
 
   function-bind@1.1.2: {}
 
-  fuse.js@7.4.0: {}
+  fuse.js@7.4.1: {}
 
   generate-function@2.3.1:
     dependencies:
@@ -9211,7 +9211,7 @@ snapshots:
 
   rfdc@1.4.1: {}
 
-  rolldown-plugin-dts@0.25.2(@typescript/native-preview@7.0.0-dev.20260601.1)(rolldown@1.0.3)(typescript@6.0.3):
+  rolldown-plugin-dts@0.25.2(@typescript/native-preview@7.0.0-dev.20260602.1)(rolldown@1.0.3)(typescript@6.0.3):
     dependencies:
       '@babel/generator': 8.0.0-rc.6
       '@babel/helper-validator-identifier': 8.0.0-rc.6
@@ -9223,7 +9223,7 @@ snapshots:
       obug: 2.1.1
       rolldown: 1.0.3
     optionalDependencies:
-      '@typescript/native-preview': 7.0.0-dev.20260601.1
+      '@typescript/native-preview': 7.0.0-dev.20260602.1
       typescript: 6.0.3
     transitivePeerDependencies:
       - oxc-resolver
@@ -9411,7 +9411,7 @@ snapshots:
 
   sort-object-keys@2.1.0: {}
 
-  sort-package-json@3.6.1:
+  sort-package-json@3.7.0:
     dependencies:
       detect-indent: 7.0.2
       detect-newline: 4.0.1
@@ -9590,7 +9590,7 @@ snapshots:
 
   trough@2.2.0: {}
 
-  tsdown@0.22.1(@typescript/native-preview@7.0.0-dev.20260601.1)(tsx@4.22.4)(typescript@6.0.3):
+  tsdown@0.22.1(@typescript/native-preview@7.0.0-dev.20260602.1)(tsx@4.22.4)(typescript@6.0.3):
     dependencies:
       ansis: 4.3.1
       cac: 7.0.0
@@ -9601,7 +9601,7 @@ snapshots:
       obug: 2.1.1
       picomatch: 4.0.4
       rolldown: 1.0.3
-      rolldown-plugin-dts: 0.25.2(@typescript/native-preview@7.0.0-dev.20260601.1)(rolldown@1.0.3)(typescript@6.0.3)
+      rolldown-plugin-dts: 0.25.2(@typescript/native-preview@7.0.0-dev.20260602.1)(rolldown@1.0.3)(typescript@6.0.3)
       semver: 7.8.1
       tinyexec: 1.2.4
       tinyglobby: 0.2.17
