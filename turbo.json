@@ -45,6 +45,7 @@
 			"dependsOn": [],
 			"inputs": [
 				"$TURBO_DEFAULT$",
+				"!src/catalogs/generated.ts",
 				"$TURBO_ROOT$/package.json",
 				"$TURBO_ROOT$/pnpm-lock.yaml",
 				"$TURBO_ROOT$/pnpm-workspace.yaml",
