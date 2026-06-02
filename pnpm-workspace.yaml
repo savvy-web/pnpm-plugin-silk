@@ -108,6 +108,9 @@ minimumReleaseAge: 1440
 minimumReleaseAgeExclude:
   - "@savvy-web/*"
   - "@typescript-eslint/*"
+  - "@typescript/*"
+  - "@rsbuild/*"
+  - "@rspack/*"
 overrides:
   "@isaacs/brace-expansion": ^5.0.1
   lodash: ^4.17.23
