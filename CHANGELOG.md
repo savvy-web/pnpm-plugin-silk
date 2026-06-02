@@ -1,5 +1,11 @@
 # @savvy-web/pnpm-plugin-silk
 
+## 0.14.2
+
+### Other
+
+* [`ecf769b`](https://github.com/savvy-web/pnpm-plugin-silk/commit/ecf769b5e89cee26f77a7bce307764e903da9a2b) More temporary ignores
+
 ## 0.14.1
 
 ### Other
