@@ -1,6 +1,15 @@
 packages:
   - .
+allowBuilds:
+  "@parcel/watcher": true
+  "@savvy-web/github-action-builder": true
+  "@savvy-web/vitest": true
+  better-sqlite3: true
+  core-js: true
+  esbuild: true
+  msgpackr-extract: true
 autoInstallPeers: true
+blockExoticSubdeps: true
 catalogs:
   silk:
     "@effect/ai": ^0.35.0
@@ -36,7 +45,7 @@ catalogs:
     effect: ^3.21.2
     react: ^19.2.6
     react-dom: ^19.2.6
-    tsx: ^4.22.3
+    tsx: ^4.22.4
     typescript: ^6.0.3
   silkPeers:
     "@effect/ai": ">=0.35.0"
@@ -75,17 +84,10 @@ catalogs:
     tsx: ^4.21.0
     typescript: ^6.0.0
 loglevel: info
-onlyBuiltDependencies:
-  - "@parcel/watcher"
-  - "@savvy-web/changesets"
-  - "@savvy-web/commitlint"
-  - "@savvy-web/github-action-builder"
-  - "@savvy-web/lint-staged"
-  - "@savvy-web/vitest"
-  - better-sqlite3
-  - core-js
-  - esbuild
-  - msgpackr-extract
+minimumReleaseAge: 1440
+minimumReleaseAgeExclude:
+  - "@savvy-web/*"
+  - "@typescript-eslint/*"
 overrides:
   "@isaacs/brace-expansion": ^5.0.1
   lodash: ^4.17.23
@@ -108,6 +110,8 @@ publicHoistPattern:
   - "@commitlint/config-conventional"
   - "@commitlint/cz-commitlint"
   - "@rslib/core"
+  - "@savvy-web/cli"
+  - "@savvy-web/mcp"
   - "@types/bun"
   - "@types/node"
   - "@types/react"
@@ -124,3 +128,4 @@ publicHoistPattern:
   - typescript
   - vitest
   - vitest-agent-reporter
+strictDepBuilds: true

@@ -5,6 +5,8 @@
  * @internal
  */
 
+import type { SecurityWarning } from "./security-warnings.js";
+
 /** Width of the warning box in characters. */
 const WARNING_BOX_WIDTH = 75;
 
@@ -80,5 +82,54 @@ export function formatOverrideWarning(overrides: readonly Override[]): string {
 export function warnOverrides(overrides: readonly Override[]): void {
 	if (overrides.length > 0) {
 		console.warn(formatOverrideWarning(overrides));
+	}
+}
+
+/**
+ * Format security-loosening warnings into a prominent box for console output.
+ *
+ * @param warnings - Security-loosening warnings to format
+ * @returns Formatted warning string, or empty string if none
+ *
+ * @internal
+ */
+export function formatSecurityWarning(warnings: readonly SecurityWarning[]): string {
+	if (warnings.length === 0) {
+		return "";
+	}
+
+	const lines: string[] = [];
+	const border = "─".repeat(WARNING_BOX_WIDTH - 2);
+
+	lines.push(`┌${border}┐`);
+	lines.push(`│  ⚠️  SILK SECURITY OVERRIDE DETECTED${" ".repeat(WARNING_BOX_WIDTH - 40)}│`);
+	lines.push(`├${border}┤`);
+	lines.push(`│  The following entries weaken Silk-managed security defaults:${" ".repeat(WARNING_BOX_WIDTH - 64)}│`);
+	lines.push(`│${" ".repeat(WARNING_BOX_WIDTH - 2)}│`);
+
+	for (const warning of warnings) {
+		const settingLine = `  ${warning.setting}: Silk=${warning.silkValue} -> local=${warning.childValue}`;
+		const detailLine = `    ${warning.detail}`;
+		lines.push(`│${settingLine}${" ".repeat(Math.max(0, WARNING_BOX_WIDTH - settingLine.length - 2))}│`);
+		lines.push(`│${detailLine}${" ".repeat(Math.max(0, WARNING_BOX_WIDTH - detailLine.length - 2))}│`);
+		lines.push(`│${" ".repeat(WARNING_BOX_WIDTH - 2)}│`);
+	}
+
+	lines.push(`│  Local values will be used. Review these before shipping.${" ".repeat(WARNING_BOX_WIDTH - 60)}│`);
+	lines.push(`└${border}┘`);
+
+	return lines.join("\n");
+}
+
+/**
+ * Emit security-loosening warnings to console if any exist.
+ *
+ * @param warnings - Security-loosening warnings to warn about
+ *
+ * @internal
+ */
+export function warnSecurity(warnings: readonly SecurityWarning[]): void {
+	if (warnings.length > 0) {
+		console.warn(formatSecurityWarning(warnings));
 	}
 }

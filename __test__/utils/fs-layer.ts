@@ -6,8 +6,8 @@
 
 import { SystemError } from "@effect/platform/Error";
 import * as FS from "@effect/platform/FileSystem";
+import type { Layer } from "effect";
 import { Effect } from "effect";
-import type { Layer } from "effect/Layer";
 
 /**
  * Create a mock FileSystem layer backed by an in-memory file map.
@@ -20,7 +20,7 @@ import type { Layer } from "effect/Layer";
  * `written` is a `Record<string, string>` capturing what was written.
  */
 export function makeFsLayer(files: Record<string, string>): {
-	layer: Layer<FS.FileSystem>;
+	layer: Layer.Layer<FS.FileSystem>;
 	written: Record<string, string>;
 } {
 	const written: Record<string, string> = {};

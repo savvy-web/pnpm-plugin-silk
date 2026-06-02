@@ -11,14 +11,15 @@
 				"$TURBO_ROOT$/pnpm-lock.yaml",
 				"$TURBO_ROOT$/pnpm-workspace.yaml",
 				"package.json",
-				"rslib.config.ts",
+				"tsdown.config.ts",
 				"tsconfig.json",
 				"src/**/*.ts",
+				"lib/packaging/**",
 				"README.md",
 				"LICENSE"
 			],
 			"outputLogs": "full",
-			"outputs": ["dist/dev/**", ".rslib/declarations/dev/**"]
+			"outputs": ["dist/dev/**"]
 		},
 		"build:prod": {
 			"cache": true,
@@ -29,14 +30,15 @@
 				"$TURBO_ROOT$/pnpm-lock.yaml",
 				"$TURBO_ROOT$/pnpm-workspace.yaml",
 				"package.json",
-				"rslib.config.ts",
+				"tsdown.config.ts",
 				"tsconfig.json",
 				"src/**/*.ts",
+				"lib/packaging/**",
 				"README.md",
 				"LICENSE"
 			],
 			"outputLogs": "full",
-			"outputs": ["dist/npm/**", ".rslib/declarations/npm/**"]
+			"outputs": ["dist/npm/**"]
 		},
 		"generate:catalogs": {
 			"cache": true,

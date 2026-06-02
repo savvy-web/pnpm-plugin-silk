@@ -64,4 +64,22 @@ describe("pnpmfile integration", () => {
 
 		expect(result).toMatchSnapshot();
 	});
+
+	it("merges allowBuilds and warns on security loosening", () => {
+		const layer = Layer.merge(makeCatalogLayer(fullCatalogs), makePeerDependencyRulesLayer(fullPeerDependencyRules));
+		const config: PnpmConfig = {
+			allowBuilds: { "core-js": true },
+			strictDepBuilds: false,
+		};
+
+		const result = Effect.runSync(updateConfig(config).pipe(Effect.provide(layer)));
+
+		expect(result.allowBuilds?.["core-js"]).toBe(true);
+		expect(result.allowBuilds?.esbuild).toBe(true);
+		expect(result.strictDepBuilds).toBe(false);
+		expect(result.minimumReleaseAge).toBe(1440);
+		expect(warnSpy).toHaveBeenCalled();
+
+		expect(result).toMatchSnapshot();
+	});
 });

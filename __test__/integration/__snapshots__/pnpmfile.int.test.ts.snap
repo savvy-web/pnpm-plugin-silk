@@ -1,7 +1,15 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`pnpmfile integration > merges full catalogs into empty config 1`] = `
+exports[`pnpmfile integration > merges allowBuilds and warns on security loosening 1`] = `
 {
+  "allowBuilds": {
+    "@parcel/watcher": true,
+    "core-js": true,
+    "esbuild": true,
+  },
+  "allowedDeprecatedVersions": {},
+  "auditConfig": {},
+  "blockExoticSubdeps": true,
   "catalogs": {
     "silk": {
       "@rslib/core": "^0.10.0",
@@ -12,15 +20,16 @@ exports[`pnpmfile integration > merges full catalogs into empty config 1`] = `
       "typescript": "^5.7.0",
     },
   },
-  "onlyBuiltDependencies": [
-    "@parcel/watcher",
-    "esbuild",
+  "minimumReleaseAge": 1440,
+  "minimumReleaseAgeExclude": [
+    "@savvy-web/*",
   ],
   "overrides": {
     "@isaacs/brace-expansion": ">=5.0.1",
     "lodash": ">=4.17.23",
     "tmp": "^0.2.4",
   },
+  "packageExtensions": {},
   "peerDependencyRules": {
     "allowAny": [
       "eslint",
@@ -37,11 +46,86 @@ exports[`pnpmfile integration > merges full catalogs into empty config 1`] = `
     "turbo",
     "typescript",
   ],
+  "strictDepBuilds": false,
+  "supportedArchitectures": {
+    "cpu": [
+      "x64",
+    ],
+    "os": [
+      "linux",
+    ],
+  },
+}
+`;
+
+exports[`pnpmfile integration > merges full catalogs into empty config 1`] = `
+{
+  "allowBuilds": {
+    "@parcel/watcher": true,
+    "core-js": false,
+    "esbuild": true,
+  },
+  "allowedDeprecatedVersions": {},
+  "auditConfig": {},
+  "blockExoticSubdeps": true,
+  "catalogs": {
+    "silk": {
+      "@rslib/core": "^0.10.0",
+      "typescript": "^5.7.0",
+      "vitest": "^3.0.0",
+    },
+    "silkPeers": {
+      "typescript": "^5.7.0",
+    },
+  },
+  "minimumReleaseAge": 1440,
+  "minimumReleaseAgeExclude": [
+    "@savvy-web/*",
+  ],
+  "overrides": {
+    "@isaacs/brace-expansion": ">=5.0.1",
+    "lodash": ">=4.17.23",
+    "tmp": "^0.2.4",
+  },
+  "packageExtensions": {},
+  "peerDependencyRules": {
+    "allowAny": [
+      "eslint",
+    ],
+    "allowedVersions": {
+      "@testing-library/react>react": "^18.0.0 || ^19.0.0",
+      "react-dom>react": "^18.0.0 || ^19.0.0",
+    },
+    "ignoreMissing": [
+      "@babel/core",
+    ],
+  },
+  "publicHoistPattern": [
+    "turbo",
+    "typescript",
+  ],
+  "strictDepBuilds": true,
+  "supportedArchitectures": {
+    "cpu": [
+      "x64",
+    ],
+    "os": [
+      "linux",
+    ],
+  },
 }
 `;
 
 exports[`pnpmfile integration > merges full catalogs with local overrides 1`] = `
 {
+  "allowBuilds": {
+    "@parcel/watcher": true,
+    "core-js": false,
+    "esbuild": true,
+  },
+  "allowedDeprecatedVersions": {},
+  "auditConfig": {},
+  "blockExoticSubdeps": true,
   "catalogs": {
     "myApp": {
       "react": "^18.0.0",
@@ -55,9 +139,11 @@ exports[`pnpmfile integration > merges full catalogs with local overrides 1`] = 
       "typescript": "^5.7.0",
     },
   },
+  "minimumReleaseAge": 1440,
+  "minimumReleaseAgeExclude": [
+    "@savvy-web/*",
+  ],
   "onlyBuiltDependencies": [
-    "@parcel/watcher",
-    "esbuild",
     "my-native-dep",
   ],
   "overrides": {
@@ -66,6 +152,7 @@ exports[`pnpmfile integration > merges full catalogs with local overrides 1`] = 
     "lodash": ">=4.17.23",
     "tmp": "^0.2.4",
   },
+  "packageExtensions": {},
   "peerDependencyRules": {
     "allowAny": [
       "eslint",
@@ -83,11 +170,25 @@ exports[`pnpmfile integration > merges full catalogs with local overrides 1`] = 
     "turbo",
     "typescript",
   ],
+  "strictDepBuilds": true,
+  "supportedArchitectures": {
+    "cpu": [
+      "x64",
+    ],
+    "os": [
+      "linux",
+    ],
+  },
 }
 `;
 
 exports[`pnpmfile integration > merges minimal catalogs into empty config 1`] = `
 {
+  "allowBuilds": {
+    "esbuild": true,
+  },
+  "allowedDeprecatedVersions": {},
+  "auditConfig": {},
   "catalogs": {
     "silk": {
       "typescript": "^5.7.0",
@@ -97,12 +198,11 @@ exports[`pnpmfile integration > merges minimal catalogs into empty config 1`] = 
       "typescript": "^5.7.0",
     },
   },
-  "onlyBuiltDependencies": [
-    "esbuild",
-  ],
+  "minimumReleaseAgeExclude": [],
   "overrides": {
     "lodash": ">=4.17.23",
   },
+  "packageExtensions": {},
   "peerDependencyRules": {
     "allowAny": [],
     "allowedVersions": {},
@@ -111,5 +211,6 @@ exports[`pnpmfile integration > merges minimal catalogs into empty config 1`] = 
   "publicHoistPattern": [
     "typescript",
   ],
+  "supportedArchitectures": {},
 }
 `;

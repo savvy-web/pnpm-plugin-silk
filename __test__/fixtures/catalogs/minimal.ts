@@ -11,6 +11,11 @@ export const minimalCatalogs: SilkCatalogs = {
 	silkOverrides: {
 		lodash: ">=4.17.23",
 	},
-	silkOnlyBuiltDependencies: ["esbuild"],
 	silkPublicHoistPattern: ["typescript"],
+	silkAllowBuilds: { esbuild: true },
+	silkMinimumReleaseAgeExclude: [],
+	silkPackageExtensions: {},
+	silkAllowedDeprecatedVersions: {},
+	silkSupportedArchitectures: {},
+	silkAuditConfig: {},
 };

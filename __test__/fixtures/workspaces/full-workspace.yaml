@@ -15,6 +15,29 @@ overrides:
 onlyBuiltDependencies:
   - esbuild
   - "@parcel/watcher"
+allowBuilds:
+  core-js: false
 publicHoistPattern:
   - typescript
   - turbo
+strictDepBuilds: true
+blockExoticSubdeps: true
+minimumReleaseAge: 1440
+minimumReleaseAgeExclude:
+  - "@savvy-web/*"
+packageExtensions:
+  react-redux:
+    peerDependencies:
+      react-dom: "*"
+allowedDeprecatedVersions:
+  request: "*"
+supportedArchitectures:
+  os:
+    - linux
+    - darwin
+  cpu:
+    - x64
+    - arm64
+auditConfig:
+  ignoreGhsas:
+    - GHSA-xxxx-yyyy-zzzz

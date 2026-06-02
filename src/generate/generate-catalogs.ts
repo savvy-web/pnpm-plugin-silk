@@ -23,8 +23,18 @@ interface WorkspaceConfig {
 		silkPeers?: Record<string, string>;
 	};
 	overrides?: Record<string, string>;
+	/** Legacy pnpm <11 field; folded into allowBuilds as `name: true`. */
 	onlyBuiltDependencies?: string[];
+	allowBuilds?: Record<string, boolean>;
 	publicHoistPattern?: string[];
+	strictDepBuilds?: boolean;
+	blockExoticSubdeps?: boolean;
+	minimumReleaseAge?: number;
+	minimumReleaseAgeExclude?: string[];
+	packageExtensions?: Record<string, unknown>;
+	allowedDeprecatedVersions?: Record<string, string>;
+	supportedArchitectures?: { os?: string[]; cpu?: string[]; libc?: string[] };
+	auditConfig?: { ignoreGhsas?: string[]; ignoreCves?: string[] };
 	peerDependencyRules?: {
 		allowedVersions?: Record<string, string>;
 		ignoreMissing?: string[];
@@ -75,17 +85,78 @@ function formatCatalogLiteral(catalog: Record<string, string>, indent = "\t\t"):
 }
 
 /**
+ * Format a boolean map as a complete TypeScript object literal (biome-clean).
+ * Returns `{}` for empty maps and a sorted multi-line literal otherwise.
+ */
+function formatBoolMapLiteral(map: Record<string, boolean>, indent = "\t\t"): string {
+	const keys = Object.keys(map);
+	if (keys.length === 0) {
+		return "{}";
+	}
+	const entries = keys
+		.sort((a, b) => a.localeCompare(b))
+		.map((pkg) => {
+			const key = pkg.includes("/") || pkg.includes("-") ? `"${pkg}"` : pkg;
+			return `${indent}${key}: ${map[pkg]},`;
+		})
+		.join("\n");
+	return `{\n${entries}\n\t}`;
+}
+
+/**
+ * Recursively sort object keys for deterministic serialization. Arrays keep
+ * their order; primitives pass through.
+ */
+function sortKeys(value: unknown): unknown {
+	if (Array.isArray(value)) {
+		return value.map(sortKeys);
+	}
+	if (value !== null && typeof value === "object") {
+		return Object.fromEntries(
+			Object.entries(value as Record<string, unknown>)
+				.sort(([a], [b]) => a.localeCompare(b))
+				.map(([k, v]) => [k, sortKeys(v)]),
+		);
+	}
+	return value;
+}
+
+/**
+ * Serialize a JSON-compatible value as a TypeScript literal indented to sit as
+ * a field value at one tab of nesting inside the generated object.
+ */
+function serialize(value: unknown): string {
+	return JSON.stringify(sortKeys(value), null, "\t").split("\n").join("\n\t");
+}
+
+/**
  * Generate the TypeScript catalog file content.
  */
 function generateContent(
 	silk: Record<string, string>,
 	silkPeers: Record<string, string>,
 	silkOverrides: Record<string, string>,
-	silkOnlyBuiltDependencies: string[],
 	silkPublicHoistPattern: string[],
+	silkAllowBuilds: Record<string, boolean>,
+	security: {
+		strictDepBuilds: boolean | undefined;
+		blockExoticSubdeps: boolean | undefined;
+		minimumReleaseAge: number | undefined;
+		minimumReleaseAgeExclude: string[];
+	},
+	silkPackageExtensions: Record<string, unknown>,
+	silkAllowedDeprecatedVersions: Record<string, string>,
+	silkSupportedArchitectures: { os?: string[]; cpu?: string[]; libc?: string[] },
+	silkAuditConfig: { ignoreGhsas?: string[]; ignoreCves?: string[] },
 	silkPeerDependencyRules: { allowedVersions: Record<string, string>; ignoreMissing: string[]; allowAny: string[] },
 	timestamp: string,
 ): string {
+	const scalarLines = [
+		security.strictDepBuilds !== undefined ? `\tsilkStrictDepBuilds: ${security.strictDepBuilds},` : "",
+		security.blockExoticSubdeps !== undefined ? `\tsilkBlockExoticSubdeps: ${security.blockExoticSubdeps},` : "",
+		security.minimumReleaseAge !== undefined ? `\tsilkMinimumReleaseAge: ${security.minimumReleaseAge},` : "",
+	].filter((line) => line !== "");
+
 	return `/**
  * Auto-generated Silk catalog definitions.
  *
@@ -101,12 +172,6 @@ import type { SilkCatalogs, SilkPeerDependencyRules } from "./types.js";
 
 /**
  * The complete Silk catalogs generated from pnpm-workspace.yaml.
- *
- * - \`silk\`: Current/latest versions for direct dependencies
- * - \`silkPeers\`: Permissive ranges for peerDependencies
- * - \`silkOverrides\`: Security overrides for known CVEs
- * - \`silkOnlyBuiltDependencies\`: Packages allowed to run build scripts
- * - \`silkPublicHoistPattern\`: Packages to hoist to virtual store root
  */
 export const silkCatalogs: SilkCatalogs = {
 \tsilk: {
@@ -118,12 +183,16 @@ ${formatCatalog(silkPeers)}
 \tsilkOverrides: {
 ${formatCatalog(silkOverrides)}
 \t},
-\tsilkOnlyBuiltDependencies: [
-${formatStringArray(silkOnlyBuiltDependencies)}
-\t],
 \tsilkPublicHoistPattern: [
 ${formatStringArray(silkPublicHoistPattern)}
 \t],
+\tsilkAllowBuilds: ${formatBoolMapLiteral(silkAllowBuilds)},
+${scalarLines.join("\n")}
+\tsilkMinimumReleaseAgeExclude: ${formatArrayLiteral(security.minimumReleaseAgeExclude)},
+\tsilkPackageExtensions: ${serialize(silkPackageExtensions)},
+\tsilkAllowedDeprecatedVersions: ${formatCatalogLiteral(silkAllowedDeprecatedVersions)},
+\tsilkSupportedArchitectures: ${serialize(silkSupportedArchitectures)},
+\tsilkAuditConfig: ${serialize(silkAuditConfig)},
 };
 
 /**
@@ -181,8 +250,25 @@ export function generateCatalogs(
 		const silk = config.catalogs.silk;
 		const silkPeers = config.catalogs.silkPeers;
 		const silkOverrides = config.overrides ?? {};
-		const silkOnlyBuiltDependencies = config.onlyBuiltDependencies ?? [];
 		const silkPublicHoistPattern = config.publicHoistPattern ?? [];
+
+		const silkAllowBuilds: Record<string, boolean> = {};
+		for (const name of config.onlyBuiltDependencies ?? []) {
+			silkAllowBuilds[name] = true;
+		}
+		Object.assign(silkAllowBuilds, config.allowBuilds ?? {});
+
+		const security = {
+			strictDepBuilds: config.strictDepBuilds,
+			blockExoticSubdeps: config.blockExoticSubdeps,
+			minimumReleaseAge: config.minimumReleaseAge,
+			minimumReleaseAgeExclude: config.minimumReleaseAgeExclude ?? [],
+		};
+		const silkPackageExtensions = config.packageExtensions ?? {};
+		const silkAllowedDeprecatedVersions = config.allowedDeprecatedVersions ?? {};
+		const silkSupportedArchitectures = config.supportedArchitectures ?? {};
+		const silkAuditConfig = config.auditConfig ?? {};
+
 		const silkPeerDependencyRules = {
 			allowedVersions: config.peerDependencyRules?.allowedVersions ?? {},
 			ignoreMissing: config.peerDependencyRules?.ignoreMissing ?? [],
@@ -194,8 +280,13 @@ export function generateCatalogs(
 			silk,
 			silkPeers,
 			silkOverrides,
-			silkOnlyBuiltDependencies,
 			silkPublicHoistPattern,
+			silkAllowBuilds,
+			security,
+			silkPackageExtensions,
+			silkAllowedDeprecatedVersions,
+			silkSupportedArchitectures,
+			silkAuditConfig,
 			silkPeerDependencyRules,
 			ts,
 		);

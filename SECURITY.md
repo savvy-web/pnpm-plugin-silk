@@ -4,8 +4,8 @@
 
 | Version | Supported |
 | --- | --- |
-| 0.11.x | :white_check_mark: |
-| < 0.11 | :x: |
+| Latest (0.13.x) | :white_check_mark: |
+| Older releases | :x: |
 
 Since this package is in pre-1.0 development, only the latest version receives
 security updates.
