@@ -36,23 +36,33 @@ export interface PackageExtension {
 /**
  * Supported architectures for optional-dependency installation.
  *
+ * @remarks
+ * A type alias (not an interface) so it carries an implicit index signature and
+ * can be passed to {@link mergeArrayRecord} without a cast.
+ *
  * @public
  */
-export interface SupportedArchitectures {
+// biome-ignore lint/style/useConsistentTypeDefinitions: a type alias (not an interface) carries an implicit index signature, letting it pass to mergeArrayRecord without a cast and erroring at compile time if a non-array field is ever added.
+export type SupportedArchitectures = {
 	readonly os?: readonly string[];
 	readonly cpu?: readonly string[];
 	readonly libc?: readonly string[];
-}
+};
 
 /**
  * Audit advisory allowlist (pnpm 11 prefers GHSA identifiers).
  *
+ * @remarks
+ * A type alias (not an interface) so it carries an implicit index signature and
+ * can be passed to {@link mergeArrayRecord} without a cast.
+ *
  * @public
  */
-export interface AuditConfig {
+// biome-ignore lint/style/useConsistentTypeDefinitions: a type alias (not an interface) carries an implicit index signature, letting it pass to mergeArrayRecord without a cast and erroring at compile time if a non-array field is ever added.
+export type AuditConfig = {
 	readonly ignoreGhsas?: readonly string[];
 	readonly ignoreCves?: readonly string[];
-}
+};
 
 /**
  * The Silk catalogs structure containing two named catalogs for version management.

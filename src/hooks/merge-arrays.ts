@@ -22,8 +22,8 @@ export function mergeStringArrays(silkArray: readonly string[], localArray: stri
  * @returns A new record with each key's arrays unioned and sorted
  */
 export function mergeArrayRecord(
-	silk: Record<string, readonly string[]>,
-	child: Record<string, readonly string[]> | undefined,
+	silk: Partial<Record<string, readonly string[] | undefined>>,
+	child: Partial<Record<string, readonly string[] | undefined>> | undefined,
 ): Record<string, string[]> {
 	const keys = new Set([...Object.keys(silk), ...Object.keys(child ?? {})]);
 	const result: Record<string, string[]> = {};

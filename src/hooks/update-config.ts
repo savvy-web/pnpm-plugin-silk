@@ -121,14 +121,11 @@ export function updateConfig(
 			catalogs.silkAllowedDeprecatedVersions,
 			config.allowedDeprecatedVersions,
 		);
-		const mergedSupportedArchitectures = mergeArrayRecord(
-			catalogs.silkSupportedArchitectures as Record<string, readonly string[]>,
-			config.supportedArchitectures as Record<string, readonly string[]> | undefined,
-		) as SupportedArchitectures;
-		const mergedAuditConfig = mergeArrayRecord(
-			catalogs.silkAuditConfig as Record<string, readonly string[]>,
-			config.auditConfig as Record<string, readonly string[]> | undefined,
-		) as AuditConfig;
+		const mergedSupportedArchitectures: SupportedArchitectures = mergeArrayRecord(
+			catalogs.silkSupportedArchitectures,
+			config.supportedArchitectures,
+		);
+		const mergedAuditConfig: AuditConfig = mergeArrayRecord(catalogs.silkAuditConfig, config.auditConfig);
 
 		securityWarnings.push(...detectAllowBuildsLoosening(catalogs.silkAllowBuilds, config.allowBuilds));
 		securityWarnings.push(
@@ -152,15 +149,23 @@ export function updateConfig(
 			overrides: mergedOverrides,
 			publicHoistPattern: mergedPublicHoistPattern,
 			peerDependencyRules: mergedPeerDependencyRules,
-			allowBuilds: mergedAllowBuilds,
+			// Managed settings are spread only when they carry content, so the
+			// merged config stays lean and consistent with the scalar guards.
+			...(Object.keys(mergedAllowBuilds).length > 0 ? { allowBuilds: mergedAllowBuilds } : {}),
 			...(mergedStrictDepBuilds !== undefined ? { strictDepBuilds: mergedStrictDepBuilds } : {}),
 			...(mergedBlockExoticSubdeps !== undefined ? { blockExoticSubdeps: mergedBlockExoticSubdeps } : {}),
 			...(mergedMinimumReleaseAge !== undefined ? { minimumReleaseAge: mergedMinimumReleaseAge } : {}),
-			minimumReleaseAgeExclude: mergedMinimumReleaseAgeExclude,
-			packageExtensions: mergedPackageExtensions,
-			allowedDeprecatedVersions: mergedAllowedDeprecatedVersions,
-			supportedArchitectures: mergedSupportedArchitectures,
-			auditConfig: mergedAuditConfig,
+			...(mergedMinimumReleaseAgeExclude.length > 0
+				? { minimumReleaseAgeExclude: mergedMinimumReleaseAgeExclude }
+				: {}),
+			...(Object.keys(mergedPackageExtensions).length > 0 ? { packageExtensions: mergedPackageExtensions } : {}),
+			...(Object.keys(mergedAllowedDeprecatedVersions).length > 0
+				? { allowedDeprecatedVersions: mergedAllowedDeprecatedVersions }
+				: {}),
+			...(Object.keys(mergedSupportedArchitectures).length > 0
+				? { supportedArchitectures: mergedSupportedArchitectures }
+				: {}),
+			...(Object.keys(mergedAuditConfig).length > 0 ? { auditConfig: mergedAuditConfig } : {}),
 		};
 	});
 }

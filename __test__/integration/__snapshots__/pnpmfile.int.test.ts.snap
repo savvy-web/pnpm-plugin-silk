@@ -7,8 +7,6 @@ exports[`pnpmfile integration > merges allowBuilds and warns on security looseni
     "core-js": true,
     "esbuild": true,
   },
-  "allowedDeprecatedVersions": {},
-  "auditConfig": {},
   "blockExoticSubdeps": true,
   "catalogs": {
     "silk": {
@@ -29,7 +27,6 @@ exports[`pnpmfile integration > merges allowBuilds and warns on security looseni
     "lodash": ">=4.17.23",
     "tmp": "^0.2.4",
   },
-  "packageExtensions": {},
   "peerDependencyRules": {
     "allowAny": [
       "eslint",
@@ -65,8 +62,6 @@ exports[`pnpmfile integration > merges full catalogs into empty config 1`] = `
     "core-js": false,
     "esbuild": true,
   },
-  "allowedDeprecatedVersions": {},
-  "auditConfig": {},
   "blockExoticSubdeps": true,
   "catalogs": {
     "silk": {
@@ -87,7 +82,6 @@ exports[`pnpmfile integration > merges full catalogs into empty config 1`] = `
     "lodash": ">=4.17.23",
     "tmp": "^0.2.4",
   },
-  "packageExtensions": {},
   "peerDependencyRules": {
     "allowAny": [
       "eslint",
@@ -123,8 +117,6 @@ exports[`pnpmfile integration > merges full catalogs with local overrides 1`] = 
     "core-js": false,
     "esbuild": true,
   },
-  "allowedDeprecatedVersions": {},
-  "auditConfig": {},
   "blockExoticSubdeps": true,
   "catalogs": {
     "myApp": {
@@ -152,7 +144,6 @@ exports[`pnpmfile integration > merges full catalogs with local overrides 1`] = 
     "lodash": ">=4.17.23",
     "tmp": "^0.2.4",
   },
-  "packageExtensions": {},
   "peerDependencyRules": {
     "allowAny": [
       "eslint",
@@ -187,8 +178,6 @@ exports[`pnpmfile integration > merges minimal catalogs into empty config 1`] = 
   "allowBuilds": {
     "esbuild": true,
   },
-  "allowedDeprecatedVersions": {},
-  "auditConfig": {},
   "catalogs": {
     "silk": {
       "typescript": "^5.7.0",
@@ -198,11 +187,9 @@ exports[`pnpmfile integration > merges minimal catalogs into empty config 1`] = 
       "typescript": "^5.7.0",
     },
   },
-  "minimumReleaseAgeExclude": [],
   "overrides": {
     "lodash": ">=4.17.23",
   },
-  "packageExtensions": {},
   "peerDependencyRules": {
     "allowAny": [],
     "allowedVersions": {},
@@ -211,6 +198,5 @@ exports[`pnpmfile integration > merges minimal catalogs into empty config 1`] = 
   "publicHoistPattern": [
     "typescript",
   ],
-  "supportedArchitectures": {},
 }
 `;
