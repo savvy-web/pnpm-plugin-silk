@@ -45,10 +45,16 @@ export interface PnpmConfig {
 	overrides?: Record<string, string>;
 	/** Packages to hoist to the virtual store root. */
 	publicHoistPattern?: string[];
-	/** The consuming workspace's root package manifest (provided by pnpm). */
+	/** The consuming workspace's root package manifest (provided by pnpm in some contexts). */
 	rootProjectManifest?: { name?: string };
-	/** Absolute path to the directory containing the root manifest (provided by pnpm). */
+	/** Directory containing the root manifest (provided by pnpm in some contexts). */
 	rootProjectManifestDir?: string;
+	/** Directory containing the lockfile — the workspace root (provided by pnpm `updateConfig`). */
+	lockfileDir?: string;
+	/** The workspace root directory (provided by pnpm `updateConfig`). */
+	workspaceDir?: string;
+	/** The current project directory (provided by pnpm `updateConfig`). */
+	dir?: string;
 	/** Map of package matchers to whether their build scripts may run. */
 	allowBuilds?: Record<string, boolean>;
 	/** Fail installs on unreviewed dependency build scripts. */
@@ -100,17 +106,17 @@ function resolveRootName(config: PnpmConfig): string | undefined {
 	if (config.rootProjectManifest?.name) {
 		return config.rootProjectManifest.name;
 	}
-	if (config.rootProjectManifestDir) {
-		try {
-			const pkg = JSON.parse(readFileSync(join(config.rootProjectManifestDir, "package.json"), "utf8")) as {
-				name?: string;
-			};
-			return pkg.name;
-		} catch {
-			return undefined;
-		}
+	// pnpm's `updateConfig` config does NOT populate `rootProjectManifest`/
+	// `rootProjectManifestDir`, but it does set the workspace/lockfile dir. Read
+	// the root `package.json` from there to identify the consuming repo.
+	const rootDir =
+		config.rootProjectManifestDir ?? config.lockfileDir ?? config.workspaceDir ?? config.dir ?? process.cwd();
+	try {
+		const pkg = JSON.parse(readFileSync(join(rootDir, "package.json"), "utf8")) as { name?: string };
+		return pkg.name;
+	} catch {
+		return undefined;
 	}
-	return undefined;
 }
 
 /**

@@ -1,3 +1,6 @@
+import { mkdtempSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { Effect, Layer } from "effect";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { PnpmConfig } from "../../src/hooks/update-config.js";
@@ -167,6 +170,21 @@ describe("updateConfig", () => {
 
 		expect(result.publicHoistPattern).toContain("@savvy-web/cli");
 		expect(result.publicHoistPattern).toContain("@savvy-web/mcp");
+	});
+
+	it("detects the source monorepo via workspaceDir when rootProjectManifest is absent", () => {
+		// pnpm's `updateConfig` does NOT pass `rootProjectManifest`; it passes `workspaceDir`/`lockfileDir`.
+		const dir = mkdtempSync(join(tmpdir(), "silk-root-"));
+		writeFileSync(join(dir, "package.json"), JSON.stringify({ name: "savvy-web-systems" }));
+		const catalogs = {
+			...fullCatalogs,
+			silkPublicHoistPattern: [...fullCatalogs.silkPublicHoistPattern, "@savvy-web/cli", "@savvy-web/mcp"],
+		};
+		const layer = Layer.merge(makeCatalogLayer(catalogs), makePeerDependencyRulesLayer(fullPeerDependencyRules));
+		const result = Effect.runSync(updateConfig({ workspaceDir: dir }).pipe(Effect.provide(layer)));
+
+		expect(result.publicHoistPattern).not.toContain("@savvy-web/cli");
+		expect(result.publicHoistPattern).not.toContain("@savvy-web/mcp");
 	});
 
 	it("sorts merged arrays alphabetically", () => {
