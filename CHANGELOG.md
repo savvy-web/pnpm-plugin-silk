@@ -1,5 +1,11 @@
 # @savvy-web/pnpm-plugin-silk
 
+## 0.14.4
+
+### Other
+
+* [`de6d023`](https://github.com/savvy-web/pnpm-plugin-silk/commit/de6d02339faaf2251d1954cf068e3fccb52359e1) Avoid hoisting @savvy-web/cli and @savvy-web/mcp in the source repo.
+
 ## 0.14.3
 
 ### Bug Fixes
