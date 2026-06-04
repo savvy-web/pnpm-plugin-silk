@@ -24,7 +24,7 @@ const STRIP_FIELDS = [
 ] as const;
 
 /** The only files shipped in the published config dependency. */
-const DIST_FILES = ["LICENSE", "README.md", "package.json", "pnpmfile.mjs"] as const;
+const DIST_FILES = ["LICENSE", "README.md", "package.json", "pnpmfile.cjs", "pnpmfile.mjs"] as const;
 
 /** Static files copied verbatim into each output directory. */
 const COPY_FILES = ["LICENSE", "README.md"] as const;

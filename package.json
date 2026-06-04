@@ -74,7 +74,7 @@
 		"@effect/typeclass": "catalog:silk",
 		"@effect/vitest": "catalog:silk",
 		"@effect/workflow": "catalog:silk",
-		"@savvy-web/silk": "^0.2.1",
+		"@savvy-web/silk": "^0.3.0",
 		"@savvy-web/vitest": "^1.3.2",
 		"@types/node": "catalog:silk",
 		"@types/react": "catalog:silk",

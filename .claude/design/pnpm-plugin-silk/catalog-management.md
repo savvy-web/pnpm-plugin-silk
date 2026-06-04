@@ -3,8 +3,8 @@ status: current
 module: pnpm-plugin-silk
 category: architecture
 created: 2026-02-03
-updated: 2026-06-02
-last-synced: 2026-06-02
+updated: 2026-06-04
+last-synced: 2026-06-04
 completeness: 97
 related: []
 dependencies: []
@@ -65,7 +65,7 @@ its own devDependencies while declaring `peerDependencies: { typescript: catalog
 **Key Design Principles:**
 
 - **Zero runtime dependencies** - Config dependencies cannot have their own dependencies; all code must be self-contained and bundled
-- **ESM named export** - pnpm 11 loads `pnpmfile.mjs` first (falling back to `pnpmfile.cjs`); the bundle must export `export const hooks = { ... }` as an ESM named export
+- **Dual ESM + CJS emit** - the build ships both `pnpmfile.mjs` and `pnpmfile.cjs` because pnpm 11.5.1 resolves config-dependency pnpmfiles via two code paths (`pnpm install` prefers `.mjs`, the `pnpm run`/`pnpm exec` lifecycle path probes only `.cjs`); both bundles export `hooks` as a named export
 - **Named catalogs** - Use `silk` and `silkPeers` namespaces; don't override user's default catalog
 - **Dual version strategy** - Current versions for direct deps, permissive ranges for peers
 - **Non-destructive merging** - Plugin catalogs merge with (not replace) local catalogs; local
@@ -292,15 +292,16 @@ export function warnOverrides(overrides: Override[]): void;
 
 #### Component 3: Bundle Output
 
-**Location:** `dist/npm/pnpmfile.mjs`
+**Location:** `dist/npm/pnpmfile.mjs` and `dist/npm/pnpmfile.cjs`
 
-**Purpose:** Self-contained ESM bundle that pnpm 11 loads as a config dependency
+**Purpose:** Self-contained bundles that pnpm 11 loads as a config dependency, one per resolution code path
 
 **Responsibilities:**
 
-- Bundle all source code into a single ESM file (effect bundled in via `deps.alwaysBundle`)
+- Bundle all source code into single self-contained files, one ESM and one CJS (effect bundled in via `deps.alwaysBundle`)
 - Include catalog definitions inline (no external imports)
 - Maintain compatibility with pnpm's hook loading mechanism (`export const hooks`)
+- Ship both formats because `pnpm install` resolves `pnpmfile.mjs` while the `pnpm run`/`pnpm exec` lifecycle path probes only `pnpmfile.cjs`
 
 ### Architecture Diagram
 
@@ -328,12 +329,13 @@ export function warnOverrides(overrides: Override[]): void;
 │             ▼                                                         │
 │  ┌──────────────────────┐                                            │
 │  │  tsdown              │                                            │
-│  │  (ESM bundling)      │                                            │
+│  │  (ESM + CJS bundling)│                                            │
 │  └──────────┬───────────┘                                            │
 │             ▼                                                         │
 │  ┌──────────────────────┐                                            │
 │  │  dist/npm/           │                                            │
-│  │  └── pnpmfile.mjs    │  (self-contained ESM bundle)               │
+│  │  ├── pnpmfile.mjs    │  (self-contained ESM bundle)               │
+│  │  └── pnpmfile.cjs    │  (self-contained CJS bundle)               │
 │  └──────────────────────┘                                            │
 └──────────────────────────────────────────────────────────────────────┘
                               │
@@ -364,7 +366,7 @@ Known limitations of the current architecture:
 
 ### Resolved Limitations
 
-- ~~**rslib-builder CJS gap**~~ - Resolved in tsdown migration (feat/pnpm-11); plugin now ships `pnpmfile.mjs` (ESM), which pnpm 11 loads natively
+- ~~**rslib-builder CJS gap**~~ - Resolved in tsdown migration (feat/pnpm-11); plugin now ships both `pnpmfile.mjs` (ESM) and `pnpmfile.cjs` (CJS), covering both of pnpm 11's config-dependency resolution code paths
 
 ---
 
@@ -420,9 +422,9 @@ multiple repositories in the Silk ecosystem.
 
 #### Pattern 2: Self-Contained Bundle
 
-- **Where used:** Build output (`pnpmfile.mjs`)
+- **Where used:** Build output (`pnpmfile.mjs` and `pnpmfile.cjs`)
 - **Why used:** Config dependencies cannot have their own dependencies
-- **Implementation:** tsdown bundles all source + data into a single ESM file (`deps.alwaysBundle: ["effect"]`)
+- **Implementation:** tsdown bundles all source + data into self-contained ESM and CJS files (`deps.alwaysBundle: ["effect"]`)
 
 ### Constraints and Trade-offs
 
@@ -430,13 +432,13 @@ multiple repositories in the Silk ecosystem.
 
 - **Description:** pnpm config dependencies cannot declare dependencies in package.json
 - **Impact:** Cannot rely on any external libraries at runtime; must bundle everything
-- **Mitigation:** Use tsdown with `deps.alwaysBundle: ["effect"]` to produce a self-contained `pnpmfile.mjs`
+- **Mitigation:** Use tsdown with `deps.alwaysBundle: ["effect"]` to produce self-contained `pnpmfile.mjs` and `pnpmfile.cjs`
 
-#### Constraint 2: Self-Contained ESM Bundle Required
+#### Constraint 2: Self-Contained Bundles Required
 
-- **Description:** pnpm 11 loads `pnpmfile.mjs` (ESM named export) from the config dependency; the bundle must be entirely self-contained with no import-time side effects from unbundled packages
-- **Impact:** All runtime code including effect must be inlined into the artifact
-- **Mitigation:** tsdown `fixedExtension: true` emits `.mjs`; `deps.alwaysBundle: ["effect"]` ensures effect is inlined
+- **Description:** pnpm 11 loads `pnpmfile.mjs` or `pnpmfile.cjs` (named `hooks` export) from the config dependency depending on the resolution path; each bundle must be entirely self-contained with no import-time side effects from unbundled packages
+- **Impact:** All runtime code including effect must be inlined into each artifact
+- **Mitigation:** tsdown `format: ["esm", "cjs"]` with `fixedExtension: true` emits `.mjs` + `.cjs`; `deps.alwaysBundle: ["effect"]` ensures effect is inlined in both
 
 #### Trade-off 1: Centralization vs. Flexibility
 
@@ -846,7 +848,7 @@ The plugin is largely stateless--all catalog data is determined at hook invocati
 
 #### Integration 1: tsdown
 
-**How it integrates:** Bundles `src/pnpmfile.ts` to a self-contained `pnpmfile.mjs` via `tsdown.config.ts`, loaded with `--config-loader tsx`
+**How it integrates:** Bundles `src/pnpmfile.ts` to self-contained `pnpmfile.mjs` and `pnpmfile.cjs` via `tsdown.config.ts`, loaded with `--config-loader tsx`
 
 **Actual Configuration:**
 
@@ -857,9 +859,9 @@ import { emitDistPackage } from "./lib/packaging/package-json.js";
 
 export default defineConfig({
   entry: { pnpmfile: "src/pnpmfile.ts" },
-  format: "esm",
+  format: ["esm", "cjs"],
   platform: "node",
-  fixedExtension: true, // → pnpmfile.mjs
+  fixedExtension: true, // → pnpmfile.mjs + pnpmfile.cjs
   deps: { alwaysBundle: ["effect"] }, // keep the bundle self-contained
   dts: false,
   clean: true,
@@ -871,7 +873,7 @@ export default defineConfig({
 });
 ```
 
-**Data exchange:** TypeScript ESM source → self-contained ESM bundle (`pnpmfile.mjs`)
+**Data exchange:** TypeScript ESM source → self-contained ESM bundle (`pnpmfile.mjs`) and CJS bundle (`pnpmfile.cjs`)
 
 **`build:done` hook:** `lib/packaging/package-json.ts` writes the trimmed publishable `package.json` and copies LICENSE/README into the output directory
 
@@ -897,12 +899,12 @@ const silkModules = {
 
 **Purpose:** Primary integration point; pnpm calls exported hooks during install
 
-**Protocol:** ESM named export (`export const hooks`) from `pnpmfile.mjs`; pnpm 11 prefers `.mjs`, falling back to `.cjs`
+**Protocol:** Named `hooks` export from `pnpmfile.mjs` (ESM) or `pnpmfile.cjs` (CJS). pnpm 11.5.1 picks the file by code path, not by preference-with-fallback: `pnpm install` resolves `pnpmfile.mjs`, while the `pnpm run`/`pnpm exec` lifecycle path probes only `pnpmfile.cjs`. Both are shipped so the plugin works under either path.
 
 **Interface:**
 
 ```javascript
-// pnpmfile.mjs
+// pnpmfile.mjs / pnpmfile.cjs (same hooks, two formats)
 export const hooks = {
   updateConfig(config) {
     return updateConfig(config);
@@ -1020,7 +1022,7 @@ __test__/
 
 - **security-warnings** - Detects loosening of `allowBuilds`, boolean flags, and `minimumReleaseAge`; companion `security-warning-format` covers box rendering
 - **merge-map / merge-scalar / merge-array-record** - Unit tests for the three new generic merge primitives added in feat/pnpm-11
-- **packaging/package-json** - `createDistPackageJson` strips build-only fields and sets the `files` list to `["LICENSE", "README.md", "package.json", "pnpmfile.mjs"]`
+- **packaging/package-json** - `createDistPackageJson` strips build-only fields and sets the `files` list to `["LICENSE", "README.md", "package.json", "pnpmfile.cjs", "pnpmfile.mjs"]`
 - **update-config** - Full Effect program exercising all merge operations and both warning paths
 
 ### Integration Tests
@@ -1031,7 +1033,7 @@ __test__/
 
 - Full pnpmfile.ts entry point via `Effect.runSync` with `LiveLayer` (error recovery, all merge operations)
 - Generator Effect program: YAML parsing, `allowBuilds` emission (folded from `onlyBuiltDependencies`), peer dependency rules generation, skip-on-no-change
-- `lib/packaging/package-json.ts` helper: strips build-only fields, sets `files` to `["LICENSE", "README.md", "package.json", "pnpmfile.mjs"]`, preserves `type: "module"`
+- `lib/packaging/package-json.ts` helper: strips build-only fields, sets `files` to `["LICENSE", "README.md", "package.json", "pnpmfile.cjs", "pnpmfile.mjs"]`, preserves `type: "module"`
 
 ---
 
@@ -1372,7 +1374,7 @@ Current catalog state: 26 tracked Effect packages (expanded from initial 13), al
 
 **Implementation Details:**
 
-The `pnpmfile.ts` entry point composes services via `Layer.merge(CatalogProvider.Live, PeerDependencyRulesProvider.Live)` and runs the updateConfig Effect program synchronously via `Effect.runSync`. It exports `export const hooks = { updateConfig }` as an ESM named export (bundled to `pnpmfile.mjs` by tsdown). The try/catch wrapper ensures fail-safe behavior.
+The `pnpmfile.ts` entry point composes services via `Layer.merge(CatalogProvider.Live, PeerDependencyRulesProvider.Live)` and runs the updateConfig Effect program synchronously via `Effect.runSync`. It exports `export const hooks = { updateConfig }` as a named export (bundled to both `pnpmfile.mjs` and `pnpmfile.cjs` by tsdown). The try/catch wrapper ensures fail-safe behavior.
 
 Current peerDependencyRules state (from `pnpm-workspace.yaml`):
 
@@ -1395,7 +1397,7 @@ These rules suppress peer dependency warnings from TypeScript-ESLint plugins tha
 - **Security defaults** - Silk now owns and injects `strictDepBuilds`, `blockExoticSubdeps`, `minimumReleaseAge` and `minimumReleaseAgeExclude`; a security-warning box fires when a child weakens any of these
 - **Extended merge surface** - Added `packageExtensions`, `allowedDeprecatedVersions`, `supportedArchitectures` and `auditConfig` to the merge pipeline with child-wins or union-per-axis semantics
 - **New merge primitives** - `merge-map.ts` (child-wins map), `merge-scalar.ts` (child else silk), `mergeArrayRecord` in `merge-arrays.ts` (union per key)
-- **tsdown migration** - Replaced `@savvy-web/rslib-builder` with a hand-rolled `tsdown.config.ts` (loaded via `--config-loader tsx`) that emits `pnpmfile.mjs` (ESM); `lib/packaging/package-json.ts` `build:done` hook writes the trimmed publishable `package.json`
+- **tsdown migration** - Replaced `@savvy-web/rslib-builder` with a hand-rolled `tsdown.config.ts` (loaded via `--config-loader tsx`) that emits `pnpmfile.mjs` (ESM) and `pnpmfile.cjs` (CJS); `lib/packaging/package-json.ts` `build:done` hook writes the trimmed publishable `package.json`
 - **pnpm 10 → 11 bump** - Silk repo itself upgraded to pnpm 11
 
 ### Phase 5: Patch Distribution (v1.2.0)
@@ -1457,14 +1459,14 @@ Areas that may need refactoring in the future:
 
 ---
 
-**Document Status:** Current (97% complete) - MVP + Security Overrides + Effect Catalog Resolver + Effect Service Rewrite + peerDependencyRules complete; pnpm 11 settings inheritance (allowBuilds, security defaults, extended merge surface) complete in feat/pnpm-11; tsdown migration (CJS → ESM `pnpmfile.mjs`) complete; Biome Schema Sync removed (migrated to @savvy-web/lint-staged); `@effect/tsgo` and `@effect/vitest` added to silk/silkPeers catalogs
+**Document Status:** Current (97% complete) - MVP + Security Overrides + Effect Catalog Resolver + Effect Service Rewrite + peerDependencyRules complete; pnpm 11 settings inheritance (allowBuilds, security defaults, extended merge surface) complete in feat/pnpm-11; tsdown migration complete, now emitting both `pnpmfile.mjs` (ESM) and `pnpmfile.cjs` (CJS) to cover pnpm 11's two config-dependency resolution paths; Biome Schema Sync removed (migrated to @savvy-web/lint-staged); `@effect/tsgo` and `@effect/vitest` added to silk/silkPeers catalogs
 
-**Synced:** 2026-06-02
+**Synced:** 2026-06-04
 
 **Implementation Summary:**
 
 - Package structure created at repo root (single package, not monorepo)
-- tsdown used for ESM bundling (`tsdown.config.ts`); produces self-contained `pnpmfile.mjs` with effect inlined via `deps.alwaysBundle`; `build:done` hook (`lib/packaging/package-json.ts`) writes publishable `package.json` and copies assets
+- tsdown used for bundling (`tsdown.config.ts`, `format: ["esm", "cjs"]`); produces self-contained `pnpmfile.mjs` and `pnpmfile.cjs` with effect inlined via `deps.alwaysBundle`; `build:done` hook (`lib/packaging/package-json.ts`) writes publishable `package.json` and copies assets
 - Catalog generation rewritten as Effect program (`src/generate/generate-catalogs.ts`) using
   `FileSystem` service; CLI runner at `lib/scripts/run-generate.ts` provides `NodeFileSystem.layer`
 - Hook layer rewritten using Effect services: `CatalogProvider` and `PeerDependencyRulesProvider`
@@ -1488,11 +1490,12 @@ Areas that may need refactoring in the future:
 
 **Build Output:**
 
-- `dist/npm/pnpmfile.mjs` - Self-contained ESM bundle (loaded by pnpm 11 as config dependency)
+- `dist/npm/pnpmfile.mjs` - Self-contained ESM bundle (resolved by `pnpm install`)
+- `dist/npm/pnpmfile.cjs` - Self-contained CJS bundle (resolved by the `pnpm run`/`pnpm exec` lifecycle path, e.g. Turbo-driven builds)
 - `dist/npm/package.json` - Trimmed publishable package.json (written by `lib/packaging/package-json.ts` in the `build:done` hook)
 - `dist/npm/LICENSE`, `dist/npm/README.md` - Copied by the same hook
 
-The build emits only `pnpmfile.mjs`. There is no separate `index.js` public API artifact; the plugin is consumed exclusively as a pnpm config dependency.
+The build emits both `pnpmfile.mjs` and `pnpmfile.cjs` because pnpm 11.5.1 resolves config-dependency pnpmfiles via two distinct code paths. There is no separate `index.js` public API artifact; the plugin is consumed exclusively as a pnpm config dependency.
 
 **Current Security Overrides:**
 

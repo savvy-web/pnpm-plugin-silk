@@ -70,9 +70,9 @@ This data is written to `src/catalogs/generated.ts` and bundled into the self-co
 
 ## Bundle architecture
 
-The published package includes a single `pnpmfile.mjs` file that contains all catalog data and hook logic. This is necessary because pnpm config dependencies cannot have their own runtime dependencies — everything must be bundled.
+The published package includes `pnpmfile.mjs` and `pnpmfile.cjs` files that contain all catalog data and hook logic. This is necessary because pnpm config dependencies cannot have their own runtime dependencies — everything must be bundled.
 
-The bundle is built with [tsdown](https://tsdown.dev) from the ESM TypeScript source, producing a self-contained ESM `pnpmfile.mjs` that pnpm 11 loads directly (pnpm 11 prefers `pnpmfile.mjs`, falling back to `pnpmfile.cjs`).
+The bundle is built with [tsdown](https://tsdown.dev) from the same TypeScript source, producing self-contained ESM (`pnpmfile.mjs`) and CommonJS (`pnpmfile.cjs`) bundles. Both ship because pnpm 11.5.1 resolves config-dependency pnpmfiles through two different code paths: `pnpm install` uses an mjs-aware resolver that prefers `pnpmfile.mjs`, while the lifecycle path (`pnpm run`/`pnpm exec`, which Turbo invokes) uses a legacy resolver that probes only `pnpmfile.cjs`. Shipping both keeps the plugin working under either path.
 
 ## Effect ecosystem version resolution
 

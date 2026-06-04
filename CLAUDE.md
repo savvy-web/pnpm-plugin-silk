@@ -112,19 +112,19 @@ types/
 
 ### Build Pipeline
 
-Uses tsdown to bundle a single self-contained ESM `pnpmfile.mjs`:
+Uses tsdown to bundle self-contained `pnpmfile.mjs` (ESM) and `pnpmfile.cjs` (CJS) from the same `src/pnpmfile.ts`:
 
 1. `generate:catalogs` + `types:check` - Run first via Turbo `dependsOn`
 2. `build:dev` - Development build (sourcemaps) → `dist/dev`
 3. `build:prod` - Production build (minified) → `dist/npm`
 
 The tsdown config (`tsdown.config.ts`, loaded via `--config-loader tsx`) bundles
-`effect` in (`deps.alwaysBundle`) and emits `pnpmfile.mjs` (`fixedExtension`). A
+`effect` in (`deps.alwaysBundle`) and emits both `pnpmfile.mjs` and `pnpmfile.cjs` (`format: ["esm", "cjs"]`). Both are required: pnpm 11.5.1 prefers `.mjs` for `pnpm install` but probes only `.cjs` for the `pnpm run`/`pnpm exec` lifecycle path. A
 `build:done` hook (`lib/packaging/package-json.ts`) writes the trimmed
 publishable `package.json` (deps/scripts/private stripped, `files` set) and
 copies `LICENSE`/`README.md` into each output directory.
 
-**Key Output:** `dist/npm/pnpmfile.mjs` (self-contained ESM bundle, loaded by pnpm 11 as a config dependency)
+**Key Output:** `dist/npm/pnpmfile.mjs` and `dist/npm/pnpmfile.cjs` (self-contained bundles, loaded by pnpm 11 as a config dependency)
 
 ### Code Quality
 
