@@ -1,5 +1,11 @@
 # @savvy-web/pnpm-plugin-silk
 
+## 0.14.5
+
+### Other
+
+* [`6d7e86a`](https://github.com/savvy-web/pnpm-plugin-silk/commit/6d7e86ace349622381a9adc02176e81e5d8dadd6) Fixes silk repo exclusion logic for mcp and cli hoisting
+
 ## 0.14.4
 
 ### Other
