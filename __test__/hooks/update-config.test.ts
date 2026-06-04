@@ -140,6 +140,35 @@ describe("updateConfig", () => {
 		expect(result.publicHoistPattern).toContain("custom-pattern");
 	});
 
+	it("excludes @savvy-web/cli and @savvy-web/mcp from publicHoistPattern in the Silk source monorepo", () => {
+		const catalogs = {
+			...fullCatalogs,
+			silkPublicHoistPattern: [...fullCatalogs.silkPublicHoistPattern, "@savvy-web/cli", "@savvy-web/mcp"],
+		};
+		const layer = Layer.merge(makeCatalogLayer(catalogs), makePeerDependencyRulesLayer(fullPeerDependencyRules));
+		const result = Effect.runSync(
+			updateConfig({ rootProjectManifest: { name: "savvy-web-systems" } }).pipe(Effect.provide(layer)),
+		);
+
+		expect(result.publicHoistPattern).not.toContain("@savvy-web/cli");
+		expect(result.publicHoistPattern).not.toContain("@savvy-web/mcp");
+		expect(result.publicHoistPattern).toContain("typescript");
+	});
+
+	it("keeps @savvy-web/cli and @savvy-web/mcp in publicHoistPattern for consumer repos", () => {
+		const catalogs = {
+			...fullCatalogs,
+			silkPublicHoistPattern: [...fullCatalogs.silkPublicHoistPattern, "@savvy-web/cli", "@savvy-web/mcp"],
+		};
+		const layer = Layer.merge(makeCatalogLayer(catalogs), makePeerDependencyRulesLayer(fullPeerDependencyRules));
+		const result = Effect.runSync(
+			updateConfig({ rootProjectManifest: { name: "some-consumer-app" } }).pipe(Effect.provide(layer)),
+		);
+
+		expect(result.publicHoistPattern).toContain("@savvy-web/cli");
+		expect(result.publicHoistPattern).toContain("@savvy-web/mcp");
+	});
+
 	it("sorts merged arrays alphabetically", () => {
 		const result = runUpdateConfig({
 			publicHoistPattern: ["zzz-last", "aaa-first"],

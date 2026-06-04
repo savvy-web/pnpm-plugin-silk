@@ -12,6 +12,8 @@
  * @internal
  */
 
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { Effect } from "effect";
 import type { AuditConfig, PackageExtension, SupportedArchitectures } from "../catalogs/types.js";
 import { CatalogProvider } from "../services/CatalogProvider.js";
@@ -43,6 +45,10 @@ export interface PnpmConfig {
 	overrides?: Record<string, string>;
 	/** Packages to hoist to the virtual store root. */
 	publicHoistPattern?: string[];
+	/** The consuming workspace's root package manifest (provided by pnpm). */
+	rootProjectManifest?: { name?: string };
+	/** Absolute path to the directory containing the root manifest (provided by pnpm). */
+	rootProjectManifestDir?: string;
 	/** Map of package matchers to whether their build scripts may run. */
 	allowBuilds?: Record<string, boolean>;
 	/** Fail installs on unreviewed dependency build scripts. */
@@ -69,6 +75,42 @@ export interface PnpmConfig {
 	};
 	/** Additional pnpm configuration fields (preserved but not modified). */
 	[key: string]: unknown;
+}
+
+/**
+ * The Silk source monorepo. Inside it, `@savvy-web/cli` and `@savvy-web/mcp`
+ * are workspace packages built locally, so they must NOT be public-hoisted: a
+ * hoist links the package root (`src`) instead of the built `dist/dev`, which
+ * breaks their `savvy`/`savvy-mcp` bins. Everywhere else they are real registry
+ * packages and hoisting their bins onto the root PATH is desirable.
+ */
+const SILK_SOURCE_REPO = "savvy-web-systems";
+
+/** Workspace-local packages excluded from public-hoisting inside {@link SILK_SOURCE_REPO}. */
+const WORKSPACE_LOCAL_HOISTS = new Set(["@savvy-web/cli", "@savvy-web/mcp"]);
+
+/**
+ * Resolves the consuming workspace's root package name.
+ *
+ * @remarks
+ * Prefers pnpm's `rootProjectManifest`, falling back to reading `package.json`
+ * from `rootProjectManifestDir`. Returns `undefined` when neither is available.
+ */
+function resolveRootName(config: PnpmConfig): string | undefined {
+	if (config.rootProjectManifest?.name) {
+		return config.rootProjectManifest.name;
+	}
+	if (config.rootProjectManifestDir) {
+		try {
+			const pkg = JSON.parse(readFileSync(join(config.rootProjectManifestDir, "package.json"), "utf8")) as {
+				name?: string;
+			};
+			return pkg.name;
+		} catch {
+			return undefined;
+		}
+	}
+	return undefined;
 }
 
 /**
@@ -105,7 +147,14 @@ export function updateConfig(
 		const mergedSilk = mergeSingleCatalog("silk", catalogs.silk, existingCatalogs.silk, warnings);
 		const mergedSilkPeers = mergeSingleCatalog("silkPeers", catalogs.silkPeers, existingCatalogs.silkPeers, warnings);
 		const mergedOverrides = mergeOverrides(catalogs.silkOverrides, config.overrides, warnings);
-		const mergedPublicHoistPattern = mergeStringArrays(catalogs.silkPublicHoistPattern, config.publicHoistPattern);
+		// Inside the Silk source monorepo, drop the workspace-local packages from
+		// the hoist set so their bins resolve to the built `dist/dev` rather than a
+		// root/`src` link. Consumer repos keep them hoisted onto the root PATH.
+		const silkHoistPattern =
+			resolveRootName(config) === SILK_SOURCE_REPO
+				? catalogs.silkPublicHoistPattern.filter((pkg) => !WORKSPACE_LOCAL_HOISTS.has(pkg))
+				: catalogs.silkPublicHoistPattern;
+		const mergedPublicHoistPattern = mergeStringArrays(silkHoistPattern, config.publicHoistPattern);
 		const mergedPeerDependencyRules = mergePeerDependencyRules(peerDepRules, config.peerDependencyRules, warnings);
 
 		const mergedAllowBuilds = mergeMap(catalogs.silkAllowBuilds, config.allowBuilds);

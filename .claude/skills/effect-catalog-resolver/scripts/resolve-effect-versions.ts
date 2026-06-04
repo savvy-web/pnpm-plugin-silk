@@ -71,6 +71,7 @@ interface WorkspaceConfig {
 		silk?: Record<string, string>;
 		silkPeers?: Record<string, string>;
 	};
+	minimumReleaseAge?: number;
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────
@@ -163,7 +164,7 @@ async function discoverPackages(currentlyTracked: string[]): Promise<string[]> {
 
 // ── Metadata fetching ──────────────────────────────────────────────────
 
-async function fetchPackageMetadata(name: string): Promise<PackageMetadata | null> {
+async function fetchPackageMetadata(name: string, cutoffMs: number): Promise<PackageMetadata | null> {
 	const url = `https://registry.npmjs.org/${name}`;
 	const response = await fetch(url);
 	if (!response.ok) return null;
@@ -172,17 +173,48 @@ async function fetchPackageMetadata(name: string): Promise<PackageMetadata | nul
 		name: string;
 		description?: string;
 		"dist-tags"?: Record<string, string>;
+		time?: Record<string, string>;
 		versions?: Record<string, { peerDependencies?: Record<string, string>; deprecated?: string }>;
 	};
 
-	const latest = data["dist-tags"]?.latest;
+	// dist-tags.latest is the registry's true latest; it caps the candidate set
+	// so we never select an ancient mis-published high version (early Effect
+	// packages published a 1.0.0 then reset to 0.x — compareSemver alone would
+	// wrongly rank 1.0.0 above 0.49.0).
+	const distLatest = data["dist-tags"]?.latest;
+	if (!distLatest) return null;
+
+	const time = data.time ?? {};
+	const allVersions = Object.keys(data.versions ?? {});
+
+	// Only consider stable versions that (a) do not exceed dist-tags.latest and
+	// (b) have aged past the minimumReleaseAge cutoff. A version with no publish
+	// timestamp can't be verified, so it is excluded rather than risk proposing
+	// something pnpm would refuse to install.
+	const stableVersions = allVersions
+		.filter((v) => !v.includes("-"))
+		.filter((v) => compareSemver(v, distLatest) <= 0)
+		.filter((v) => {
+			const published = time[v];
+			if (!published) return false;
+			return Date.parse(published) <= cutoffMs;
+		})
+		.sort(compareSemver);
+
+	if (stableVersions.length === 0) return null;
+
+	// "latest" is the newest age-eligible, non-deprecated stable version — not
+	// necessarily the registry's dist-tags.latest, which may be too fresh.
+	let latest: string | null = null;
+	for (let i = stableVersions.length - 1; i >= 0; i--) {
+		const v = stableVersions[i];
+		if (data.versions?.[v]?.deprecated) continue;
+		latest = v;
+		break;
+	}
 	if (!latest) return null;
 	const latestMeta = data.versions?.[latest];
 	if (!latestMeta) return null;
-	if (latestMeta.deprecated) return null;
-
-	const allVersions = Object.keys(data.versions ?? {});
-	const stableVersions = allVersions.filter((v) => !v.includes("-")).sort(compareSemver);
 
 	const versionPeerDeps = new Map<string, Record<string, string>>();
 	for (const v of stableVersions) {
@@ -201,8 +233,8 @@ async function fetchPackageMetadata(name: string): Promise<PackageMetadata | nul
 	};
 }
 
-async function fetchAllMetadata(packageNames: string[]): Promise<Map<string, PackageMetadata>> {
-	const results = await Promise.all(packageNames.map(fetchPackageMetadata));
+async function fetchAllMetadata(packageNames: string[], cutoffMs: number): Promise<Map<string, PackageMetadata>> {
+	const results = await Promise.all(packageNames.map((name) => fetchPackageMetadata(name, cutoffMs)));
 	const metadata = new Map<string, PackageMetadata>();
 	for (let i = 0; i < packageNames.length; i++) {
 		const meta = results[i];
@@ -216,6 +248,7 @@ async function fetchAllMetadata(packageNames: string[]): Promise<Map<string, Pac
 function readCurrentCatalog(rootDir: string): {
 	silk: Map<string, string>;
 	silkPeers: Map<string, string>;
+	minimumReleaseAge: number;
 } {
 	const yamlPath = join(rootDir, "pnpm-workspace.yaml");
 	let content: string;
@@ -234,7 +267,9 @@ function readCurrentCatalog(rootDir: string): {
 	for (const [name, version] of Object.entries(config.catalogs?.silkPeers ?? {})) {
 		if (isEffectPkg(name)) silkPeers.set(name, version);
 	}
-	return { silk, silkPeers };
+	const minimumReleaseAge =
+		typeof config.minimumReleaseAge === "number" && config.minimumReleaseAge > 0 ? config.minimumReleaseAge : 0;
+	return { silk, silkPeers, minimumReleaseAge };
 }
 
 // ── Resolution algorithm ───────────────────────────────────────────────
@@ -436,7 +471,8 @@ async function main(): Promise<void> {
 		const rootDir = join(scriptDir, "../../../..");
 
 		// Read current catalog
-		const { silk: currentSilk, silkPeers: currentSilkPeers } = readCurrentCatalog(rootDir);
+		const { silk: currentSilk, silkPeers: currentSilkPeers, minimumReleaseAge } = readCurrentCatalog(rootDir);
+		const cutoffMs = Date.now() - minimumReleaseAge * 60 * 1000;
 		if (testMode) {
 			if (currentSilk.size === 0) fail("YAML test failed — no Effect entries in silk catalog");
 			if (!currentSilk.has("effect")) fail("YAML test failed — effect not in silk");
@@ -453,9 +489,13 @@ async function main(): Promise<void> {
 			console.error(`Discovery OK: found ${packageNames.length} packages`);
 		}
 
-		// Fetch metadata
-		console.error(`Fetching metadata for ${packageNames.length} packages...`);
-		const metadata = await fetchAllMetadata(packageNames);
+		// Fetch metadata (filtering versions younger than the release-age cutoff)
+		console.error(
+			minimumReleaseAge > 0
+				? `Fetching metadata for ${packageNames.length} packages (minimumReleaseAge: ${minimumReleaseAge}m)...`
+				: `Fetching metadata for ${packageNames.length} packages...`,
+		);
+		const metadata = await fetchAllMetadata(packageNames, cutoffMs);
 		if (testMode) {
 			const effectMeta = metadata.get("effect");
 			if (!effectMeta) fail("Metadata test failed — effect core not found");

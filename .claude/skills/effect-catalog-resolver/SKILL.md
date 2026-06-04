@@ -14,6 +14,15 @@ tools: Bash, Read, Edit
 Resolves the latest compatible set of `effect` + `@effect/*` package versions
 for the silk and silkPeers catalogs in `pnpm-workspace.yaml`.
 
+The resolver honours the `minimumReleaseAge` setting (minutes) from
+`pnpm-workspace.yaml`: versions published more recently than the cutoff are
+skipped, so "latest" is the newest version that has aged past the gate. This
+keeps proposals installable under the same release-age policy pnpm enforces and
+avoids needing per-version `minimumReleaseAgeExclude` entries. The registry's
+`dist-tags.latest` caps the candidate set, so ancient mis-published high
+versions (some early `@effect/*` packages published a `1.0.0` then reset to
+`0.x`) are never selected.
+
 ## Workflow
 
 1. Run the resolution script:

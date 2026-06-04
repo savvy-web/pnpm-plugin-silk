@@ -44,7 +44,7 @@ catalogs:
     "@effect/sql-sqlite-node": ^0.52.0
     "@effect/sql-sqlite-react-native": ^0.54.0
     "@effect/sql-sqlite-wasm": ^0.52.0
-    "@effect/tsgo": ^0.11.4
+    "@effect/tsgo": ^0.13.1
     "@effect/typeclass": ^0.40.0
     "@effect/vitest": ^0.29.0
     "@effect/workflow": ^0.18.1
@@ -90,7 +90,7 @@ catalogs:
     "@effect/sql-sqlite-node": ">=0.52.0"
     "@effect/sql-sqlite-react-native": ">=0.54.0"
     "@effect/sql-sqlite-wasm": ">=0.52.0"
-    "@effect/tsgo": ">=0.11.0"
+    "@effect/tsgo": ">=0.13.1"
     "@effect/typeclass": ">=0.40.0"
     "@effect/vitest": ">=0.29.0"
     "@effect/workflow": ">=0.18.0"
@@ -107,12 +107,6 @@ loglevel: info
 minimumReleaseAge: 1440
 minimumReleaseAgeExclude:
   - "@savvy-web/*"
-  - "@typescript-eslint/*"
-  - "@typescript/*"
-  - "@rsbuild/*"
-  - "@rspack/*"
-  - fuse.js
-  - sort-package-json
 overrides:
   "@isaacs/brace-expansion": ^5.0.1
   lodash: ^4.17.23
