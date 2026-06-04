@@ -38,8 +38,14 @@ describe("createDistPackageJson", () => {
 		expect(result.version).toBe("0.13.4");
 	});
 
-	it("sets files to the published artifacts including pnpmfile.mjs", () => {
-		expect(createDistPackageJson(source).files).toEqual(["LICENSE", "README.md", "package.json", "pnpmfile.mjs"]);
+	it("sets files to the published artifacts including both pnpmfile.cjs and pnpmfile.mjs", () => {
+		expect(createDistPackageJson(source).files).toEqual([
+			"LICENSE",
+			"README.md",
+			"package.json",
+			"pnpmfile.cjs",
+			"pnpmfile.mjs",
+		]);
 	});
 
 	it("does not mutate the source object", () => {
