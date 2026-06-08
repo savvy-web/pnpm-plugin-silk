@@ -83,7 +83,7 @@
 		"effect": "catalog:silk",
 		"react": "catalog:silk",
 		"react-dom": "catalog:silk",
-		"tsdown": "^0.22.1",
+		"tsdown": "^0.22.2",
 		"tsx": "catalog:silk",
 		"typescript": "catalog:silk",
 		"yaml": "^2.9.0"
