@@ -51,7 +51,7 @@ catalogs:
     "@types/node": ^25.9.1
     "@types/react": ^19.2.16
     "@types/react-dom": ^19.2.3
-    "@typescript/native-preview": ^7.0.0-dev.20260601.1
+    "@typescript/native-preview": ^7.0.0-dev.20260610.1
     effect: ^3.21.2
     react: ^19.2.7
     react-dom: ^19.2.7
