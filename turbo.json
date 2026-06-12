@@ -4,41 +4,55 @@
 	"tasks": {
 		"build:dev": {
 			"cache": true,
-			"dependsOn": ["types:check", "generate:catalogs"],
+			"dependsOn": ["^build:dev"],
 			"inputs": [
 				"$TURBO_DEFAULT$",
 				"$TURBO_ROOT$/package.json",
-				"$TURBO_ROOT$/pnpm-lock.yaml",
 				"$TURBO_ROOT$/pnpm-workspace.yaml",
-				"package.json",
-				"tsdown.config.ts",
-				"tsconfig.json",
-				"src/**/*.ts",
-				"lib/packaging/**",
+				"$TURBO_ROOT$/pnpm-lock.yaml",
+				"$TURBO_ROOT$/tsconfig.json",
 				"README.md",
-				"LICENSE"
+				"LICENSE",
+				"package.json",
+				"tsconfig.json",
+				"*.ts",
+				"*.mts",
+				"*.cts",
+				"public/**/*",
+				"lib/**/*",
+				"src/**/*"
 			],
-			"outputLogs": "full",
-			"outputs": ["dist/dev/**"]
+			"outputLogs": "errors-only",
+			"outputs": ["dist/dev/pkg/**"]
+		},
+		"build:meta": {
+			"cache": true,
+			"dependsOn": ["build:dev"],
+			"inputs": ["$TURBO_DEFAULT$", "dist/dev/pkg/**"],
+			"outputs": ["dist/dev/meta/**"]
 		},
 		"build:prod": {
 			"cache": true,
-			"dependsOn": ["types:check", "generate:catalogs"],
+			"dependsOn": ["types:check", "build:meta", "generate:catalogs"],
 			"inputs": [
 				"$TURBO_DEFAULT$",
 				"$TURBO_ROOT$/package.json",
-				"$TURBO_ROOT$/pnpm-lock.yaml",
 				"$TURBO_ROOT$/pnpm-workspace.yaml",
-				"package.json",
-				"tsdown.config.ts",
-				"tsconfig.json",
-				"src/**/*.ts",
-				"lib/packaging/**",
+				"$TURBO_ROOT$/pnpm-lock.yaml",
+				"$TURBO_ROOT$/tsconfig.json",
 				"README.md",
-				"LICENSE"
+				"LICENSE",
+				"package.json",
+				"tsconfig.json",
+				"*.ts",
+				"*.mts",
+				"*.cts",
+				"public/**/*",
+				"lib/**/*",
+				"src/**/*"
 			],
 			"outputLogs": "full",
-			"outputs": ["dist/npm/**"]
+			"outputs": ["dist/prod/**"]
 		},
 		"generate:catalogs": {
 			"cache": true,
@@ -57,10 +71,27 @@
 		},
 		"types:check": {
 			"cache": true,
-			"dependsOn": [],
-			"inputs": ["*.ts", "lib/**/*.ts", "lib/**/*.mts"],
+			"dependsOn": ["generate:catalogs"],
+			"inputs": [
+				"$TURBO_DEFAULT$",
+				"*.ts",
+				"*.mts",
+				"*.cts",
+				"src/**/*.ts",
+				"src/**/*.tsx",
+				"src/**/*.mts",
+				"src/**/*.cts",
+				"lib/**/*.ts",
+				"lib/**/*.tsx",
+				"lib/**/*.mts",
+				"lib/**/*.cts",
+				"__test__/**/*.ts",
+				"__test__/**/*.tsx",
+				"__test__/**/*.mts",
+				"__test__/**/*.cts"
+			],
 			"outputLogs": "errors-only",
-			"outputs": []
+			"outputs": ["dist/.tsbuildinfo.lib"]
 		}
 	}
 }
