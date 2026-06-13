@@ -72,6 +72,7 @@ export const silkCatalogs: SilkCatalogs = {
 			"GHSA-xxxx-yyyy-zzzz"
 		]
 	},
+	silkConfirmModulesPurge: false,
 };
 
 /**

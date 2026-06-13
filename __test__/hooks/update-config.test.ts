@@ -225,4 +225,17 @@ describe("updateConfig", () => {
 		expect(result.peerDependencyRules?.allowedVersions?.["react-dom>react"]).toBe("^17.0.0");
 		expect(warnSpy).toHaveBeenCalled();
 	});
+
+	it("applies the silk confirmModulesPurge default to empty config", () => {
+		const result = runUpdateConfig({});
+
+		expect(result.confirmModulesPurge).toBe(false);
+	});
+
+	it("lets a child confirmModulesPurge value win without warning", () => {
+		const result = runUpdateConfig({ confirmModulesPurge: true });
+
+		expect(result.confirmModulesPurge).toBe(true);
+		expect(warnSpy).not.toHaveBeenCalled();
+	});
 });

@@ -35,6 +35,7 @@ interface WorkspaceConfig {
 	allowedDeprecatedVersions?: Record<string, string>;
 	supportedArchitectures?: { os?: string[]; cpu?: string[]; libc?: string[] };
 	auditConfig?: { ignoreGhsas?: string[]; ignoreCves?: string[] };
+	confirmModulesPurge?: boolean;
 	peerDependencyRules?: {
 		allowedVersions?: Record<string, string>;
 		ignoreMissing?: string[];
@@ -148,6 +149,7 @@ function generateContent(
 	silkAllowedDeprecatedVersions: Record<string, string>,
 	silkSupportedArchitectures: { os?: string[]; cpu?: string[]; libc?: string[] },
 	silkAuditConfig: { ignoreGhsas?: string[]; ignoreCves?: string[] },
+	silkConfirmModulesPurge: boolean | undefined,
 	silkPeerDependencyRules: { allowedVersions: Record<string, string>; ignoreMissing: string[]; allowAny: string[] },
 	timestamp: string,
 ): string {
@@ -156,6 +158,9 @@ function generateContent(
 		security.blockExoticSubdeps !== undefined ? `\tsilkBlockExoticSubdeps: ${security.blockExoticSubdeps},` : "",
 		security.minimumReleaseAge !== undefined ? `\tsilkMinimumReleaseAge: ${security.minimumReleaseAge},` : "",
 	].filter((line) => line !== "");
+
+	const confirmModulesPurgeLine =
+		silkConfirmModulesPurge !== undefined ? `\tsilkConfirmModulesPurge: ${silkConfirmModulesPurge},\n` : "";
 
 	return `/**
  * Auto-generated Silk catalog definitions.
@@ -193,7 +198,7 @@ ${scalarLines.join("\n")}
 \tsilkAllowedDeprecatedVersions: ${formatCatalogLiteral(silkAllowedDeprecatedVersions)},
 \tsilkSupportedArchitectures: ${serialize(silkSupportedArchitectures)},
 \tsilkAuditConfig: ${serialize(silkAuditConfig)},
-};
+${confirmModulesPurgeLine}};
 
 /**
  * Peer dependency rules generated from pnpm-workspace.yaml.
@@ -268,6 +273,7 @@ export function generateCatalogs(
 		const silkAllowedDeprecatedVersions = config.allowedDeprecatedVersions ?? {};
 		const silkSupportedArchitectures = config.supportedArchitectures ?? {};
 		const silkAuditConfig = config.auditConfig ?? {};
+		const silkConfirmModulesPurge = config.confirmModulesPurge;
 
 		const silkPeerDependencyRules = {
 			allowedVersions: config.peerDependencyRules?.allowedVersions ?? {},
@@ -287,6 +293,7 @@ export function generateCatalogs(
 			silkAllowedDeprecatedVersions,
 			silkSupportedArchitectures,
 			silkAuditConfig,
+			silkConfirmModulesPurge,
 			silkPeerDependencyRules,
 			ts,
 		);
