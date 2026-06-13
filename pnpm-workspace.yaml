@@ -109,6 +109,20 @@ minimumReleaseAge: 1440
 minimumReleaseAgeExclude:
   - "@savvy-web/*"
   - "@typescript/native-preview*"
+  - vitest-agent-*
+  - vitest-bats
+  - rspress-plugin-api-extractor
+  - runtime-resolver
+  - type-registry-effect
+  - semver-effect
+  - workspaces-effect
+  - yaml-effect
+  - jsonc-effect
+  - json-schema-effect
+  - package-json-effect
+  - config-file-effect
+  - std-osc8
+  - api-extractor-llms
 overrides:
   "@isaacs/brace-expansion": ^5.0.1
   lodash: ^4.17.23
