@@ -1,5 +1,31 @@
 # @savvy-web/pnpm-plugin-silk
 
+## 0.15.0
+
+### Features
+
+* [`71c70ca`](https://github.com/savvy-web/pnpm-plugin-silk/commit/71c70cac4a18f61136f01b464b4523fe4c90956a) ### `confirmModulesPurge` managed setting
+
+Silk now injects `confirmModulesPurge: false` into the consuming workspace's pnpm config as a behavioral default. When pnpm considers purging the `node_modules` store, this setting suppresses the interactive confirmation prompt — keeping installs non-interactive in CI and scripted environments without requiring each repo to set it manually.
+
+This is a plain behavioral default, not a security setting:
+
+* A child workspace's own `confirmModulesPurge` value wins (child-wins merge via `mergeScalar`).
+* No warning is emitted when the child value diverges. Repos that want interactive confirmation can set `confirmModulesPurge: true` in their own `pnpm-workspace.yaml`.
+
+```yaml
+# pnpm-workspace.yaml in a child repo — overrides Silk's default
+confirmModulesPurge: true
+```
+
+If the child repo sets no value, Silk's `false` applies automatically.
+
+### Dependencies
+
+* | [`71c70ca`](https://github.com/savvy-web/pnpm-plugin-silk/commit/71c70cac4a18f61136f01b464b4523fe4c90956a) | Dependency | Type    | Action                | From                  | To |
+  | :--------------------------------------------------------------------------------------------------------- | :--------- | :------ | :-------------------- | :-------------------- | -- |
+  | @typescript/native-preview                                                                                 | config     | updated | ^7.0.0-dev.20260611.2 | ^7.0.0-dev.20260612.1 |    |
+
 ## 0.14.6
 
 ### Build System
