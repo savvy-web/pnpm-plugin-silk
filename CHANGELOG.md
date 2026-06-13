@@ -1,5 +1,11 @@
 # @savvy-web/pnpm-plugin-silk
 
+## 0.15.1
+
+### Features
+
+* [`4048445`](https://github.com/savvy-web/pnpm-plugin-silk/commit/4048445e581d75334be5bd5dcc908f2340f028c4) Exclude core effect packages from minimum release age requirements.
+
 ## 0.15.0
 
 ### Features
