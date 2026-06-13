@@ -3,8 +3,8 @@ status: current
 module: pnpm-plugin-silk
 category: architecture
 created: 2026-02-03
-updated: 2026-06-04
-last-synced: 2026-06-04
+updated: 2026-06-12
+last-synced: 2026-06-12
 completeness: 97
 related: []
 dependencies: []
@@ -51,6 +51,7 @@ receives two named catalogs, security overrides, and peer dependency rules:
 - **`publicHoistPattern`** - Packages to hoist to the virtual store root
 - **`peerDependencyRules`** - Centralized rules for suppressing peer dependency warnings (`allowedVersions`, `ignoreMissing`, `allowAny`)
 - **`strictDepBuilds`, `blockExoticSubdeps`, `minimumReleaseAge`** - pnpm 11 build/security defaults injected by Silk; child repos may override but receive a security warning when they weaken any default
+- **`confirmModulesPurge`** - plain behavioral default injected by Silk; a child value wins via `mergeScalar` like the security scalars, but diverging emits NO warning since it is not a security setting
 - **`packageExtensions`, `allowedDeprecatedVersions`, `supportedArchitectures`, `auditConfig`** - Additional pnpm settings merged with child-wins semantics
 
 Plus future enhancements:
@@ -140,6 +141,7 @@ interface SilkCatalogs {
   readonly silkAllowedDeprecatedVersions: Record<string, string>;
   readonly silkSupportedArchitectures: SupportedArchitectures;
   readonly silkAuditConfig: AuditConfig;
+  readonly silkConfirmModulesPurge?: boolean; // plain default, overridable without warning
 }
 
 interface SilkPeerDependencyRules {
@@ -621,12 +623,15 @@ security warning when a child config weakens the Silk posture:
 | `strictDepBuilds` | boolean | child value else Silk default | child `false` where Silk `true` |
 | `blockExoticSubdeps` | boolean | child value else Silk default | child `false` where Silk `true` |
 | `minimumReleaseAge` | number | child value else Silk default | child lower than Silk |
+| `confirmModulesPurge` | boolean | child value else Silk default | none |
 | `minimumReleaseAgeExclude` | array | union | none |
 | `packageExtensions` | nested map | child-wins per key | none |
 | `allowedDeprecatedVersions` | map | child-wins per key | none |
 | `supportedArchitectures` | axis arrays | union per axis | none |
 | `auditConfig` | axis arrays | union per axis | none |
 | `peerDependencyRules` | nested | per-field merge | allowedVersions divergence |
+
+`confirmModulesPurge` shares the `mergeScalar` "child value else Silk default" mechanic with `strictDepBuilds`, `blockExoticSubdeps` and `minimumReleaseAge`, but it is a plain behavioral default rather than a security posture: it has no entry in `src/hooks/security-warnings.ts`, so a diverging child value wins silently with no warning. The security-loosening detectors fire only for the rows whose warning column is non-`none`.
 
 `allowBuilds` replaces the deprecated pnpm 10 build settings
 (`onlyBuiltDependencies` and friends). The generator folds any legacy
@@ -679,6 +684,7 @@ interface SilkCatalogs {
   readonly silkAllowedDeprecatedVersions: Record<string, string>;
   readonly silkSupportedArchitectures: SupportedArchitectures;
   readonly silkAuditConfig: AuditConfig;
+  readonly silkConfirmModulesPurge?: boolean; // plain default, overridable without warning
 }
 
 // Plugin peer dependency rules structure

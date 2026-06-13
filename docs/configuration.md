@@ -106,6 +106,14 @@ The plugin sets `minimumReleaseAge: 1440` (minutes), meaning pnpm will not insta
 
 `minimumReleaseAgeExclude` is an array that unions with the Silk default excludes — first-party scopes (`@savvy-web/*`) are always excluded.
 
+## Behavioral defaults
+
+The plugin also injects plain behavioral defaults. These share the child-wins-else-Silk merge mechanic with the security scalars above, but they are not a security posture, so a diverging child value wins silently with no warning.
+
+### `confirmModulesPurge`
+
+Silk sets `confirmModulesPurge: false` so pnpm reinstalls a corrupted or out-of-date `node_modules` without an interactive confirmation prompt — useful in CI and scripted workflows. Setting `confirmModulesPurge: true` in your child config restores the prompt; unlike the security defaults, overriding this value does not trigger a warning.
+
 ## Additional inherited settings
 
 The following settings merge into child workspaces using the same non-destructive strategy (child-wins per key for maps, union for arrays):

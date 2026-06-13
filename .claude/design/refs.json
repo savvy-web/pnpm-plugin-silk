@@ -1,0 +1,11 @@
+{
+	"version": 1,
+	"refs": [
+		{
+			"source": "CLAUDE.md",
+			"target": ".claude/design/pnpm-plugin-silk/catalog-management.md",
+			"hash": "3602078bd8d6c141359a6e461c96244f6369235faa66da64ebab73041e845b45",
+			"recordedAt": "2026-06-12"
+		}
+	]
+}

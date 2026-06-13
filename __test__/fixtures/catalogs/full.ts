@@ -24,4 +24,5 @@ export const fullCatalogs: SilkCatalogs = {
 	silkAllowedDeprecatedVersions: {},
 	silkSupportedArchitectures: { os: ["linux"], cpu: ["x64"] },
 	silkAuditConfig: {},
+	silkConfirmModulesPurge: false,
 };

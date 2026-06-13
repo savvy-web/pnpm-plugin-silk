@@ -41,3 +41,4 @@ supportedArchitectures:
 auditConfig:
   ignoreGhsas:
     - GHSA-xxxx-yyyy-zzzz
+confirmModulesPurge: false

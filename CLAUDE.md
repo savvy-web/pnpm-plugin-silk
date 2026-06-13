@@ -17,6 +17,7 @@ centralized catalog management across the Savvy Web ecosystem.
 - `silkOverrides` - Security overrides for transitive dependency CVEs
 - `allowBuilds` - pnpm 11 build-script allowlist map (replaces `onlyBuiltDependencies`)
 - Security defaults - Silk owns `strictDepBuilds`, `blockExoticSubdeps`, and `minimumReleaseAge` (child repos may override)
+- `confirmModulesPurge` - Behavioral default (`false`), not a security setting; child value wins with no warning when it diverges
 - `packageExtensions`, `allowedDeprecatedVersions`, `supportedArchitectures`, `auditConfig` - Inherited and merged from Silk
 - `publicHoistPattern` - Packages hoisted to virtual store root
 - `peerDependencyRules` - Syncs allowedVersions, ignoreMissing, allowAny

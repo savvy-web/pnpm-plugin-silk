@@ -138,6 +138,12 @@ export interface SilkCatalogs {
 
 	/** Audit advisory allowlist, synced to `auditConfig`. */
 	readonly silkAuditConfig: AuditConfig;
+
+	/**
+	 * Whether pnpm prompts for confirmation before purging `node_modules`.
+	 * Synced to pnpm `confirmModulesPurge`. Child repos may override freely.
+	 */
+	readonly silkConfirmModulesPurge?: boolean;
 }
 
 /**

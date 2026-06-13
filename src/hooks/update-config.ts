@@ -73,6 +73,8 @@ export interface PnpmConfig {
 	supportedArchitectures?: SupportedArchitectures;
 	/** Audit advisory allowlist. */
 	auditConfig?: AuditConfig;
+	/** Whether pnpm prompts for confirmation before purging `node_modules`. */
+	confirmModulesPurge?: boolean;
 	/** Rules for handling peer dependency warnings and resolution. */
 	peerDependencyRules?: {
 		allowedVersions?: Record<string, string>;
@@ -181,6 +183,9 @@ export function updateConfig(
 			config.supportedArchitectures,
 		);
 		const mergedAuditConfig: AuditConfig = mergeArrayRecord(catalogs.silkAuditConfig, config.auditConfig);
+		// confirmModulesPurge is a plain behavioral default: child value wins, no
+		// security warning when it diverges.
+		const mergedConfirmModulesPurge = mergeScalar(catalogs.silkConfirmModulesPurge, config.confirmModulesPurge);
 
 		securityWarnings.push(...detectAllowBuildsLoosening(catalogs.silkAllowBuilds, config.allowBuilds));
 		securityWarnings.push(
@@ -221,6 +226,7 @@ export function updateConfig(
 				? { supportedArchitectures: mergedSupportedArchitectures }
 				: {}),
 			...(Object.keys(mergedAuditConfig).length > 0 ? { auditConfig: mergedAuditConfig } : {}),
+			...(mergedConfirmModulesPurge !== undefined ? { confirmModulesPurge: mergedConfirmModulesPurge } : {}),
 		};
 	});
 }

@@ -18,6 +18,7 @@ exports[`pnpmfile integration > merges allowBuilds and warns on security looseni
       "typescript": "^5.7.0",
     },
   },
+  "confirmModulesPurge": false,
   "minimumReleaseAge": 1440,
   "minimumReleaseAgeExclude": [
     "@savvy-web/*",
@@ -73,6 +74,7 @@ exports[`pnpmfile integration > merges full catalogs into empty config 1`] = `
       "typescript": "^5.7.0",
     },
   },
+  "confirmModulesPurge": false,
   "minimumReleaseAge": 1440,
   "minimumReleaseAgeExclude": [
     "@savvy-web/*",
@@ -131,6 +133,7 @@ exports[`pnpmfile integration > merges full catalogs with local overrides 1`] = 
       "typescript": "^5.7.0",
     },
   },
+  "confirmModulesPurge": false,
   "minimumReleaseAge": 1440,
   "minimumReleaseAgeExclude": [
     "@savvy-web/*",
