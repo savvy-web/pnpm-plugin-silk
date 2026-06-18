@@ -44,14 +44,14 @@ catalogs:
     "@effect/sql-sqlite-node": ^0.52.0
     "@effect/sql-sqlite-react-native": ^0.54.0
     "@effect/sql-sqlite-wasm": ^0.52.0
-    "@effect/tsgo": ^0.14.3
+    "@effect/tsgo": ^0.14.5
     "@effect/typeclass": ^0.40.0
     "@effect/vitest": ^0.29.0
     "@effect/workflow": ^0.18.2
     "@types/node": ^25.9.3
     "@types/react": ^19.2.17
     "@types/react-dom": ^19.2.3
-    "@typescript/native-preview": ^7.0.0-dev.20260612.1
+    "@typescript/native-preview": ^7.0.0-dev.20260618.1
     effect: ^3.21.3
     react: ^19.2.7
     react-dom: ^19.2.7
@@ -90,14 +90,14 @@ catalogs:
     "@effect/sql-sqlite-node": ">=0.52.0"
     "@effect/sql-sqlite-react-native": ">=0.54.0"
     "@effect/sql-sqlite-wasm": ">=0.52.0"
-    "@effect/tsgo": ">=0.14.3"
+    "@effect/tsgo": ">=0.14.5"
     "@effect/typeclass": ">=0.40.0"
     "@effect/vitest": ">=0.29.0"
     "@effect/workflow": ">=0.18.2"
     "@types/node": ^25.9.0
     "@types/react": ^19.2.0
     "@types/react-dom": ^19.2.0
-    "@typescript/native-preview": ^7.0.0-dev.20260513.1
+    "@typescript/native-preview": ^7.0.0-dev.20260612.1
     effect: ">=3.21.0"
     react: ^19.2.0
     react-dom: ^19.2.0
@@ -108,11 +108,13 @@ loglevel: info
 minimumReleaseAge: 1440
 minimumReleaseAgeExclude:
   - "@savvy-web/*"
+  - "@vitest/agent/*"
   - "@typescript/native-preview*"
-  - vitest-agent-*
+  - "@spencerbeggs/*"
   - vitest-bats
   - rspress-plugin-api-extractor
   - runtime-resolver
+  - reposets
   - type-registry-effect
   - semver-effect
   - workspaces-effect
@@ -123,6 +125,7 @@ minimumReleaseAgeExclude:
   - config-file-effect
   - std-osc8
   - api-extractor-llms
+  - xdg-effect
 overrides:
   "@isaacs/brace-expansion": ^5.0.1
   lodash: ^4.17.23
