@@ -1,5 +1,11 @@
 # @savvy-web/pnpm-plugin-silk
 
+## 0.15.2
+
+### Features
+
+* [`33d5e2a`](https://github.com/savvy-web/pnpm-plugin-silk/commit/33d5e2abbf716148e1b978ac13ee52a710caa300) Add `@vitest-agent/*` to minimumReleaseAgeExclude in preperation for new test harness release.
+
 ## 0.15.1
 
 ### Features
