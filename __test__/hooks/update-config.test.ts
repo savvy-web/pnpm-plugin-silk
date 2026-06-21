@@ -126,6 +126,37 @@ describe("updateConfig", () => {
 		expect(result.allowBuilds?.esbuild).toBe(true);
 	});
 
+	it("adds silk allowedDeprecatedVersions to empty config", () => {
+		const catalogs = {
+			...fullCatalogs,
+			silkAllowedDeprecatedVersions: { glob: "7.2.3", inflight: "1.0.6" },
+		};
+		const layer = Layer.merge(makeCatalogLayer(catalogs), makePeerDependencyRulesLayer(fullPeerDependencyRules));
+		const result = Effect.runSync(updateConfig({}).pipe(Effect.provide(layer)));
+
+		expect(result.allowedDeprecatedVersions?.glob).toBe("7.2.3");
+		expect(result.allowedDeprecatedVersions?.inflight).toBe("1.0.6");
+	});
+
+	it("merges allowedDeprecatedVersions with child entries winning per key and no warning", () => {
+		const catalogs = {
+			...fullCatalogs,
+			silkAllowedDeprecatedVersions: { glob: "7.2.3", inflight: "1.0.6" },
+		};
+		const layer = Layer.merge(makeCatalogLayer(catalogs), makePeerDependencyRulesLayer(fullPeerDependencyRules));
+		const result = Effect.runSync(
+			updateConfig({
+				// Child overrides glob and adds its own entry.
+				allowedDeprecatedVersions: { glob: "8.0.0", "custom-dep": "1.2.3" },
+			}).pipe(Effect.provide(layer)),
+		);
+
+		expect(result.allowedDeprecatedVersions?.glob).toBe("8.0.0");
+		expect(result.allowedDeprecatedVersions?.inflight).toBe("1.0.6");
+		expect(result.allowedDeprecatedVersions?.["custom-dep"]).toBe("1.2.3");
+		expect(warnSpy).not.toHaveBeenCalled();
+	});
+
 	it("adds silk publicHoistPattern to empty config", () => {
 		const result = runUpdateConfig({});
 
@@ -185,6 +216,59 @@ describe("updateConfig", () => {
 
 		expect(result.publicHoistPattern).not.toContain("@savvy-web/cli");
 		expect(result.publicHoistPattern).not.toContain("@savvy-web/mcp");
+	});
+
+	it("excludes @vitest-agent/cli and @vitest-agent/mcp from publicHoistPattern in the vitest-agent source monorepo", () => {
+		const catalogs = {
+			...fullCatalogs,
+			silkPublicHoistPattern: [...fullCatalogs.silkPublicHoistPattern, "@vitest-agent/cli", "@vitest-agent/mcp"],
+		};
+		const layer = Layer.merge(makeCatalogLayer(catalogs), makePeerDependencyRulesLayer(fullPeerDependencyRules));
+		const result = Effect.runSync(
+			updateConfig({ rootProjectManifest: { name: "vitest-agent" } }).pipe(Effect.provide(layer)),
+		);
+
+		expect(result.publicHoistPattern).not.toContain("@vitest-agent/cli");
+		expect(result.publicHoistPattern).not.toContain("@vitest-agent/mcp");
+		expect(result.publicHoistPattern).toContain("typescript");
+	});
+
+	it("keeps @vitest-agent/cli and @vitest-agent/mcp in publicHoistPattern for consumer repos", () => {
+		const catalogs = {
+			...fullCatalogs,
+			silkPublicHoistPattern: [...fullCatalogs.silkPublicHoistPattern, "@vitest-agent/cli", "@vitest-agent/mcp"],
+		};
+		const layer = Layer.merge(makeCatalogLayer(catalogs), makePeerDependencyRulesLayer(fullPeerDependencyRules));
+		const result = Effect.runSync(
+			updateConfig({ rootProjectManifest: { name: "some-consumer-app" } }).pipe(Effect.provide(layer)),
+		);
+
+		expect(result.publicHoistPattern).toContain("@vitest-agent/cli");
+		expect(result.publicHoistPattern).toContain("@vitest-agent/mcp");
+	});
+
+	it("excludes only the source repo's own workspace-local packages", () => {
+		// In the vitest-agent repo, the @savvy-web/* pair are real registry packages
+		// and must stay hoisted; only @vitest-agent/* are workspace-local there.
+		const catalogs = {
+			...fullCatalogs,
+			silkPublicHoistPattern: [
+				...fullCatalogs.silkPublicHoistPattern,
+				"@savvy-web/cli",
+				"@savvy-web/mcp",
+				"@vitest-agent/cli",
+				"@vitest-agent/mcp",
+			],
+		};
+		const layer = Layer.merge(makeCatalogLayer(catalogs), makePeerDependencyRulesLayer(fullPeerDependencyRules));
+		const result = Effect.runSync(
+			updateConfig({ rootProjectManifest: { name: "vitest-agent" } }).pipe(Effect.provide(layer)),
+		);
+
+		expect(result.publicHoistPattern).toContain("@savvy-web/cli");
+		expect(result.publicHoistPattern).toContain("@savvy-web/mcp");
+		expect(result.publicHoistPattern).not.toContain("@vitest-agent/cli");
+		expect(result.publicHoistPattern).not.toContain("@vitest-agent/mcp");
 	});
 
 	it("sorts merged arrays alphabetically", () => {

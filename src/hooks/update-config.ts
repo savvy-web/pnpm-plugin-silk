@@ -86,16 +86,20 @@ export interface PnpmConfig {
 }
 
 /**
- * The Silk source monorepo. Inside it, `@savvy-web/cli` and `@savvy-web/mcp`
- * are workspace packages built locally, so they must NOT be public-hoisted: a
- * hoist links the package root (`src`) instead of the built `dist/dev`, which
- * breaks their `savvy`/`savvy-mcp` bins. Everywhere else they are real registry
- * packages and hoisting their bins onto the root PATH is desirable.
+ * Source monorepos mapped to the workspace-local packages each builds in place.
+ *
+ * @remarks
+ * Inside its own source repo, a package such as `@savvy-web/cli` or
+ * `@vitest-agent/cli` is a workspace package built locally, so it must NOT be
+ * public-hoisted: a hoist links the package root (`src`) instead of the built
+ * `dist/dev`, which breaks its bin. Everywhere else these are real registry
+ * packages and hoisting their bins onto the root PATH is desirable. Keyed by the
+ * consuming repo's root package name.
  */
-const SILK_SOURCE_REPO = "savvy-web-systems";
-
-/** Workspace-local packages excluded from public-hoisting inside {@link SILK_SOURCE_REPO}. */
-const WORKSPACE_LOCAL_HOISTS = new Set(["@savvy-web/cli", "@savvy-web/mcp"]);
+const WORKSPACE_LOCAL_HOISTS_BY_REPO: Record<string, ReadonlySet<string>> = {
+	"savvy-web-systems": new Set(["@savvy-web/cli", "@savvy-web/mcp"]),
+	"vitest-agent": new Set(["@vitest-agent/cli", "@vitest-agent/mcp"]),
+};
 
 /**
  * Resolves the consuming workspace's root package name.
@@ -155,13 +159,13 @@ export function updateConfig(
 		const mergedSilk = mergeSingleCatalog("silk", catalogs.silk, existingCatalogs.silk, warnings);
 		const mergedSilkPeers = mergeSingleCatalog("silkPeers", catalogs.silkPeers, existingCatalogs.silkPeers, warnings);
 		const mergedOverrides = mergeOverrides(catalogs.silkOverrides, config.overrides, warnings);
-		// Inside the Silk source monorepo, drop the workspace-local packages from
+		// Inside a source monorepo, drop that repo's workspace-local packages from
 		// the hoist set so their bins resolve to the built `dist/dev` rather than a
 		// root/`src` link. Consumer repos keep them hoisted onto the root PATH.
-		const silkHoistPattern =
-			resolveRootName(config) === SILK_SOURCE_REPO
-				? catalogs.silkPublicHoistPattern.filter((pkg) => !WORKSPACE_LOCAL_HOISTS.has(pkg))
-				: catalogs.silkPublicHoistPattern;
+		const workspaceLocalHoists = WORKSPACE_LOCAL_HOISTS_BY_REPO[resolveRootName(config) ?? ""];
+		const silkHoistPattern = workspaceLocalHoists
+			? catalogs.silkPublicHoistPattern.filter((pkg) => !workspaceLocalHoists.has(pkg))
+			: catalogs.silkPublicHoistPattern;
 		const mergedPublicHoistPattern = mergeStringArrays(silkHoistPattern, config.publicHoistPattern);
 		const mergedPeerDependencyRules = mergePeerDependencyRules(peerDepRules, config.peerDependencyRules, warnings);
 
