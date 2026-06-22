@@ -108,9 +108,6 @@ catalogs:
     '@effect/workflow':
       specifier: ^0.18.2
       version: 0.18.2
-    '@types/node':
-      specifier: ^26.0.0
-      version: 26.0.0
     '@types/react':
       specifier: ^19.2.17
       version: 19.2.17
@@ -152,6 +149,7 @@ overrides:
   minimatch: '>=10.2.3'
   smol-toml: '>=1.6.1'
   tmp: ^0.2.7
+  '@types/node': ^26.0.0
 
 importers:
 
@@ -269,7 +267,7 @@ importers:
         specifier: ^1.5.1
         version: 1.5.1(cd4deee9e3aea4909f0714810b8e4a79)
       '@types/node':
-        specifier: catalog:silk
+        specifier: ^26.0.0
         version: 26.0.0
       '@types/react':
         specifier: catalog:silk
@@ -1144,7 +1142,7 @@ packages:
     resolution: {integrity: sha512-RWbSrDiYmO4LbejWY7ttpxczuwQyZLBUyygsA9Nsv95hpzUWwnNTVQmAq3xuh7vNwCp07UTmE5i11XAEExx4RA==}
     engines: {node: '>=18'}
     peerDependencies:
-      '@types/node': '>=18'
+      '@types/node': ^26.0.0
     peerDependenciesMeta:
       '@types/node':
         optional: true
@@ -1757,7 +1755,7 @@ packages:
   '@rushstack/node-core-library@5.23.1':
     resolution: {integrity: sha512-wlKmIKIYCKuCASbITvOxLZXepPbwXvrv7S6ig6XNWFchSyhL/E2txmVXspHY49Wu2dzf7nI27a2k/yV5BA3EiA==}
     peerDependencies:
-      '@types/node': '*'
+      '@types/node': ^26.0.0
     peerDependenciesMeta:
       '@types/node':
         optional: true
@@ -1765,7 +1763,7 @@ packages:
   '@rushstack/problem-matcher@0.2.1':
     resolution: {integrity: sha512-gulfhBs6n+I5b7DvjKRfhMGyUejtSgOHTclF/eONr8hcgF1APEDjhxIsfdUYYMzC3rvLwGluqLjbwCFZ8nxrog==}
     peerDependencies:
-      '@types/node': '*'
+      '@types/node': ^26.0.0
     peerDependenciesMeta:
       '@types/node':
         optional: true
@@ -1776,7 +1774,7 @@ packages:
   '@rushstack/terminal@0.24.0':
     resolution: {integrity: sha512-8ZQS4MMaGsv27EXCBiH7WMPkRZrffeDoIevs6z9TM5dzqiY6+Hn4evfK/G+gvgBTjfvfkHIZPQQmalmI2sM4TQ==}
     peerDependencies:
-      '@types/node': '*'
+      '@types/node': ^26.0.0
     peerDependenciesMeta:
       '@types/node':
         optional: true
@@ -1787,7 +1785,7 @@ packages:
   '@savvy-web/bundler@0.8.0':
     resolution: {integrity: sha512-C0uC4KgR0iJce6Lbx8fky/nT8/L8uIJ6xKt2skl5gGmWOd4hVHz93Go2x87LnPhi5lT41eU3/thC5mbYuV7Fvw==}
     peerDependencies:
-      '@types/node': ^25.9.0
+      '@types/node': ^26.0.0
       '@types/react': ^19.2.0
       '@types/react-dom': ^19.2.0
       '@typescript/native-preview': ^7.0.0-dev.20260513.1
@@ -1827,7 +1825,7 @@ packages:
       '@commitlint/config-conventional': ^21.0.2
       '@savvy-web/cli': 1.2.0
       '@savvy-web/mcp': 1.2.0
-      '@types/node': ^25.9.0
+      '@types/node': ^26.0.0
       '@typescript/native-preview': ^7.0.0-dev.20260513.1
       commitizen: ^4.3.0
       husky: ^9.1.7
@@ -1848,7 +1846,7 @@ packages:
   '@savvy-web/vitest@1.5.1':
     resolution: {integrity: sha512-qtG/46r3jEqXBVsDCgJGAY33su4zDAK7zClqpypF46DPiltPep8oQXJDh66VKDkEiGNCI4FvNAmVTOu38XaUxg==}
     peerDependencies:
-      '@types/node': ^25.9.0
+      '@types/node': ^26.0.0
       '@typescript/native-preview': ^7.0.0-dev.20260513.1
       '@vitest/coverage-v8': ^4.1.0
       typescript: ^6.0.0
@@ -1981,12 +1979,6 @@ packages:
 
   '@types/ms@2.1.0':
     resolution: {integrity: sha512-GsCCIZDE/p3i96vtEqx+7dBUGXrc7zeSK3wwPHIaRThS+9OhWIXRqzs4d6k1SVU8g91DrNRWxWUGhp5KXQb2VA==}
-
-  '@types/node@12.20.55':
-    resolution: {integrity: sha512-J8xLz7q2OFulZ2cyGTLE1TbbZcjpno7FaN6zdJNrgAdrJ+DZzh/uFR6YrTb4C+nXakvud8Q4+rbhoIWlYQbUFQ==}
-
-  '@types/node@18.19.130':
-    resolution: {integrity: sha512-GRaXQx6jGfL8sKfaIDD6OupbIHBr9jv7Jnaml9tB7l4v068PAOXqfcujMMo5PhbIs6ggR1XODELqahT2R8v0fg==}
 
   '@types/node@26.0.0':
     resolution: {integrity: sha512-vf2YFi1iY9lHGwNJMs01biZFbKJkrZR1T6/MlzjhJLPdntOHLhTrDSnSVcdtvjihi4VQNlrFRIxLsDBlQpAipA==}
@@ -2527,7 +2519,7 @@ packages:
     resolution: {integrity: sha512-Akr82WH1Wfqatyiqpj8HDkO2o2KmJRu1FhKfSNJP3K4IdXwHfEyL7MOb62i1AGQVLtIQM+iCE9CGOtrfhR+mmA==}
     engines: {node: '>=v18'}
     peerDependencies:
-      '@types/node': '*'
+      '@types/node': ^26.0.0
       cosmiconfig: '>=9'
       typescript: '>=5'
 
@@ -4121,7 +4113,7 @@ packages:
     resolution: {integrity: sha512-95uZ2TrPWAZdwpB3vvvDbmEMcNG8yIeNCyu6GUcr/QnWEE/wXm7+mhOCsdQfWQDTV7qYT/PDUZ4U4UPP4AsXqQ==}
     engines: {node: '>= 8.0'}
     peerDependencies:
-      '@types/node': '>= 8'
+      '@types/node': ^26.0.0
 
   named-placeholders@1.1.6:
     resolution: {integrity: sha512-Tz09sEL2EEuv5fFowm419c1+a/jSMiBjI9gHxVLrVdbUkkNUUfjsVYs9pVZu5oCon/kmRh9TfLEObFtkVxmY0w==}
@@ -5070,9 +5062,6 @@ packages:
   unconfig-core@7.5.0:
     resolution: {integrity: sha512-Su3FauozOGP44ZmKdHy2oE6LPjk51M/TRRjHv2HNCWiDvfvCoxC2lno6jevMA91MYAdCdwP05QnWdWpSbncX/w==}
 
-  undici-types@5.26.5:
-    resolution: {integrity: sha512-JlCMO+ehdEIKqlFxk6IfVoAUVmgz7cU7zD/h9XZ0qzeosSHmUJVOzSQvvYSYWXkFXC+IfLKSIffhv0sVZup6pA==}
-
   undici-types@8.3.0:
     resolution: {integrity: sha512-j375ScV60dom+YkPFIfTLcOiPxkN/buHz5GobjLhixFuANaNs3C9l4GmrWqejgXWJ7BbJcFYpTEUkS1Ge8bpZQ==}
 
@@ -5149,7 +5138,7 @@ packages:
     engines: {node: ^20.19.0 || >=22.12.0}
     hasBin: true
     peerDependencies:
-      '@types/node': ^20.19.0 || >=22.12.0
+      '@types/node': ^26.0.0
       '@vitejs/devtools': ^0.1.18
       esbuild: ^0.27.0 || ^0.28.0
       jiti: '>=1.21.0'
@@ -5207,7 +5196,7 @@ packages:
     peerDependencies:
       '@edge-runtime/vm': '*'
       '@opentelemetry/api': ^1.9.0
-      '@types/node': ^20.0.0 || ^22.0.0 || >=24.0.0
+      '@types/node': ^26.0.0
       '@vitest/browser-playwright': 4.1.9
       '@vitest/browser-preview': 4.1.9
       '@vitest/browser-webdriverio': 4.1.9
@@ -5409,7 +5398,7 @@ snapshots:
 
   '@anthropic-ai/tokenizer@0.0.4':
     dependencies:
-      '@types/node': 18.19.130
+      '@types/node': 26.0.0
       tiktoken: 1.0.22
 
   '@aws-crypto/crc32@5.2.0':
@@ -6530,7 +6519,7 @@ snapshots:
   '@manypkg/find-root@1.1.0':
     dependencies:
       '@babel/runtime': 7.29.7
-      '@types/node': 12.20.55
+      '@types/node': 26.0.0
       find-up: 4.1.0
       fs-extra: 8.1.0
 
@@ -7285,12 +7274,6 @@ snapshots:
       '@types/unist': 3.0.3
 
   '@types/ms@2.1.0': {}
-
-  '@types/node@12.20.55': {}
-
-  '@types/node@18.19.130':
-    dependencies:
-      undici-types: 5.26.5
 
   '@types/node@26.0.0':
     dependencies:
@@ -10691,8 +10674,6 @@ snapshots:
     dependencies:
       '@quansync/fs': 1.0.0
       quansync: 1.0.0
-
-  undici-types@5.26.5: {}
 
   undici-types@8.3.0: {}
 

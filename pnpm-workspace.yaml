@@ -143,6 +143,7 @@ overrides:
   minimatch: ">=10.2.3"
   smol-toml: ">=1.6.1"
   tmp: ^0.2.7
+  "@types/node": catalog:silk
 peerDependencyRules:
   allowedVersions:
     "@effect/vitest>vitest": ^4.1.0
