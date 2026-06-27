@@ -118,7 +118,7 @@ loglevel: info
 minimumReleaseAge: 1440
 minimumReleaseAgeExclude:
   - "@savvy-web/*"
-  - "@vitest/agent/*"
+  - "@vitest-agent/*"
   - "@typescript/native-preview*"
   - "@spencerbeggs/*"
   - vitest-bats
@@ -133,6 +133,7 @@ minimumReleaseAgeExclude:
   - json-schema-effect
   - package-json-effect
   - config-file-effect
+  - rolldown-pnpm-config
   - std-osc8
   - api-extractor-llms
   - xdg-effect
@@ -143,7 +144,7 @@ overrides:
   minimatch: ">=10.2.3"
   smol-toml: ">=1.6.1"
   tmp: ^0.2.7
-  "@types/node": catalog:silk
+  "@types/node": ^26.0.0
 peerDependencyRules:
   allowedVersions:
     "@effect/vitest>vitest": ^4.1.0

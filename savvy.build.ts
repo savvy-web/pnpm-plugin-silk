@@ -2,6 +2,7 @@ import { defineBuild, runBuild } from "@savvy-web/bundler";
 
 const config = defineBuild({
 	bundleNodeModules: true,
+	meta: false,
 	looseFiles: {
 		"pnpmfile.mjs": "./src/pnpmfile.ts",
 		"pnpmfile.cjs": "./src/pnpmfile.ts",
