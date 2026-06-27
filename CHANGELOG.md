@@ -1,5 +1,11 @@
 # @savvy-web/pnpm-plugin-silk
 
+## 0.17.0
+
+### Bug Fixes
+
+* [`32151e5`](https://github.com/savvy-web/pnpm-plugin-silk/commit/32151e5da02679c3cb31f7c882948ece126dd9ab) Explicitly overrides @types/node to ^26.0.0 instead of using catalog version
+
 ## 0.16.1
 
 ### Bug Fixes
