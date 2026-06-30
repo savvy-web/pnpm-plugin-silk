@@ -1,5 +1,10 @@
 # @savvy-web/pnpm-plugin-silk
 
+> [!WARNING]
+> Development of this package has been moved to the [`savvy-web/systems`](https://github.com/savvy-web/systems) monorepo.
+> Source code live in the [packages/pnpm-plugin-silk](https://github.com/savvy-web/systems/packages/pnpm-plugin-silk) folder.
+> No further code updates will be published here.
+
 [![npm](https://img.shields.io/npm/v/@savvy-web%2Fpnpm-plugin-silk?label=npm&color=cb3837)](https://www.npmjs.com/package/@savvy-web/pnpm-plugin-silk)
 [![License: MIT](https://img.shields.io/badge/License-MIT-4caf50.svg)](https://opensource.org/licenses/MIT)
 [![TypeScript 6.0](https://img.shields.io/badge/TypeScript-6.0-3178c6.svg)](https://www.typescriptlang.org/)
